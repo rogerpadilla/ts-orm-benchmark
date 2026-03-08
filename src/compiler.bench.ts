@@ -7,9 +7,10 @@
  * - TypeORM     — EntitySchema + QueryBuilder
  * - MikroORM    — EntitySchema + Knex-backed QueryBuilder
  * - Drizzle     — Functional SQL builder
+ * - Knex        — Standalone query builder
+ * - Kysely      — Type-safe query builder
  *
- * Only full ORMs are included (no standalone query builders like Knex or Kysely).
- * Each ORM defines the same User entity and compiles equivalent queries.
+ * Each entry defines the same User entity and compiles equivalent queries.
  * Run: npm run bench
  */
 import { beforeAll, bench, describe } from 'vitest';
@@ -59,7 +60,7 @@ const TypeORMUserSchema = new EntitySchema({
     companyId: { type: Number },
     createdAt: { type: Number },
   },
-} as any);
+});
 
 let typeormDs: DataSource;
 
@@ -90,7 +91,7 @@ const MikroUserSchema = new MikroEntitySchema<MikroUser>({
 let mikroEm: SqlEntityManager;
 
 // ── Drizzle ──────────────────────────────────────────────────────────────────
-import { and, eq, gt, ilike, inArray, or } from 'drizzle-orm';
+import { and, eq, gt, ilike, inArray, like, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
 
@@ -104,6 +105,33 @@ const drizzleUsers = pgTable('User', {
 
 const drizzleDb = drizzle({ client: { connect: () => ({}) } as any });
 
+// ── Knex ─────────────────────────────────────────────────────────────────────
+import knexLib from 'knex';
+
+const knexDb = knexLib({ client: 'pg', connection: {} });
+
+// ── Kysely ────────────────────────────────────────────────────────────────────
+import { DummyDriver, Kysely, PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler, type Generated } from 'kysely';
+
+interface KyselyDb {
+  User: {
+    id: Generated<number>;
+    name: string;
+    email: string;
+    companyId: number;
+    createdAt: number;
+  };
+}
+
+const kyselyDb = new Kysely<KyselyDb>({
+  dialect: {
+    createDriver: () => new DummyDriver(),
+    createAdapter: () => new PostgresAdapter(),
+    createIntrospector: (db) => new PostgresIntrospector(db),
+    createQueryCompiler: () => new PostgresQueryCompiler(),
+  },
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Global Setup
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +141,7 @@ beforeAll(async () => {
   typeormDs = new DataSource({
     type: 'better-sqlite3',
     database: ':memory:',
-    entities: [TypeORMUserSchema as any],
+    entities: [TypeORMUserSchema],
     synchronize: false,
     logging: false,
   });
@@ -155,6 +183,14 @@ describe('SELECT — simple (1 field, no WHERE)', () => {
 
   bench('Drizzle', () => {
     drizzleDb.select({ name: drizzleUsers.name }).from(drizzleUsers).toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User').select('name').toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb.selectFrom('User').select('name').compile();
   });
 });
 
@@ -214,6 +250,29 @@ describe('SELECT — WHERE + SORT + LIMIT', () => {
       .limit(10)
       .offset(20)
       .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User')
+      .select('id', 'name')
+      .where({ name: 'John' })
+      .andWhere('companyId', '>', 5)
+      .orderBy('name', 'asc')
+      .limit(10)
+      .offset(20)
+      .toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb
+      .selectFrom('User')
+      .select(['id', 'name'])
+      .where('name', '=', 'John')
+      .where('companyId', '>', 5)
+      .orderBy('name', 'asc')
+      .limit(10)
+      .offset(20)
+      .compile();
   });
 });
 
@@ -297,11 +356,41 @@ describe('SELECT — complex $or + operators', () => {
       .where(
         or(
           and(ilike(drizzleUsers.name, '%john%'), inArray(drizzleUsers.companyId, [1, 2, 3])),
-          and(ilike(drizzleUsers.email, '%@example.com'), gt(drizzleUsers.createdAt, 1000)),
+          and(like(drizzleUsers.email, '%@example.com'), gt(drizzleUsers.createdAt, 1000)),
         ),
       )
+      .orderBy(drizzleUsers.createdAt)
       .limit(50)
       .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User')
+      .select('id', 'name', 'email')
+      .where((builder) => {
+        builder
+          .where((qb) => qb.whereILike('name', '%john%').whereIn('companyId', [1, 2, 3]))
+          .orWhere((qb) => qb.whereLike('email', '%@example.com').where('createdAt', '>', 1000));
+      })
+      .orderBy([{ column: 'createdAt', order: 'desc' }, { column: 'name', order: 'asc' }])
+      .limit(50)
+      .toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb
+      .selectFrom('User')
+      .select(['id', 'name', 'email'])
+      .where((eb) =>
+        eb.or([
+          eb.and([eb('name', 'ilike', '%john%'), eb('companyId', 'in', [1, 2, 3])]),
+          eb.and([eb('email', 'like', '%@example.com'), eb('createdAt', '>', 1000)]),
+        ]),
+      )
+      .orderBy('createdAt', 'desc')
+      .orderBy('name', 'asc')
+      .limit(50)
+      .compile();
   });
 });
 
@@ -332,6 +421,14 @@ describe('INSERT — batch (10 rows)', () => {
 
   bench('Drizzle', () => {
     drizzleDb.insert(drizzleUsers).values(rows).toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User').insert(rows).toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb.insertInto('User').values(rows).compile();
   });
 });
 
@@ -369,5 +466,13 @@ describe('UPDATE — simple SET + WHERE', () => {
       .set({ name: 'Updated', email: 'new@test.com' })
       .where(eq(drizzleUsers.id, 1))
       .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User').update({ name: 'Updated', email: 'new@test.com' }).where({ id: 1 }).toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb.updateTable('User').set({ name: 'Updated', email: 'new@test.com' }).where('id', '=', 1).compile();
   });
 });

@@ -27,13 +27,15 @@
     "@mikro-orm/knex": "^6.6.9",
     "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "^1.3.10",
-    "uql-orm": "^0.1.0",
     "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.1",
+    "knex": "^3.1.0",
+    "kysely": "^0.28.11",
     "pg": "^8.20.0",
     "sequelize": "^6.37.8",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3",
+    "uql-orm": "^0.1.1",
     "vitest": "^4.0.18"
   }
 }

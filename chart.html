@@ -126,6 +126,8 @@
     .fill-typeorm    { background: linear-gradient(90deg, #c55a1a 0%, #ff7733 100%); opacity: 0.75; }
     .fill-mikro      { background: linear-gradient(90deg, #148f75 0%, #1abc9c 100%); opacity: 0.65; }
     .fill-drizzle    { background: linear-gradient(90deg, #5a8a1e 0%, #7ab82d 100%); opacity: 0.70; }
+    .fill-knex       { background: linear-gradient(90deg, #b83a28 0%, #e24a33 100%); opacity: 0.70; }
+    .fill-kysely     { background: linear-gradient(90deg, #9b5de5 0%, #c084fc 100%); opacity: 0.70; }
 
     .bar-row.is-winner .bar-name { color: #e6edf3; }
 
@@ -179,17 +181,17 @@
 
 <div class="card">
   <div class="header">
-    <h1>⚡ The fastest TypeScript ORMs — SQL Generation Speed</h1>
-    <p>Full ORMs only (entities, relations, hooks) · ops/sec · Higher = better · No database</p>
+    <h1>⚡ TypeScript ORMs' SQL Generation Speed</h1>
+    <p>ORMs and Query Builders · Ops/Sec · Higher = Better</p>
   </div>
 
   <div class="category">
-    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 2.57x</span></div>
+    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.30x</span></div>
     <div class="bars" id="bars-insert"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 3.71x</span></div>
+    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 1.48x</span></div>
     <div class="bars" id="bars-update"></div>
   </div>
 
@@ -199,21 +201,16 @@
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.91x</span></div>
+    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.59x</span></div>
     <div class="bars" id="bars-filter"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.54x</span></div>
+    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.42x</span></div>
     <div class="bars" id="bars-complex"></div>
   </div>
 
-  <div style="border-top: 1px solid rgba(255,255,255,0.06); margin: 24px 0 20px;"></div>
 
-  <div class="category">
-    <div class="category-label">MEMORY — Heap after init (lower = better) <span class="winner-badge winner-uql">UQL 14.8x lighter</span></div>
-    <div class="bars" id="bars-memory"></div>
-  </div>
 
   <div class="score">
     <span class="score-text">
@@ -221,7 +218,7 @@
       <span class="sep">—</span>
       <span class="sequelize-color">Sequelize 1</span>
       <span class="sep">·</span>
-      Full ORMs only — no query builders
+      ORMs and query builders
     </span>
   </div>
 
@@ -232,30 +229,33 @@
       <div class="legend-item"><div class="legend-dot dot-typeorm"></div>TypeORM</div>
       <div class="legend-item"><div class="legend-dot dot-mikro"></div>MikroORM</div>
       <div class="legend-item"><div class="legend-dot dot-drizzle"></div>Drizzle</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e24a33"></div>Knex</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Kysely</div>
     </div>
     <div class="footer-right">Node.js v24 · Apple Silicon · github.com/rogerpadilla/ts-orm-benchmark</div>
   </div>
 </div>
 
 <script>
-  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle'];
-  const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle'];
-  const colors = ['#5b6abf', '#02afef', '#ff7733', '#1abc9c', '#7ab82d'];
+  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
+  const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle', 'fill-knex', 'fill-kysely'];
+  const colors = ['#5b6abf', '#02afef', '#ff7733', '#1abc9c', '#7ab82d', '#e24a33', '#c084fc'];
   const logos = [
     'assets/uql-icon.svg',                                   // UQL
     'https://avatars.githubusercontent.com/u/3591786?s=32',   // Sequelize
     'https://avatars.githubusercontent.com/u/20165699?s=32',  // TypeORM
     'https://mikro-orm.io/img/logo.svg',                     // MikroORM
-    'https://avatars.githubusercontent.com/u/108468352?s=32',  // Drizzle
+    'https://avatars.githubusercontent.com/u/108468352?s=32', // Drizzle
+    'https://avatars.githubusercontent.com/u/3137232?s=32',  // Knex
+    'https://avatars.githubusercontent.com/u/123764858?s=32', // Kysely
   ];
 
   const data = {
-    insert:  [537, 209, 48, 50, 13],
-    update:  [1202, 236, 324, 125, 81],
-    simple:  [2882, 3141, 870, 300, 241],
-    filter:  [768, 402, 379, 56, 62],
-    complex: [323, 155, 210, 24, 42],
-    memory:  [0.44, 1.30, 6.51, 3.64, 2.76],  // MB heap
+    insert:  [531, 205, 48, 49, 13, 408, 196],
+    update:  [1201, 239, 322, 120, 81, 594, 812],
+    simple:  [2876, 3146, 805, 296, 236, 993, 1551],
+    filter:  [776, 405, 369, 55, 62, 488, 425],
+    complex: [323, 155, 206, 24, 41, 203, 227],
   };
 
   function renderBars(containerId, values, unit, invert) {
@@ -291,7 +291,6 @@
   renderBars('bars-simple', data.simple);
   renderBars('bars-filter', data.filter);
   renderBars('bars-complex', data.complex);
-  renderBars('bars-memory', data.memory, ' MB', true);
 </script>
 
 </body>
