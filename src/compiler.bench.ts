@@ -38,12 +38,16 @@ const uqlDialect = new UqlDialect();
 import { DataTypes, Op, Sequelize } from 'sequelize';
 
 const sequelize = new Sequelize('postgres://x:x@localhost/x', { logging: false, dialect: 'postgres' });
-sequelize.define('User', {
-  name: DataTypes.STRING,
-  email: DataTypes.STRING,
-  companyId: DataTypes.INTEGER,
-  createdAt: DataTypes.INTEGER,
-}, { timestamps: false, tableName: 'User', freezeTableName: true });
+sequelize.define(
+  'User',
+  {
+    name: DataTypes.STRING,
+    email: DataTypes.STRING,
+    companyId: DataTypes.INTEGER,
+    createdAt: DataTypes.INTEGER,
+  },
+  { timestamps: false, tableName: 'User', freezeTableName: true },
+);
 
 const seqQg = sequelize.getQueryInterface().queryGenerator as any;
 
@@ -111,7 +115,14 @@ import knexLib from 'knex';
 const knexDb = knexLib({ client: 'pg', connection: {} });
 
 // ── Kysely ────────────────────────────────────────────────────────────────────
-import { DummyDriver, Kysely, PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler, type Generated } from 'kysely';
+import {
+  DummyDriver,
+  Kysely,
+  PostgresAdapter,
+  PostgresIntrospector,
+  PostgresQueryCompiler,
+  type Generated,
+} from 'kysely';
 
 interface KyselyDb {
   User: {
@@ -301,7 +312,10 @@ describe('SELECT — complex $or + operators', () => {
           { email: { [Op.like]: '%@example.com' }, createdAt: { [Op.gt]: 1000 } },
         ],
       },
-      order: [['createdAt', 'DESC'], ['name', 'ASC']],
+      order: [
+        ['createdAt', 'DESC'],
+        ['name', 'ASC'],
+      ],
       limit: 50,
     });
   });
@@ -313,18 +327,16 @@ describe('SELECT — complex $or + operators', () => {
       .from('User', 'User')
       .where(
         new Brackets((qb) => {
-          qb.where('User.name ILIKE :name1', { name1: '%john%' }).andWhere(
-            'User.companyId IN (:...companyIds)',
-            { companyIds: [1, 2, 3] },
-          );
+          qb.where('User.name ILIKE :name1', { name1: '%john%' }).andWhere('User.companyId IN (:...companyIds)', {
+            companyIds: [1, 2, 3],
+          });
         }),
       )
       .orWhere(
         new Brackets((qb) => {
-          qb.where('User.email LIKE :email', { email: '%@example.com' }).andWhere(
-            'User.createdAt > :createdAt',
-            { createdAt: 1000 },
-          );
+          qb.where('User.email LIKE :email', { email: '%@example.com' }).andWhere('User.createdAt > :createdAt', {
+            createdAt: 1000,
+          });
         }),
       )
       .orderBy('User.createdAt', 'DESC')
@@ -372,7 +384,10 @@ describe('SELECT — complex $or + operators', () => {
           .where((qb) => qb.whereILike('name', '%john%').whereIn('companyId', [1, 2, 3]))
           .orWhere((qb) => qb.whereLike('email', '%@example.com').where('createdAt', '>', 1000));
       })
-      .orderBy([{ column: 'createdAt', order: 'desc' }, { column: 'name', order: 'asc' }])
+      .orderBy([
+        { column: 'createdAt', order: 'desc' },
+        { column: 'name', order: 'asc' },
+      ])
       .limit(50)
       .toSQL();
   });
@@ -486,7 +501,10 @@ describe('UPSERT — ON CONFLICT by id', () => {
   });
 
   bench('Sequelize', () => {
-    seqQg.bulkInsertQuery('User', [row], { updateOnDuplicate: ['name', 'email', 'companyId', 'createdAt'], upsertKeys: ['id'] });
+    seqQg.bulkInsertQuery('User', [row], {
+      updateOnDuplicate: ['name', 'email', 'companyId', 'createdAt'],
+      upsertKeys: ['id'],
+    });
   });
 
   bench('TypeORM', () => {
@@ -500,13 +518,7 @@ describe('UPSERT — ON CONFLICT by id', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm
-      .createQueryBuilder(MikroUserSchema)
-      .insert(row)
-      .onConflict('id')
-      .merge()
-      .getKnexQuery()
-      .toSQL();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().getKnexQuery().toSQL();
   });
 
   bench('Drizzle', () => {
@@ -528,7 +540,11 @@ describe('UPSERT — ON CONFLICT by id', () => {
     kyselyDb
       .insertInto('User')
       .values(row)
-      .onConflict((oc) => oc.column('id').doUpdateSet({ name: row.name, email: row.email, companyId: row.companyId, createdAt: row.createdAt }))
+      .onConflict((oc) =>
+        oc
+          .column('id')
+          .doUpdateSet({ name: row.name, email: row.email, companyId: row.companyId, createdAt: row.createdAt }),
+      )
       .compile();
   });
 });
@@ -563,4 +579,3 @@ describe('DELETE — simple WHERE', () => {
     kyselyDb.deleteFrom('User').where('id', '=', 1).compile();
   });
 });
-

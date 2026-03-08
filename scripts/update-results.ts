@@ -17,13 +17,25 @@ const readmePath = resolve(root, 'README.md');
 const entries = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
 
 const categories = [
-  { key: 'insert',  readmeLabel: 'INSERT (10 rows)',          pattern: 'INSERT' },
-  { key: 'update',  readmeLabel: 'UPDATE (SET+WHERE)',        pattern: 'UPDATE' },
-  { key: 'upsert',  readmeLabel: 'UPSERT (ON CONFLICT)',     pattern: 'UPSERT' },
-  { key: 'delete',  readmeLabel: 'DELETE (WHERE)',            pattern: 'DELETE' },
-  { key: 'simple',  readmeLabel: 'SELECT (1 field)',          pattern: 'SELECT — simple' },
-  { key: 'filter',  readmeLabel: 'SELECT (WHERE+SORT+LIMIT)', pattern: 'SELECT — WHERE' },
-  { key: 'complex', readmeLabel: 'SELECT (complex $or)',      pattern: 'SELECT — complex' },
+  { key: 'insert', readmeLabel: 'INSERT (10 rows)', pattern: 'INSERT' },
+  { key: 'update', readmeLabel: 'UPDATE (SET+WHERE)', pattern: 'UPDATE' },
+  { key: 'upsert', readmeLabel: 'UPSERT (ON CONFLICT)', pattern: 'UPSERT' },
+  { key: 'delete', readmeLabel: 'DELETE (WHERE)', pattern: 'DELETE' },
+  {
+    key: 'simple',
+    readmeLabel: 'SELECT (1 field)',
+    pattern: 'SELECT — simple',
+  },
+  {
+    key: 'filter',
+    readmeLabel: 'SELECT (WHERE+SORT+LIMIT)',
+    pattern: 'SELECT — WHERE',
+  },
+  {
+    key: 'complex',
+    readmeLabel: 'SELECT (complex $or)',
+    pattern: 'SELECT — complex',
+  },
 ];
 
 const categoryKeys = categories.map((c) => c.key);
@@ -48,7 +60,7 @@ for (const line of lines) {
     const match = line.match(/·\s+(\S+)\s+([\d,]+\.\d+)/);
     if (match) {
       const name = match[1];
-      const hz = parseFloat(match[2].replace(/,/g, ''));
+      const hz = Number.parseFloat(match[2].replace(/,/g, ''));
       parsed[currentCategory][name] = Math.round(hz / 1000);
     }
   }
@@ -155,3 +167,11 @@ console.log('\nResults (K ops/sec):');
 for (const cat of categoryKeys) {
   console.log(`  ${cat}: ${entries.map((e, i) => `${e}: ${data[cat][i]}K`).join('  ')}`);
 }
+
+// ── Open chart in browser ────────────────────────────────────────────────────
+
+import { exec } from 'node:child_process';
+
+const chartPath = resolve(root, 'chart.html');
+const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+exec(`${openCmd} ${chartPath}`);
