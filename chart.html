@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TS ORM Benchmark</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+      background: #0a0a0f;
+      color: #e6edf3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .card {
+      max-width: 800px;
+      background: linear-gradient(145deg, #12131a 0%, #0d0e14 100%);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 48px 52px 40px;
+      box-shadow: 0 0 80px rgba(88, 166, 255, 0.04);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #58a6ff 0%, #a371f7 50%, #f778ba 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #6e7681;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .category { margin-bottom: 20px; }
+    .category:last-child { margin-bottom: 0; }
+
+    .category-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .winner-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .winner-uql { background: rgba(91, 106, 191, 0.15); color: #5b6abf; }
+    .winner-sequelize { background: rgba(2, 175, 239, 0.15); color: #02afef; }
+
+    .bars { display: flex; flex-direction: column; gap: 4px; }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      height: 28px;
+    }
+
+    .bar-name {
+      width: 100px;
+      font-family: 'Inter', ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+      font-size: 12px;
+      font-weight: 700;
+      color: #6e7681;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .bar-name img {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 22px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+      min-width: 45px;
+    }
+
+    .fill-uql       { background: linear-gradient(90deg, #3d4a8f 0%, #5b6abf 100%); }
+    .fill-sequelize  { background: linear-gradient(90deg, #0182b3 0%, #02afef 100%); }
+    .fill-typeorm    { background: linear-gradient(90deg, #c55a1a 0%, #ff7733 100%); opacity: 0.75; }
+    .fill-mikro      { background: linear-gradient(90deg, #148f75 0%, #1abc9c 100%); opacity: 0.65; }
+    .fill-drizzle    { background: linear-gradient(90deg, #5a8a1e 0%, #7ab82d 100%); opacity: 0.70; }
+
+    .bar-row.is-winner .bar-name { color: #e6edf3; }
+
+    .footer {
+      margin-top: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .footer-left { display: flex; gap: 18px; }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #6e7681;
+      font-weight: 500;
+    }
+
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-uql { background: #5b6abf; }
+    .dot-sequelize { background: #02afef; }
+    .dot-typeorm { background: #ff7733; }
+    .dot-mikro { background: #1abc9c; }
+    .dot-drizzle { background: #7ab82d; }
+
+    .footer-right { font-size: 11px; color: #484f58; font-weight: 500; }
+
+    .score {
+      text-align: center;
+      margin-top: 28px;
+      margin-bottom: 4px;
+    }
+
+    .score-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: #8b949e;
+    }
+
+    .score-text .uql-color { color: #5b6abf; }
+    .score-text .sequelize-color { color: #02afef; }
+    .score-text .sep { color: #30363d; margin: 0 6px; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <h1>⚡ The fastest TypeScript ORMs — SQL Generation Speed</h1>
+    <p>Full ORMs only (entities, relations, hooks) · ops/sec · Higher = better · No database</p>
+  </div>
+
+  <div class="category">
+    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.18x</span></div>
+    <div class="bars" id="bars-insert"></div>
+  </div>
+
+  <div class="category">
+    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.37x</span></div>
+    <div class="bars" id="bars-update"></div>
+  </div>
+
+  <div class="category">
+    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 2.11x</span></div>
+    <div class="bars" id="bars-simple"></div>
+  </div>
+
+  <div class="category">
+    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.28x</span></div>
+    <div class="bars" id="bars-filter"></div>
+  </div>
+
+  <div class="category">
+    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.14x</span></div>
+    <div class="bars" id="bars-complex"></div>
+  </div>
+
+  <div style="border-top: 1px solid rgba(255,255,255,0.06); margin: 24px 0 20px;"></div>
+
+  <div class="category">
+    <div class="category-label">MEMORY — Heap after init (lower = better) <span class="winner-badge winner-uql">UQL 14.8x lighter</span></div>
+    <div class="bars" id="bars-memory"></div>
+  </div>
+
+  <div class="score">
+    <span class="score-text">
+      <span class="uql-color">UQL 4</span>
+      <span class="sep">—</span>
+      <span class="sequelize-color">Sequelize 1</span>
+      <span class="sep">·</span>
+      Full ORMs only — no query builders
+    </span>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">
+      <div class="legend-item"><div class="legend-dot dot-uql"></div>UQL</div>
+      <div class="legend-item"><div class="legend-dot dot-sequelize"></div>Sequelize</div>
+      <div class="legend-item"><div class="legend-dot dot-typeorm"></div>TypeORM</div>
+      <div class="legend-item"><div class="legend-dot dot-mikro"></div>MikroORM</div>
+      <div class="legend-item"><div class="legend-dot dot-drizzle"></div>Drizzle</div>
+    </div>
+    <div class="footer-right">Node.js v24 · Apple Silicon · github.com/rogerpadilla/ts-orm-benchmark</div>
+  </div>
+</div>
+
+<script>
+  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle'];
+  const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle'];
+  const colors = ['#5b6abf', '#02afef', '#ff7733', '#1abc9c', '#7ab82d'];
+  const logos = [
+    'assets/uql-icon.svg',                                   // UQL
+    'https://avatars.githubusercontent.com/u/3591786?s=32',   // Sequelize
+    'https://avatars.githubusercontent.com/u/20165699?s=32',  // TypeORM
+    'https://mikro-orm.io/img/logo.svg',                     // MikroORM
+    'https://avatars.githubusercontent.com/u/108468352?s=32',  // Drizzle
+  ];
+
+  const data = {
+    insert:  [245, 208, 47, 50, 13],
+    update:  [800, 242, 324, 122, 80],
+    simple:  [1513, 3192, 853, 311, 235],
+    filter:  [510, 400, 379, 56, 61],
+    complex: [237, 156, 209, 24, 41],
+  };
+
+  function renderBars(containerId, values, unit, invert) {
+    const container = document.getElementById(containerId);
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+
+    const sorted = values.map((val, i) => ({ val, i }))
+      .sort((a, b) => invert ? a.val - b.val : b.val - a.val);
+
+    sorted.forEach(({ val, i }) => {
+      const pct = Math.max((val / max) * 100, 4);
+      const isWinner = invert ? val === min : val === max;
+      const label = unit ? val + unit : (val >= 1000 ? (val / 1000).toFixed(1) + 'M' : val + 'K');
+      const labelInside = pct >= 15;
+      const row = document.createElement('div');
+      row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
+      row.innerHTML = `
+        <span class="bar-name" style="color:${colors[i]}"><img src="${logos[i]}" alt="">${orms[i]}</span>
+        <div class="bar-track" style="display:flex;align-items:center">
+          <div class="bar-fill ${fills[i]}" style="width: ${pct}%">
+            ${labelInside ? `<span style="margin-left:auto;padding-right:8px;white-space:nowrap">${label}</span>` : ''}
+          </div>
+          ${!labelInside ? `<span style="padding-left:8px;font-size:11px;font-weight:700;color:${colors[i]};white-space:nowrap">${label}</span>` : ''}
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  const memoryData = {
+    memory:  [0.44, 1.30, 6.51, 3.64, 2.76],  // MB heap
+  };
+
+  function renderBarsInverted(containerId, values, unit) {
+    const container = document.getElementById(containerId);
+    const max = Math.max(...values);
+    const min = Math.min(...values);
+
+    // Sort ascending (smallest = best first)
+    const sorted = values.map((val, i) => ({ val, i })).sort((a, b) => a.val - b.val);
+
+    sorted.forEach(({ val, i }) => {
+      const pct = Math.max(((max - val + min) / max) * 100, 12);
+      const isWinner = val === min;
+      const row = document.createElement('div');
+      row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
+      row.innerHTML = `
+        <span class="bar-name" style="color:${colors[i]}">${orms[i]}</span>
+        <div class="bar-track">
+          <div class="bar-fill ${fills[i]}" style="width: ${pct}%">
+            <span style="margin-left:auto;padding-right:8px;white-space:nowrap">${val}${unit}</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  renderBars('bars-insert', data.insert);
+  renderBars('bars-update', data.update);
+  renderBars('bars-simple', data.simple);
+  renderBars('bars-filter', data.filter);
+  renderBars('bars-complex', data.complex);
+  renderBars('bars-memory', memoryData.memory, ' MB', true);
+</script>
+
+</body>
+</html>
