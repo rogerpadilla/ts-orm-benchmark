@@ -19,8 +19,8 @@ import { beforeAll, bench, describe } from 'vitest';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── UQL ──────────────────────────────────────────────────────────────────────
-import { Entity, Field, Id } from 'uql';
-import { PostgresDialect as UqlDialect } from 'uql/postgres';
+import { Entity, Field, Id } from 'uql-orm';
+import { PostgresDialect as UqlDialect } from 'uql-orm/postgres';
 
 @Entity()
 class User {

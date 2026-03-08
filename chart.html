@@ -184,27 +184,27 @@
   </div>
 
   <div class="category">
-    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.22x</span></div>
+    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 2.57x</span></div>
     <div class="bars" id="bars-insert"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.51x</span></div>
+    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 3.71x</span></div>
     <div class="bars" id="bars-update"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 1.89x</span></div>
+    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 1.09x</span></div>
     <div class="bars" id="bars-simple"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.35x</span></div>
+    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.91x</span></div>
     <div class="bars" id="bars-filter"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.12x</span></div>
+    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.54x</span></div>
     <div class="bars" id="bars-complex"></div>
   </div>
 
@@ -250,11 +250,12 @@
   ];
 
   const data = {
-    insert:  [247, 202, 45, 49, 13],
-    update:  [805, 233, 321, 122, 77],
-    simple:  [1557, 2949, 857, 301, 234],
-    filter:  [524, 388, 382, 55, 61],
-    complex: [237, 152, 211, 24, 41],
+    insert:  [537, 209, 48, 50, 13],
+    update:  [1202, 236, 324, 125, 81],
+    simple:  [2882, 3141, 870, 300, 241],
+    filter:  [768, 402, 379, 56, 62],
+    complex: [323, 155, 210, 24, 42],
+    memory:  [0.44, 1.30, 6.51, 3.64, 2.76],  // MB heap
   };
 
   function renderBars(containerId, values, unit, invert) {
@@ -285,41 +286,12 @@
     });
   }
 
-  const memoryData = {
-    memory:  [0.44, 1.30, 6.51, 3.64, 2.76],  // MB heap
-  };
-
-  function renderBarsInverted(containerId, values, unit) {
-    const container = document.getElementById(containerId);
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-
-    // Sort ascending (smallest = best first)
-    const sorted = values.map((val, i) => ({ val, i })).sort((a, b) => a.val - b.val);
-
-    sorted.forEach(({ val, i }) => {
-      const pct = Math.max(((max - val + min) / max) * 100, 12);
-      const isWinner = val === min;
-      const row = document.createElement('div');
-      row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
-      row.innerHTML = `
-        <span class="bar-name" style="color:${colors[i]}">${orms[i]}</span>
-        <div class="bar-track">
-          <div class="bar-fill ${fills[i]}" style="width: ${pct}%">
-            <span style="margin-left:auto;padding-right:8px;white-space:nowrap">${val}${unit}</span>
-          </div>
-        </div>
-      `;
-      container.appendChild(row);
-    });
-  }
-
   renderBars('bars-insert', data.insert);
   renderBars('bars-update', data.update);
   renderBars('bars-simple', data.simple);
   renderBars('bars-filter', data.filter);
   renderBars('bars-complex', data.complex);
-  renderBars('bars-memory', memoryData.memory, ' MB', true);
+  renderBars('bars-memory', data.memory, ' MB', true);
 </script>
 
 </body>

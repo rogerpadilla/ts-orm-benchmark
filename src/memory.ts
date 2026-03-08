@@ -1,6 +1,6 @@
 /**
  * Measures memory (heap) usage after importing and initializing each ORM.
- * Run: bun src/memory.bench.ts
+ * Run: bun src/memory.ts
  */
 
 export async function measureHeap(label: string, fn: () => Promise<void>) {
@@ -17,8 +17,8 @@ console.log('ORM          Heap (MB)');
 console.log('─'.repeat(25));
 
 await measureHeap('UQL', async () => {
-  const { Entity, Field, Id } = await import('uql');
-  const { PostgresDialect } = await import('uql/postgres');
+  const { Entity, Field, Id } = await import('uql-orm');
+  const { PostgresDialect } = await import('uql-orm/postgres');
   @Entity() class User {
     @Id() id?: number;
     @Field() name?: string;
