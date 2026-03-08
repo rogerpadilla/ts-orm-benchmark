@@ -1,0 +1,4 @@
+{
+  // This will make VsCode to recommend these extensions by default (the ones related to the tools we use)
+  "recommendations": ["biomejs.biome", "editorConfig.editorConfig", "eamodio.gitlens"]
+}
