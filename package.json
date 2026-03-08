@@ -1,12 +1,11 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "⚡ TypeScript ORM SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle",
   "type": "module",
   "scripts": {
-    "bench": "npx vitest bench --run",
-    "bench:update": "npx vitest bench --run 2>&1 | bun scripts/update-results.ts",
-    "bench:watch": "npx vitest bench"
+    "bench": "npx vitest bench --run 2>&1 | tee /dev/stderr | bun scripts/update-results.ts",
+    "ts": "tsc --noEmit"
   },
   "keywords": [
     "orm",
@@ -36,7 +35,7 @@
     "sequelize": "^6.37.8",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3",
-    "uql-orm": "^0.1.1",
+    "uql-orm": "^0.1.4",
     "vitest": "^4.0.18"
   }
 }

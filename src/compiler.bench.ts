@@ -476,3 +476,91 @@ describe('UPDATE — simple SET + WHERE', () => {
     kyselyDb.updateTable('User').set({ name: 'Updated', email: 'new@test.com' }).where('id', '=', 1).compile();
   });
 });
+
+describe('UPSERT — ON CONFLICT by id', () => {
+  const row = { id: 1, name: 'Upserted', email: 'upsert@test.com', companyId: 10, createdAt: Date.now() };
+
+  bench('UQL', () => {
+    const ctx = uqlDialect.createContext();
+    uqlDialect.upsert(ctx, User, { id: true }, row);
+  });
+
+  bench('Sequelize', () => {
+    seqQg.bulkInsertQuery('User', [row], { updateOnDuplicate: ['name', 'email', 'companyId', 'createdAt'], upsertKeys: ['id'] });
+  });
+
+  bench('TypeORM', () => {
+    typeormDs
+      .createQueryBuilder()
+      .insert()
+      .into('User')
+      .values(row)
+      .orUpdate(['name', 'email', 'companyId', 'createdAt'], ['id'])
+      .getQueryAndParameters();
+  });
+
+  bench('MikroORM', () => {
+    mikroEm
+      .createQueryBuilder(MikroUserSchema)
+      .insert(row)
+      .onConflict('id')
+      .merge()
+      .getKnexQuery()
+      .toSQL();
+  });
+
+  bench('Drizzle', () => {
+    drizzleDb
+      .insert(drizzleUsers)
+      .values(row)
+      .onConflictDoUpdate({
+        target: drizzleUsers.id,
+        set: { name: row.name, email: row.email, companyId: row.companyId, createdAt: row.createdAt },
+      })
+      .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User').insert(row).onConflict('id').merge().toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb
+      .insertInto('User')
+      .values(row)
+      .onConflict((oc) => oc.column('id').doUpdateSet({ name: row.name, email: row.email, companyId: row.companyId, createdAt: row.createdAt }))
+      .compile();
+  });
+});
+
+describe('DELETE — simple WHERE', () => {
+  bench('UQL', () => {
+    const ctx = uqlDialect.createContext();
+    uqlDialect.delete(ctx, User, { $where: { id: 1 } });
+  });
+
+  bench('Sequelize', () => {
+    seqQg.deleteQuery('User', { id: 1 });
+  });
+
+  bench('TypeORM', () => {
+    typeormDs.createQueryBuilder().delete().from('User').where('id = :id', { id: 1 }).getQueryAndParameters();
+  });
+
+  bench('MikroORM', () => {
+    mikroEm.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).getKnexQuery().toSQL();
+  });
+
+  bench('Drizzle', () => {
+    drizzleDb.delete(drizzleUsers).where(eq(drizzleUsers.id, 1)).toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User').where({ id: 1 }).delete().toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb.deleteFrom('User').where('id', '=', 1).compile();
+  });
+});
+

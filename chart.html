@@ -196,6 +196,16 @@
   </div>
 
   <div class="category">
+    <div class="category-label">UPSERT — ON CONFLICT by id <span class="winner-badge winner-uql">UQL 2.00x</span></div>
+    <div class="bars" id="bars-upsert"></div>
+  </div>
+
+  <div class="category">
+    <div class="category-label">DELETE — simple WHERE <span class="winner-badge winner-uql">UQL 2.89x</span></div>
+    <div class="bars" id="bars-delete"></div>
+  </div>
+
+  <div class="category">
     <div class="category-label">SELECT — 1 field <span class="winner-badge winner-uql">UQL 1.24x</span></div>
     <div class="bars" id="bars-simple"></div>
   </div>
@@ -214,7 +224,7 @@
 
   <div class="score">
     <span class="score-text">
-      <span class="uql-color">UQL 5</span>
+      <span class="uql-color">UQL 7</span>
       <span class="sep">·</span>
       ORMs and Query Builders
     </span>
@@ -281,6 +291,8 @@
   const { data } = window.BENCH_DATA;
   renderBars('bars-insert', data.insert);
   renderBars('bars-update', data.update);
+  renderBars('bars-upsert', data.upsert);
+  renderBars('bars-delete', data.delete);
   renderBars('bars-simple', data.simple);
   renderBars('bars-filter', data.filter);
   renderBars('bars-complex', data.complex);
