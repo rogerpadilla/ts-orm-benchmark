@@ -12,11 +12,11 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | Query Type | [UQL](https://github.com/rogerpadilla/uql) | [Sequelize](https://github.com/sequelize/sequelize) | [TypeORM](https://github.com/typeorm/typeorm) | [MikroORM](https://github.com/mikro-orm/mikro-orm) | [Drizzle](https://github.com/drizzle-team/drizzle-orm) |
 |---|---|---|---|---|---|
-| INSERT (10 rows) | **245K** 🥇 | 208K | 47K | 50K | 13K |
-| UPDATE (SET+WHERE) | **800K** 🥇 | 242K | 324K | 122K | 80K |
-| SELECT (1 field) | 1,513K | **3,192K** 🥇 | 853K | 311K | 235K |
-| SELECT (WHERE+SORT+LIMIT) | **510K** 🥇 | 400K | 379K | 56K | 61K |
-| SELECT (complex $or) | **237K** 🥇 | 156K | 209K | 24K | 41K |
+| INSERT (10 rows) | **247K** 🥇 | 202K | 45K | 49K | 13K |
+| UPDATE (SET+WHERE) | **805K** 🥇 | 233K | 321K | 122K | 77K |
+| SELECT (1 field) | 1,557K | **2,949K** 🥇 | 857K | 301K | 234K |
+| SELECT (WHERE+SORT+LIMIT) | **524K** 🥇 | 388K | 382K | 55K | 61K |
+| SELECT (complex $or) | **237K** 🥇 | 152K | 211K | 24K | 41K |
 
 **UQL wins 4 out of 5** — the only category it loses is the simplest SELECT, where Sequelize's raw string concatenation (no query object overhead) is faster.
 
@@ -25,8 +25,8 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 | ORM | Best | Worst | Wins |
 |---|---|---|---|
 | **UQL** | 19.4x faster | 1.0x faster | **4/5** 🏆 |
-| **Sequelize** | 13.6x faster | 1.0x faster | **1/5** |
-| TypeORM | 5.2x faster | 1.0x faster | 0/5 |
+| **Sequelize** | 12.6x faster | 1.0x faster | **1/5** |
+| TypeORM | 5.5x faster | 1.0x faster | 0/5 |
 | MikroORM | 3.8x faster | 1.0x baseline | 0/5 |
 | Drizzle | 1.0x baseline | 1.0x baseline | 0/5 |
 

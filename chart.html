@@ -184,27 +184,27 @@
   </div>
 
   <div class="category">
-    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.18x</span></div>
+    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.22x</span></div>
     <div class="bars" id="bars-insert"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.37x</span></div>
+    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.51x</span></div>
     <div class="bars" id="bars-update"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 2.11x</span></div>
+    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 1.89x</span></div>
     <div class="bars" id="bars-simple"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.28x</span></div>
+    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.35x</span></div>
     <div class="bars" id="bars-filter"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.14x</span></div>
+    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.12x</span></div>
     <div class="bars" id="bars-complex"></div>
   </div>
 
@@ -250,11 +250,11 @@
   ];
 
   const data = {
-    insert:  [245, 208, 47, 50, 13],
-    update:  [800, 242, 324, 122, 80],
-    simple:  [1513, 3192, 853, 311, 235],
-    filter:  [510, 400, 379, 56, 61],
-    complex: [237, 156, 209, 24, 41],
+    insert:  [247, 202, 45, 49, 13],
+    update:  [805, 233, 321, 122, 77],
+    simple:  [1557, 2949, 857, 301, 234],
+    filter:  [524, 388, 382, 55, 61],
+    complex: [237, 152, 211, 24, 41],
   };
 
   function renderBars(containerId, values, unit, invert) {
