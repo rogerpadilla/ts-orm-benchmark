@@ -11,25 +11,25 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | Query Type                | [UQL](https://github.com/rogerpadilla/uql) | [Sequelize](https://github.com/sequelize/sequelize) | [TypeORM](https://github.com/typeorm/typeorm) | [MikroORM](https://github.com/mikro-orm/mikro-orm) | [Drizzle](https://github.com/drizzle-team/drizzle-orm) | [Knex](https://github.com/knex/knex) | [Kysely](https://github.com/kysely-org/kysely) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
-| INSERT (10 rows)          | **531K** 🥇                                 | 205K                                                | 48K                                           | 49K                                                | 13K                                                    | 408K                                 | 196K                                           |
-| UPDATE (SET+WHERE)        | **1,201K** 🥇                               | 239K                                                | 322K                                          | 120K                                               | 81K                                                    | 594K                                 | 812K                                           |
-| SELECT (1 field)          | 2,876K                                     | **3,146K** 🥇                                        | 805K                                          | 296K                                               | 236K                                                   | 993K                                 | 1,551K                                         |
-| SELECT (WHERE+SORT+LIMIT) | **776K** 🥇                                 | 405K                                                | 369K                                          | 55K                                                | 62K                                                    | 488K                                 | 425K                                           |
-| SELECT (complex $or)      | **323K** 🥇                                 | 155K                                                | 206K                                          | 24K                                                | 41K                                                    | 203K                                 | 227K                                           |
+| INSERT (10 rows)          | **599K** 🥇                                 | 203K                                                | 49K                                           | 50K                                                | 13K                                                    | 408K                                 | 193K                                           |
+| UPDATE (SET+WHERE)        | **1,816K** 🥇                               | 238K                                                | 316K                                          | 120K                                               | 80K                                                    | 594K                                 | 817K                                           |
+| SELECT (1 field)          | **3,913K** 🥇                               | 3,149K                                              | 807K                                          | 292K                                               | 235K                                                   | 978K                                 | 1,547K                                         |
+| SELECT (WHERE+SORT+LIMIT) | **1,186K** 🥇                               | 393K                                                | 381K                                          | 54K                                                | 61K                                                    | 486K                                 | 426K                                           |
+| SELECT (complex $or)      | **591K** 🥇                                 | 154K                                                | 207K                                          | 24K                                                | 39K                                                    | 203K                                 | 220K                                           |
 
-**UQL wins 4 out of 5** — even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
+**UQL wins 5 out of 5** — even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
 
 ### Speed Comparison - higher is better
 
-| Entry         | Best          | Wins      |
-| ------------- | ------------- | --------- |
-| **UQL**       | 40.8x faster  | **4/5** 🏆 |
-| **Sequelize** | 13.3x faster  | **1/5**   |
-| Kysely        | 6.6x faster   | 0/5       |
-| Knex          | 5.7x faster   | 0/5       |
-| TypeORM       | 3.4x faster   | 0/5       |
-| MikroORM      | 2.1x faster   | 0/5       |
-| Drizzle       | 1.0x baseline | 0/5       |
+| Entry     | Best          | Wins      |
+| --------- | ------------- | --------- |
+| **UQL**   | 46.1x faster  | **5/5** 🏆 |
+| Kysely    | 6.6x faster   | 0/5       |
+| Knex      | 5.7x faster   | 0/5       |
+| Sequelize | 3.4x faster   | 0/5       |
+| TypeORM   | 3.4x faster   | 0/5       |
+| MikroORM  | 2.1x faster   | 0/5       |
+| Drizzle   | 1.0x baseline | 0/5       |
 
 ### Why No Prisma?
 
@@ -71,7 +71,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| UQL       | 0.1.0   |
+| UQL       | 0.1.1   |
 | Sequelize | 6.37.8  |
 | TypeORM   | 0.3.28  |
 | MikroORM  | 6.6.9   |

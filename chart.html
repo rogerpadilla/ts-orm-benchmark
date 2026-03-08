@@ -186,27 +186,27 @@
   </div>
 
   <div class="category">
-    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.30x</span></div>
+    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.47x</span></div>
     <div class="bars" id="bars-insert"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 1.48x</span></div>
+    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.22x</span></div>
     <div class="bars" id="bars-update"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-sequelize">Sequelize 1.09x</span></div>
+    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-uql">UQL 1.24x</span></div>
     <div class="bars" id="bars-simple"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 1.59x</span></div>
+    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 2.44x</span></div>
     <div class="bars" id="bars-filter"></div>
   </div>
 
   <div class="category">
-    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 1.42x</span></div>
+    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 2.69x</span></div>
     <div class="bars" id="bars-complex"></div>
   </div>
 
@@ -214,11 +214,9 @@
 
   <div class="score">
     <span class="score-text">
-      <span class="uql-color">UQL 4</span>
-      <span class="sep">—</span>
-      <span class="sequelize-color">Sequelize 1</span>
+      <span class="uql-color">UQL 5</span>
       <span class="sep">·</span>
-      ORMs and query builders
+      ORMs and Query Builders
     </span>
   </div>
 
@@ -251,11 +249,11 @@
   ];
 
   const data = {
-    insert:  [531, 205, 48, 49, 13, 408, 196],
-    update:  [1201, 239, 322, 120, 81, 594, 812],
-    simple:  [2876, 3146, 805, 296, 236, 993, 1551],
-    filter:  [776, 405, 369, 55, 62, 488, 425],
-    complex: [323, 155, 206, 24, 41, 203, 227],
+    insert:  [599, 203, 49, 50, 13, 408, 193],
+    update:  [1816, 238, 316, 120, 80, 594, 817],
+    simple:  [3913, 3149, 807, 292, 235, 978, 1547],
+    filter:  [1186, 393, 381, 54, 61, 486, 426],
+    complex: [591, 154, 207, 24, 39, 203, 220],
   };
 
   function renderBars(containerId, values, unit, invert) {
