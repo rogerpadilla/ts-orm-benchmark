@@ -1,0 +1,17 @@
+{
+  "entries": ["UQL", "Sequelize", "TypeORM", "MikroORM", "Drizzle", "Knex", "Kysely"],
+  "categories": {
+    "insert": { "label": "INSERT (10 rows)", "chartLabel": "INSERT — 10 rows in batch" },
+    "update": { "label": "UPDATE (SET+WHERE)", "chartLabel": "UPDATE — SET + WHERE" },
+    "simple": { "label": "SELECT (1 field)", "chartLabel": "SELECT — 1 field" },
+    "filter": { "label": "SELECT (WHERE+SORT+LIMIT)", "chartLabel": "SELECT — WHERE + SORT + LIMIT" },
+    "complex": { "label": "SELECT (complex $or)", "chartLabel": "SELECT — Complex $or + Operators" }
+  },
+  "data": {
+    "insert":  [599, 203, 49, 50, 13, 408, 193],
+    "update":  [1816, 238, 316, 120, 80, 594, 817],
+    "simple":  [3913, 3149, 807, 292, 235, 978, 1547],
+    "filter":  [1186, 393, 381, 54, 61, 486, 426],
+    "complex": [591, 154, 207, 24, 39, 203, 220]
+  }
+}

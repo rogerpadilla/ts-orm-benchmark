@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "bench": "npx vitest bench --run",
+    "bench:update": "npx vitest bench --run 2>&1 | bun scripts/update-results.ts",
     "bench:watch": "npx vitest bench"
   },
   "keywords": [

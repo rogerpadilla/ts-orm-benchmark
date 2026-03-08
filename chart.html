@@ -234,6 +234,7 @@
   </div>
 </div>
 
+<script src="results.js"></script>
 <script>
   const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
   const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle', 'fill-knex', 'fill-kysely'];
@@ -247,14 +248,6 @@
     'https://avatars.githubusercontent.com/u/3137232?s=32',  // Knex
     'https://avatars.githubusercontent.com/u/123764858?s=32', // Kysely
   ];
-
-  const data = {
-    insert:  [599, 203, 49, 50, 13, 408, 193],
-    update:  [1816, 238, 316, 120, 80, 594, 817],
-    simple:  [3913, 3149, 807, 292, 235, 978, 1547],
-    filter:  [1186, 393, 381, 54, 61, 486, 426],
-    complex: [591, 154, 207, 24, 39, 203, 220],
-  };
 
   function renderBars(containerId, values, unit, invert) {
     const container = document.getElementById(containerId);
@@ -284,6 +277,8 @@
     });
   }
 
+  // Data loaded from results.js (single source of truth)
+  const { data } = window.BENCH_DATA;
   renderBars('bars-insert', data.insert);
   renderBars('bars-update', data.update);
   renderBars('bars-simple', data.simple);
