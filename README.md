@@ -72,7 +72,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 - ✅ All ORMs use the **same entity** (User: id, name, email, companyId, createdAt)
 - ✅ All generate **logically equivalent** queries
 - ✅ Each uses its **idiomatic API** — no raw SQL shortcuts
-- ✅ TypeORM's complex queries use structured `Brackets` (not raw string WHERE)
+- ✅ TypeORM's queries use safe `Brackets` queries (not raw string WHERE)
 - ✅ MikroORM uses `EntitySchema` (no decorator overhead)
 - ✅ Sequelize uses `QueryGenerator` (no connection needed)
 
