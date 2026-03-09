@@ -4,6 +4,7 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 **No database required** — measures pure SQL generation speed, the overhead your ORM adds to every request.
 
+📊 **[Live Interactive Chart](https://rogerpadilla.github.io/ts-orm-benchmark/chart.html)**
 
 ## Results
 
