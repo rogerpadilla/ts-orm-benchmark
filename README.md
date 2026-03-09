@@ -70,6 +70,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 - ✅ All ORMs use the **same entity** (User: id, name, email, companyId, createdAt)
 - ✅ All ORMs use their **latest stable version** at the time of testing (see versions below)
+- ✅ Benchmarks run on the **latest LTS Node.js** (v24 at the time of writing)
 - ✅ All generate **logically equivalent** queries
 - ✅ Each uses its **idiomatic API** — no raw SQL shortcuts
 - ✅ TypeORM's queries use safe `Brackets` queries (not raw string WHERE)
