@@ -147,16 +147,18 @@ const speedRows = entries
 
 const baselineName = speedRows.at(-1)!.name;
 const totalCategories = categoryKeys.length;
-const speedTableRows = speedRows.map((r) => {
+const medals = ['🥇', '🥈', '🥉'];
+const speedTableRows = speedRows.map((r, i) => {
+  const pos = medals[i] ? `${medals[i]} ${i + 1}` : `${i + 1}`;
   const bestStr = r.name === baselineName ? '1.0x baseline' : `${r.best.toFixed(1)}x faster`;
   const winsStr = r.wins > 0 ? `**${r.wins}/${totalCategories}** 🏆` : `0/${totalCategories}`;
   const nameStr = r.wins > 0 ? `**${r.name}**` : r.name;
-  return `| ${nameStr.padEnd(13)} | ${bestStr.padEnd(13)} | ${winsStr.padEnd(9)} |`;
+  return `| ${pos.padEnd(4)} | ${nameStr.padEnd(13)} | ${bestStr.padEnd(13)} | ${winsStr.padEnd(9)} |`;
 });
 
-const speedTableHeaderRegex = /\| Entry\s+\| Best\s+\| Wins\s+\|\n\| [-| ]+\|\n((?:\|.*\|\n)*)/;
+const speedTableHeaderRegex = /\| P\s+\| Entry\s+\| Best\s+\| Wins\s+\|\n\| [-| ]+\|\n((?:\|.*\|\n)*)/;
 if (readme.match(speedTableHeaderRegex)) {
-  const header = `| Entry         | Best          | Wins      |\n| ------------- | ------------- | --------- |\n`;
+  const header = `| P   | Entry         | Best          | Wins      |\n| --- | ------------- | ------------- | --------- |\n`;
   readme = readme.replace(speedTableHeaderRegex, header + speedTableRows.join('\n') + '\n');
 }
 

@@ -24,15 +24,15 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 ### Speed Comparison - higher is better
 
-| Entry         | Best          | Wins      |
-| ------------- | ------------- | --------- |
-| **UQL**       | 47.2x faster  | **8/8** 🏆 |
-| Knex          | 30.3x faster  | 0/8       |
-| Sequelize     | 15.3x faster  | 0/8       |
-| Kysely        | 15.0x faster  | 0/8       |
-| TypeORM       | 9.0x faster   | 0/8       |
-| MikroORM      | 3.8x faster   | 0/8       |
-| Drizzle       | 1.0x baseline | 0/8       |
+| P   | Entry         | Best          | Wins      |
+| --- | ------------- | ------------- | --------- |
+| 🥇 1 | **UQL**       | 47.2x faster  | **8/8** 🏆 |
+| 🥈 2 | Knex          | 30.3x faster  | 0/8       |
+| 🥉 3 | Sequelize     | 15.3x faster  | 0/8       |
+| 4   | Kysely        | 15.0x faster  | 0/8       |
+| 5   | TypeORM       | 9.0x faster   | 0/8       |
+| 6   | MikroORM      | 3.8x faster   | 0/8       |
+| 7   | Drizzle       | 1.0x baseline | 0/8       |
 
 ### Why No Prisma?
 
