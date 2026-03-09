@@ -95,7 +95,7 @@ const MikroUserSchema = new MikroEntitySchema<MikroUser>({
 let mikroEm: SqlEntityManager;
 
 // ── Drizzle ──────────────────────────────────────────────────────────────────
-import { and, eq, gt, ilike, inArray, like, or } from 'drizzle-orm';
+import { and, eq, gt, ilike, inArray, like, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
 
@@ -577,5 +577,78 @@ describe('DELETE — simple WHERE', () => {
 
   bench('Kysely', () => {
     kyselyDb.deleteFrom('User').where('id', '=', 1).compile();
+  });
+});
+
+// ── AGGREGATE — GROUP BY + COUNT + HAVING + SORT ─────────────────────────────
+describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
+  bench('UQL', () => {
+    const ctx = uqlDialect.createContext();
+    uqlDialect.aggregate(ctx, User, {
+      $group: {
+        companyId: true,
+        count: { $count: '*' },
+        maxCreated: { $max: 'createdAt' },
+      },
+      $having: { count: { $gt: 5 } },
+      $sort: { count: -1 },
+      $limit: 10,
+    });
+  });
+
+  bench('Sequelize', () => {
+    seqQg.selectQuery('User', {
+      attributes: [
+        'companyId',
+        [sequelize.fn('COUNT', sequelize.literal('*')), 'count'],
+        [sequelize.fn('MAX', sequelize.col('createdAt')), 'maxCreated'],
+      ],
+      group: ['companyId'],
+      having: sequelize.where(sequelize.fn('COUNT', sequelize.literal('*')), { [Op.gt]: 5 }),
+      order: [[sequelize.fn('COUNT', sequelize.literal('*')), 'DESC']],
+      limit: 10,
+    });
+  });
+
+  bench('TypeORM', () => {
+    typeormDs
+      .createQueryBuilder()
+      .select('User.companyId', 'companyId')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect('MAX(User.createdAt)', 'maxCreated')
+      .from('User', 'User')
+      .groupBy('User.companyId')
+      .having('COUNT(*) > :minCount', { minCount: 5 })
+      .orderBy('COUNT(*)', 'DESC')
+      .limit(10)
+      .getQueryAndParameters();
+  });
+
+  bench('MikroORM', () => {
+    mikroEm
+      .createQueryBuilder(MikroUserSchema)
+      .select(['companyId'])
+      .addSelect('COUNT(*) as count')
+      .addSelect('MAX(createdAt) as maxCreated')
+      .groupBy('companyId')
+      .having('COUNT(*) > ?', [5])
+      .limit(10)
+      .getKnexQuery()
+      .toSQL();
+  });
+
+  bench('Drizzle', () => {
+    drizzleDb
+      .select({
+        companyId: drizzleUsers.companyId,
+        count: sql`COUNT(*)`,
+        maxCreated: sql`MAX(${drizzleUsers.createdAt})`,
+      })
+      .from(drizzleUsers)
+      .groupBy(drizzleUsers.companyId)
+      .having(sql`COUNT(*) > 5`)
+      .orderBy(sql`COUNT(*) DESC`)
+      .limit(10)
+      .toSQL();
   });
 });
