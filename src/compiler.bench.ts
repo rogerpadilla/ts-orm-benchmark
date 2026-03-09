@@ -635,7 +635,7 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .having('COUNT(*) > ?', [5])
       .limit(10)
       .getKnexQuery()
-      .orderBy(knexDb.raw('COUNT(*) DESC'))
+      .orderByRaw('COUNT(*) DESC')
       .toSQL();
   });
 
@@ -661,7 +661,7 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .max('createdAt as maxCreated')
       .groupBy('companyId')
       .having(knexDb.raw('COUNT(*) > ?', [5]))
-      .orderBy(knexDb.raw('COUNT(*) DESC'))
+      .orderByRaw('COUNT(*) DESC')
       .limit(10)
       .toSQL();
   });

@@ -18,6 +18,9 @@ concurrency:
 
 jobs:
   bench:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,9 +44,13 @@ jobs:
           git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git push
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          exclude_assets: 'node_modules,src,.git,.github,.vscode,scripts,bun.lock,biome.json,tsconfig.json,vitest.config.ts,package.json,long-post.md,short-post.md'
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp chart.html results.js README.md _site/
+          cp -r assets _site/assets 2>/dev/null || true
+
+      - uses: actions/upload-pages-artifact@v3
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
