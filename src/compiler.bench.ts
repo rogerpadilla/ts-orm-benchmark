@@ -95,7 +95,7 @@ const MikroUserSchema = new MikroEntitySchema<MikroUser>({
 let mikroEm: SqlEntityManager;
 
 // ── Drizzle ──────────────────────────────────────────────────────────────────
-import { and, eq, gt, ilike, inArray, like, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, ilike, inArray, like, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
 
@@ -121,6 +121,7 @@ import {
   PostgresAdapter,
   PostgresIntrospector,
   PostgresQueryCompiler,
+  sql as kyselySql,
   type Generated,
 } from 'kysely';
 
@@ -371,7 +372,7 @@ describe('SELECT — complex $or + operators', () => {
           and(like(drizzleUsers.email, '%@example.com'), gt(drizzleUsers.createdAt, 1000)),
         ),
       )
-      .orderBy(drizzleUsers.createdAt)
+      .orderBy(desc(drizzleUsers.createdAt), asc(drizzleUsers.name))
       .limit(50)
       .toSQL();
   });
@@ -634,6 +635,7 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .having('COUNT(*) > ?', [5])
       .limit(10)
       .getKnexQuery()
+      .orderBy(knexDb.raw('COUNT(*) DESC'))
       .toSQL();
   });
 
@@ -650,5 +652,30 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .orderBy(sql`COUNT(*) DESC`)
       .limit(10)
       .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb('User')
+      .select('companyId')
+      .count('* as count')
+      .max('createdAt as maxCreated')
+      .groupBy('companyId')
+      .having(knexDb.raw('COUNT(*) > ?', [5]))
+      .orderBy(knexDb.raw('COUNT(*) DESC'))
+      .limit(10)
+      .toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb
+      .selectFrom('User')
+      .select(['companyId'])
+      .select((eb) => eb.fn.countAll().as('count'))
+      .select((eb) => eb.fn.max('createdAt').as('maxCreated'))
+      .groupBy('companyId')
+      .having(kyselySql`COUNT(*)`, '>', 5)
+      .orderBy(kyselySql`COUNT(*)`, 'desc')
+      .limit(10)
+      .compile();
   });
 });

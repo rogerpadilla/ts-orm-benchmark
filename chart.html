@@ -220,11 +220,16 @@
     <div class="bars" id="bars-complex"></div>
   </div>
 
+  <div class="category">
+    <div class="category-label">AGGREGATE — GROUP BY + COUNT + HAVING <span class="winner-badge winner-uql">UQL 3.82x</span></div>
+    <div class="bars" id="bars-aggregate"></div>
+  </div>
+
 
 
   <div class="score">
     <span class="score-text">
-      <span class="uql-color">UQL 7</span>
+      <span class="uql-color">UQL 8</span>
       <span class="sep">·</span>
       ORMs and Query Builders
     </span>
@@ -261,10 +266,12 @@
 
   function renderBars(containerId, values, unit, invert) {
     const container = document.getElementById(containerId);
-    const max = Math.max(...values);
-    const min = Math.min(...values);
+    const nonZero = values.filter(v => v > 0);
+    const max = Math.max(...nonZero);
+    const min = Math.min(...nonZero);
 
     const sorted = values.map((val, i) => ({ val, i }))
+      .filter(({ val }) => val > 0)
       .sort((a, b) => invert ? a.val - b.val : b.val - a.val);
 
     sorted.forEach(({ val, i }) => {
@@ -296,6 +303,7 @@
   renderBars('bars-simple', data.simple);
   renderBars('bars-filter', data.filter);
   renderBars('bars-complex', data.complex);
+  renderBars('bars-aggregate', data.aggregate);
 </script>
 
 </body>

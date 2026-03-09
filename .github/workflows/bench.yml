@@ -1,0 +1,49 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1' # Weekly on Monday 6 AM UTC
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: benchmark
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: bun install --frozen-lockfile
+
+      - name: Run benchmarks & update results
+        run: npx vitest bench --run 2>&1 | tee /dev/stderr | bun scripts/update-results.ts
+
+      - name: Commit updated results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results.js README.md
+          git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
+          git push
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          exclude_assets: 'node_modules,src,.git,.github,.vscode,scripts,bun.lock,biome.json,tsconfig.json,vitest.config.ts,package.json,long-post.md,short-post.md'

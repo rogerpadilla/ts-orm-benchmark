@@ -36,6 +36,11 @@ const categories = [
     readmeLabel: 'SELECT (complex $or)',
     pattern: 'SELECT — complex',
   },
+  {
+    key: 'aggregate',
+    readmeLabel: 'AGGREGATE (GROUP+HAVING)',
+    pattern: 'AGGREGATE',
+  },
 ];
 
 const categoryKeys = categories.map((c) => c.key);
@@ -168,10 +173,11 @@ for (const cat of categoryKeys) {
   console.log(`  ${cat}: ${entries.map((e, i) => `${e}: ${data[cat][i]}K`).join('  ')}`);
 }
 
-// ── Open chart in browser ────────────────────────────────────────────────────
+// ── Open chart in browser (local only) ───────────────────────────────────────
 
-import { exec } from 'node:child_process';
-
-const chartPath = resolve(root, 'chart.html');
-const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-exec(`${openCmd} ${chartPath}`);
+if (!process.env.CI) {
+  const { exec } = await import('node:child_process');
+  const chartPath = resolve(root, 'chart.html');
+  const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+  exec(`${openCmd} ${chartPath}`);
+}
