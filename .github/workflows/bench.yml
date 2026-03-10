@@ -1,53 +1,44 @@
-name: Benchmark
+name: Bench
 
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: '0 6 * * 1' # Weekly on Monday 6 AM UTC
-  workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+  pull_request:
+    branches: [main]
 
 concurrency:
-  group: benchmark
+  group: bench-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  bench:
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+  # Benchmark results are updated locally on Apple Silicon (M-series)
+  # to ensure consistent, reproducible numbers without Github Actions VM noise.
+  # To update reports: npm run bench (locally)
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
+      - run: bun install
+      - run: bunx tsc --noEmit
+      - run: bunx vitest bench --run
 
-      - run: bun install --frozen-lockfile
-
-      - name: Run benchmarks & update results
-        run: npx vitest bench --run 2>&1 | tee /dev/stderr | bun scripts/update-results.ts
-
-      - name: Commit updated results
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add results.js README.md
-          git diff --staged --quiet || git commit -m "chore: update benchmark results [skip ci]"
-          git push
-
-      - name: Prepare Pages artifact
-        run: |
+  deploy:
+    if: github.event_name == 'push'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
           mkdir -p _site
           cp chart.html results.js README.md _site/
           cp -r assets _site/assets 2>/dev/null || true
-
       - uses: actions/upload-pages-artifact@v3
       - id: deploy
         uses: actions/deploy-pages@v4
