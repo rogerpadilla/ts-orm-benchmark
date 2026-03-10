@@ -82,7 +82,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| UQL       | 0.2.3   |
+| UQL       | 0.2.4   |
 | Sequelize | 6.37.8  |
 | TypeORM   | 0.3.28  |
 | MikroORM  | 6.6.9   |
