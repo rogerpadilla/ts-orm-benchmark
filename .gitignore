@@ -3,3 +3,5 @@ dist/
 target/
 _site/
 *.node
+short.md
+long.md
