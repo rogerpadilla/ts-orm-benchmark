@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Carousel Slides</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; font-family: 'Inter', sans-serif; }
+
+  .slides { display: flex; flex-direction: column; align-items: center; gap: 40px; padding: 40px; }
+
+  .slide {
+    width: 1080px;
+    height: 1350px;
+    background: linear-gradient(165deg, #0f0f23 0%, #1a1a2e 40%, #16213e 100%);
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 80px;
+    position: relative;
+    overflow: hidden;
+    color: #e0e0e0;
+  }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .slide::after {
+    content: '';
+    position: absolute;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Footer branding */
+  .slide-footer {
+    position: absolute;
+    bottom: 40px;
+    left: 80px;
+    right: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 20px;
+    color: #555;
+    letter-spacing: 0.5px;
+  }
+  .slide-footer .dot { color: #6366f1; }
+  .slide-num { font-weight: 600; color: #6366f1; font-size: 18px; }
+
+  /* ── Slide 1: Hook ── */
+  .hook-pre {
+    font-size: 28px;
+    color: #888;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-weight: 600;
+  }
+  .hook-title {
+    font-size: 62px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    max-width: 900px;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hook-sub {
+    margin-top: 50px;
+    font-size: 30px;
+    color: #a78bfa;
+    font-weight: 500;
+  }
+
+  /* ── Slide 2: Players ── */
+  .players-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 60px;
+    color: #fff;
+  }
+  .players-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+  }
+  .player-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 32px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #e0e0e0;
+  }
+
+  .player-type {
+    font-size: 16px;
+    color: #666;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .player-divider {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 18px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 10px 0;
+  }
+
+  /* ── Slide 3-4: Charts ── */
+  .chart-slide-title {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 50px;
+    color: #fff;
+    text-align: center;
+  }
+  .chart-category {
+    width: 100%;
+    margin-bottom: 36px;
+  }
+  .chart-label {
+    font-size: 22px;
+    font-weight: 600;
+    color: #a78bfa;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .chart-winner {
+    font-size: 16px;
+    background: rgba(99,102,241,0.2);
+    color: #c4b5fd;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    height: 30px;
+  }
+  .bar-name {
+    width: 105px;
+    font-size: 16px;
+    color: #999;
+    text-align: right;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .bar-track {
+    flex: 1;
+    height: 22px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    min-width: 2px;
+  }
+  .bar-val {
+    width: 70px;
+    font-size: 15px;
+    color: #888;
+    font-weight: 500;
+  }
+
+  /* ORM Colors */
+  .color-uql { background: #4f46e5; }
+  .color-sequelize { background: #02afef; }
+  .color-typeorm { background: #e8832a; }
+  .color-mikroorm { background: #0d9488; }
+  .color-drizzle { background: #c5f74f; }
+  .color-knex { background: #e07628; }
+  .color-kysely { background: #55b3f3; }
+
+  /* ── Slide 5: Scoreboard ── */
+  .score-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 50px;
+    color: #fff;
+  }
+  .score-table {
+    width: 100%;
+    max-width: 800px;
+  }
+  .score-row {
+    display: flex;
+    align-items: center;
+    padding: 18px 28px;
+    margin-bottom: 8px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .score-row.winner {
+    background: rgba(99,102,241,0.12);
+    border-color: rgba(99,102,241,0.3);
+  }
+  .score-pos { width: 60px; font-size: 28px; font-weight: 700; }
+  .score-name { flex: 1; font-size: 28px; font-weight: 600; }
+  .score-best { width: 200px; font-size: 24px; color: #888; text-align: right; }
+  .score-wins { width: 100px; font-size: 24px; font-weight: 700; text-align: right; }
+  .score-wins.won { color: #a78bfa; }
+
+  /* ── Slide 6: Surprises ── */
+  .surprise-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 60px;
+    color: #fff;
+    text-align: center;
+  }
+  .surprise-card {
+    width: 100%;
+    max-width: 850px;
+    padding: 36px 40px;
+    margin-bottom: 24px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    border-left: 4px solid #6366f1;
+  }
+  .surprise-num {
+    font-size: 18px;
+    color: #6366f1;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .surprise-headline {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .surprise-body {
+    font-size: 21px;
+    color: #999;
+    line-height: 1.5;
+  }
+
+  /* ── Slide 7: Why ── */
+  .why-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 50px;
+    color: #fff;
+  }
+  .why-block {
+    width: 100%;
+    max-width: 850px;
+    margin-bottom: 30px;
+  }
+  .why-label {
+    font-size: 18px;
+    color: #6366f1;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .why-text {
+    font-size: 26px;
+    color: #ccc;
+    line-height: 1.5;
+  }
+  .why-vs {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .why-vs-box {
+    flex: 1;
+    padding: 28px;
+    border-radius: 16px;
+    text-align: center;
+  }
+  .why-vs-box.good {
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.3);
+  }
+  .why-vs-box.bad {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .why-vs-name { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+  .why-vs-desc { font-size: 18px; color: #999; line-height: 1.4; }
+
+  /* ── Slide 8: Production ── */
+  .prod-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 50px;
+    color: #fff;
+    text-align: center;
+  }
+  .prod-comparison {
+    display: flex;
+    gap: 30px;
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 50px;
+  }
+  .prod-box {
+    flex: 1;
+    padding: 40px 30px;
+    border-radius: 20px;
+    text-align: center;
+  }
+  .prod-box.fast {
+    background: rgba(99,102,241,0.1);
+    border: 2px solid rgba(99,102,241,0.3);
+  }
+  .prod-box.slow {
+    background: rgba(239,68,68,0.08);
+    border: 2px solid rgba(239,68,68,0.2);
+  }
+  .prod-label { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+  .prod-number { font-size: 64px; font-weight: 900; margin-bottom: 8px; }
+  .prod-box.fast .prod-number { color: #a78bfa; }
+  .prod-box.slow .prod-number { color: #f87171; }
+  .prod-unit { font-size: 22px; color: #888; }
+  .prod-context {
+    font-size: 26px;
+    color: #999;
+    text-align: center;
+    max-width: 700px;
+    line-height: 1.5;
+  }
+  .prod-highlight { color: #a78bfa; font-weight: 700; }
+
+  /* ── Slide 9: Methodology ── */
+  .method-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 50px;
+    color: #fff;
+  }
+  .method-item {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 22px;
+    align-items: flex-start;
+  }
+  .method-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    width: 36px;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .method-content {}
+  .method-label {
+    font-size: 22px;
+    font-weight: 700;
+    color: #c4b5fd;
+    margin-bottom: 4px;
+  }
+  .method-desc {
+    font-size: 19px;
+    color: #999;
+    line-height: 1.4;
+  }
+  /* ── Print: preserve colors + one slide per page ── */
+  @page {
+    size: 1080px 1350px;
+    margin: 0;
+  }
+  @media print {
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    body { background: #0f0f23 !important; margin: 0; }
+    .slides { gap: 0; padding: 0; }
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      page-break-after: always;
+      page-break-inside: avoid;
+      break-after: page;
+      break-inside: avoid;
+      margin: 0;
+      border-radius: 0;
+    }
+    .slide:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="slides">
+
+  <!-- SLIDE 1: Hook -->
+  <div class="slide" id="slide-1">    
+    <div class="hook-pre">Benchmark <span style="font-size:64px;margin-bottom:24px">⚡</span></div>
+    <div class="hook-title">I benchmarked every TypeScript ORM.<br><br>The slowest was a query builder.</div>
+    <div class="hook-sub">Swipe to see the data →</div>
+    <div class="slide-footer"><span>github.com/rogerpadilla/ts-orm-benchmark</span><span class="slide-num">1/9</span></div>
+  </div>
+
+  <!-- SLIDE 2: Players -->
+  <div class="slide" id="slide-2">
+    <div class="players-title">7 ORMs & Query Builders Tested</div>
+    <div class="players-grid">
+      <div class="player-card">Sequelize <span class="player-type">ORM</span></div>
+      <div class="player-card">TypeORM <span class="player-type">ORM</span></div>
+      <div class="player-card">MikroORM <span class="player-type">ORM</span></div>
+      <div class="player-card">Drizzle <span class="player-type">QB</span></div>
+      <div class="player-card">Knex <span class="player-type">QB</span></div>
+      <div class="player-card">Kysely <span class="player-type">QB</span></div>
+      <div class="player-card">UQL <span class="player-type">ORM</span></div>
+    </div>
+    <div style="margin-top:50px;font-size:24px;color:#888;text-align:center;line-height:1.6">
+      8 query types · No database · Pure SQL generation speed<br>
+      <span style="color:#6366f1">The overhead your ORM adds to every request</span>
+    </div>
+    <div class="slide-footer"><span>3 runs averaged · Apple Silicon M4</span><span class="slide-num">2/9</span></div>
+  </div>
+
+  <!-- SLIDE 3: Write Operations -->
+  <div class="slide" id="slide-3">
+    <div class="chart-slide-title">Write Operations (K ops/sec)</div>
+
+    <div class="chart-category">
+      <div class="chart-label">INSERT — 10 rows <span class="chart-winner">UQL 1.49x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">606K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:67%"></div></div><span class="bar-val">407K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:33%"></div></div><span class="bar-val">202K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:33%"></div></div><span class="bar-val">197K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:8%"></div></div><span class="bar-val">50K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:8%"></div></div><span class="bar-val">47K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:2%"></div></div><span class="bar-val">13K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">UPDATE — SET + WHERE <span class="chart-winner">UQL 2.22x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,817K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:45%"></div></div><span class="bar-val">819K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:33%"></div></div><span class="bar-val">601K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:18%"></div></div><span class="bar-val">321K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:13%"></div></div><span class="bar-val">234K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:7%"></div></div><span class="bar-val">119K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:4%"></div></div><span class="bar-val">81K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">UPSERT — ON CONFLICT <span class="chart-winner">UQL 1.99x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">693K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:50%"></div></div><span class="bar-val">349K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:48%"></div></div><span class="bar-val">334K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:48%"></div></div><span class="bar-val">334K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:46%"></div></div><span class="bar-val">316K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:19%"></div></div><span class="bar-val">130K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">38K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">DELETE — WHERE <span class="chart-winner">UQL 2.70x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">3,642K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:37%"></div></div><span class="bar-val">1,349K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:35%"></div></div><span class="bar-val">1,290K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:26%"></div></div><span class="bar-val">962K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:15%"></div></div><span class="bar-val">542K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:6%"></div></div><span class="bar-val">212K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">148K</span></div>
+    </div>
+
+    <div class="slide-footer"><span>Higher is better · 3-run average</span><span class="slide-num">3/9</span></div>
+  </div>
+
+  <!-- SLIDE 4: Read Operations -->
+  <div class="slide" id="slide-4">
+    <div class="chart-slide-title">Read & Aggregate Operations (K ops/sec)</div>
+
+    <div class="chart-category">
+      <div class="chart-label">SELECT — 1 field <span class="chart-winner">UQL 1.27x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">3,994K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:79%"></div></div><span class="bar-val">3,143K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:39%"></div></div><span class="bar-val">1,559K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:25%"></div></div><span class="bar-val">994K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:20%"></div></div><span class="bar-val">817K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:7%"></div></div><span class="bar-val">297K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:6%"></div></div><span class="bar-val">238K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">SELECT — WHERE + SORT + LIMIT <span class="chart-winner">UQL 2.50x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,200K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:40%"></div></div><span class="bar-val">480K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:35%"></div></div><span class="bar-val">425K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:32%"></div></div><span class="bar-val">385K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:30%"></div></div><span class="bar-val">355K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">60K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">46K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">SELECT — Complex $or <span class="chart-winner">UQL 2.95x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">644K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:34%"></div></div><span class="bar-val">218K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:31%"></div></div><span class="bar-val">199K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:29%"></div></div><span class="bar-val">186K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:24%"></div></div><span class="bar-val">152K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">35K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:3%"></div></div><span class="bar-val">22K</span></div>
+    </div>
+
+    <div class="chart-category">
+      <div class="chart-label">AGGREGATE — GROUP BY + HAVING <span class="chart-winner">UQL 3.66x</span></div>
+      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,489K</span></div>
+      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:27%"></div></div><span class="bar-val">407K</span></div>
+      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:24%"></div></div><span class="bar-val">364K</span></div>
+      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:19%"></div></div><span class="bar-val">284K</span></div>
+      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:15%"></div></div><span class="bar-val">227K</span></div>
+      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">77K</span></div>
+      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">64K</span></div>
+    </div>
+
+    <div class="slide-footer"><span>Higher is better · 3-run average</span><span class="slide-num">4/9</span></div>
+  </div>
+
+  <!-- SLIDE 5: Scoreboard -->
+  <div class="slide" id="slide-5">
+    <div class="score-title">Final Scoreboard</div>
+    <div class="score-table">
+      <div class="score-row winner">
+        <span class="score-pos">🥇</span>
+        <span class="score-name" style="color:#a78bfa">UQL</span>
+        <span class="score-best">46.6x faster</span>
+        <span class="score-wins won">8/8 🏆</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#888">🥈</span>
+        <span class="score-name">Knex</span>
+        <span class="score-best">31.3x faster</span>
+        <span class="score-wins">0/8</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#888">🥉</span>
+        <span class="score-name">Sequelize</span>
+        <span class="score-best">15.5x faster</span>
+        <span class="score-wins">0/8</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#555">4</span>
+        <span class="score-name">Kysely</span>
+        <span class="score-best">15.2x faster</span>
+        <span class="score-wins">0/8</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#555">5</span>
+        <span class="score-name">TypeORM</span>
+        <span class="score-best">8.5x faster</span>
+        <span class="score-wins">0/8</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#555">6</span>
+        <span class="score-name">MikroORM</span>
+        <span class="score-best">3.8x faster</span>
+        <span class="score-wins">0/8</span>
+      </div>
+      <div class="score-row">
+        <span class="score-pos" style="color:#555">7</span>
+        <span class="score-name">Drizzle</span>
+        <span class="score-best">1.0x baseline</span>
+        <span class="score-wins">0/8</span>
+      </div>
+    </div>
+    <div style="margin-top:40px;font-size:22px;color:#888;text-align:center">
+      Including standalone query builders (Knex, Kysely)<br>
+      that have zero entity/relation overhead
+    </div>
+    <div class="slide-footer"><span></span><span class="slide-num">5/9</span></div>
+  </div>
+
+  <!-- SLIDE 6: 3 Surprises -->
+  <div class="slide" id="slide-6">
+    <div class="surprise-title">3 Things That Surprised Me</div>
+
+    <div class="surprise-card">
+      <div class="surprise-num">Surprise #1</div>
+      <div class="surprise-headline">The slowest entry is a query builder — not an ORM.</div>
+      <div class="surprise-body">Drizzle — a "lightweight" query builder — is slower than Sequelize (a full ORM from 2014) in every category.</div>
+    </div>
+
+    <div class="surprise-card">
+      <div class="surprise-num">Surprise #2</div>
+      <div class="surprise-headline">Query builders can't beat a well-designed ORM.</div>
+      <div class="surprise-body">Knex and Kysely have zero entity overhead. Yet UQL — a full ORM with relations and migrations — beats both in all 8 categories.</div>
+    </div>
+
+    <div class="surprise-card">
+      <div class="surprise-num">Surprise #3</div>
+      <div class="surprise-headline">MikroORM pays double.</div>
+      <div class="surprise-body">MikroORM uses Knex internally. Every query compiles twice: MikroORM → Knex → SQL. Result: 4-5x slower than Knex alone.</div>
+    </div>
+
+    <div class="slide-footer"><span></span><span class="slide-num">6/9</span></div>
+  </div>
+
+  <!-- SLIDE 7: Why UQL wins -->
+  <div class="slide" id="slide-7">
+    <div class="why-title">Why Is UQL Faster?</div>
+
+    <div class="why-block">
+      <div class="why-label">The Problem</div>
+      <div class="why-text">Most ORMs figure out your schema on every query: "What table? What column? Nullable?" — answered fresh each time.</div>
+    </div>
+
+    <div class="why-block">
+      <div class="why-label">UQL's Approach</div>
+      <div class="why-text">Answer everything once at startup. Field→column mappings, table names, relations — all pre-computed into lookup tables.</div>
+    </div>
+
+    <div class="why-vs">
+      <div class="why-vs-box good">
+        <div class="why-vs-name" style="color:#a78bfa">UQL</div>
+        <div class="why-vs-desc">Pre-computed metadata<br>→ direct buffer writes<br>→ zero allocation</div>
+      </div>
+      <div class="why-vs-box bad">
+        <div class="why-vs-name" style="color:#f87171">Others</div>
+        <div class="why-vs-desc">Build query object<br>→ walk expression tree<br>→ produce SQL string</div>
+      </div>
+    </div>
+
+    <div class="slide-footer"><span></span><span class="slide-num">7/9</span></div>
+  </div>
+
+  <!-- SLIDE 8: Production impact -->
+  <div class="slide" id="slide-8">
+    <div class="prod-title">Does This Matter in Production?</div>
+
+    <div style="font-size:26px;color:#888;margin-bottom:40px;text-align:center">At 1,000 requests/second, ORM overhead per second:</div>
+
+    <div class="prod-comparison">
+      <div class="prod-box fast">
+        <div class="prod-label" style="color:#a78bfa">UQL</div>
+        <div class="prod-number">1</div>
+        <div class="prod-unit">CPU-second</div>
+      </div>
+      <div class="prod-box slow">
+        <div class="prod-label" style="color:#f87171">MikroORM</div>
+        <div class="prod-number">20</div>
+        <div class="prod-unit">CPU-seconds</div>
+      </div>
+    </div>
+
+    <div class="prod-context">
+      <span class="prod-highlight">20x more CPU</span> burned on generating SQL strings — pure waste before a single byte hits the network.
+    </div>
+    <div class="prod-context" style="margin-top:20px">
+      In serverless → that's your <span class="prod-highlight">bill</span>.<br>
+      In containers → that's your <span class="prod-highlight">scaling cost</span>.
+    </div>
+
+    <div class="slide-footer"><span></span><span class="slide-num">8/9</span></div>
+  </div>
+
+  <!-- SLIDE 9: Methodology -->
+  <div class="slide" id="slide-9">    
+    <div class="method-title">Methodology</div>
+
+    <div class="method-item">
+      <div class="method-icon">🖥️</div>
+      <div class="method-content">
+        <div class="method-label">Environment</div>
+        <div class="method-desc">Node.js v24 · Apple Silicon M4 · 3 runs averaged</div>
+      </div>
+    </div>
+
+    <div class="method-item">
+      <div class="method-icon">📦</div>
+      <div class="method-content">
+        <div class="method-label">Versions</div>
+        <div class="method-desc">Latest stable of every ORM/QB as of March 2026</div>
+      </div>
+    </div>
+
+    <div class="method-item">
+      <div class="method-icon">⚖️</div>
+      <div class="method-content">
+        <div class="method-label">Fairness</div>
+        <div class="method-desc">Each ORM uses its most idiomatic API — QueryBuilder for TypeORM/MikroORM benefits them by skipping entity overhead</div>
+      </div>
+    </div>
+
+    <div class="method-item">
+      <div class="method-icon">📏</div>
+      <div class="method-content">
+        <div class="method-label">What's Measured</div>
+        <div class="method-desc">Pure SQL string generation — no database, no I/O, no connection pool. Isolates ORM overhead only.</div>
+      </div>
+    </div>
+
+    <div class="method-item">
+      <div class="method-icon">🚫</div>
+      <div class="method-content">
+        <div class="method-label">Why No Prisma?</div>
+        <div class="method-desc">Prisma is not a pure TypeScript/JavaScript ORM — only its client is JS/TS. The query engine is a separate Rust binary that builds SQL, making it architecturally incomparable. It is not even testeable this way.</div>
+      </div>
+    </div>
+
+    <div class="method-item">
+      <div class="method-icon">🔗</div>
+      <div class="method-content">
+        <div class="method-label">Open Source</div>
+        <div class="method-desc">github.com/rogerpadilla/ts-orm-benchmark — reproduce it yourself, PRs welcome!</div>
+      </div>
+    </div>
+
+    <div class="slide-footer"><span>#typescript #orm #performance #nodejs</span><span class="slide-num">9/9</span></div>
+  </div>
+
+</div>
+</body>
+</html>
