@@ -93,6 +93,24 @@
       gap: 6px;
     }
 
+    .bar-name a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .bar-name a:hover {
+      text-decoration: underline;
+    }
+
+    .legend-item a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .legend-item a:hover {
+      text-decoration: underline;
+    }
+
     .bar-name img {
       width: 16px;
       height: 16px;
@@ -236,13 +254,13 @@
 
   <div class="footer">
     <div class="footer-left">
-      <div class="legend-item"><div class="legend-dot dot-uql"></div>UQL</div>
-      <div class="legend-item"><div class="legend-dot dot-sequelize"></div>Sequelize</div>
-      <div class="legend-item"><div class="legend-dot dot-typeorm"></div>TypeORM</div>
-      <div class="legend-item"><div class="legend-dot dot-mikro"></div>MikroORM</div>
-      <div class="legend-item"><div class="legend-dot dot-drizzle"></div>Drizzle</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e24a33"></div>Knex</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Kysely</div>
+      <div class="legend-item"><div class="legend-dot dot-uql"></div><a href="https://uql-orm.dev" target="_blank" rel="noopener">UQL</a></div>
+      <div class="legend-item"><div class="legend-dot dot-sequelize"></div><a href="https://sequelize.org" target="_blank" rel="noopener">Sequelize</a></div>
+      <div class="legend-item"><div class="legend-dot dot-typeorm"></div><a href="https://typeorm.io" target="_blank" rel="noopener">TypeORM</a></div>
+      <div class="legend-item"><div class="legend-dot dot-mikro"></div><a href="https://mikro-orm.io" target="_blank" rel="noopener">MikroORM</a></div>
+      <div class="legend-item"><div class="legend-dot dot-drizzle"></div><a href="https://orm.drizzle.team" target="_blank" rel="noopener">Drizzle</a></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e24a33"></div><a href="https://knexjs.org" target="_blank" rel="noopener">Knex</a></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div><a href="https://kysely.dev" target="_blank" rel="noopener">Kysely</a></div>
     </div>
     <div class="footer-right">Node.js v24 · Apple Silicon · github.com/rogerpadilla/ts-orm-benchmark</div>
   </div>
@@ -253,6 +271,15 @@
   const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
   const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle', 'fill-knex', 'fill-kysely'];
   const colors = ['#5b6abf', '#02afef', '#ff7733', '#1abc9c', '#7ab82d', '#e24a33', '#c084fc'];
+  const urls = [
+    'https://uql-orm.dev',
+    'https://sequelize.org',
+    'https://typeorm.io',
+    'https://mikro-orm.io',
+    'https://orm.drizzle.team',
+    'https://knexjs.org',
+    'https://kysely.dev',
+  ];
   const logos = [
     'assets/uql-icon.svg',                                   // UQL
     'https://avatars.githubusercontent.com/u/3591786?s=32',   // Sequelize
@@ -281,7 +308,7 @@
       const row = document.createElement('div');
       row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
       row.innerHTML = `
-        <span class="bar-name" style="color:${colors[i]}"><img src="${logos[i]}" alt="">${orms[i]}</span>
+        <span class="bar-name" style="color:${colors[i]}"><img src="${logos[i]}" alt=""><a href="${urls[i]}" target="_blank" rel="noopener">${orms[i]}</a></span>
         <div class="bar-track" style="display:flex;align-items:center">
           <div class="bar-fill ${fills[i]}" style="width: ${pct}%">
             ${labelInside ? `<span style="margin-left:auto;padding-right:8px;white-space:nowrap">${label}</span>` : ''}

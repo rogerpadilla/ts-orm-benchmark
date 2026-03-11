@@ -10,7 +10,7 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 > Node.js v24, Apple Silicon M-series, March 2026. All values in **ops/sec** (higher = better).
 
-| Query Type                | [UQL](https://github.com/rogerpadilla/uql) | [Sequelize](https://github.com/sequelize/sequelize) | [TypeORM](https://github.com/typeorm/typeorm) | [MikroORM](https://github.com/mikro-orm/mikro-orm) | [Drizzle](https://github.com/drizzle-team/drizzle-orm) | [Knex](https://github.com/knex/knex) | [Kysely](https://github.com/kysely-org/kysely) |
+| Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
 | INSERT (10 rows)          | **611K** 🥇 | 205K | 50K | 50K | 12K | 398K | 196K |
 | UPDATE (SET+WHERE)        | **1,824K** 🥇 | 229K | 327K | 122K | 78K | 591K | 823K |
@@ -27,13 +27,13 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | P   | Entry         | Best          | Wins      |
 | --- | ------------- | ------------- | --------- |
-| 🥇 1 | **UQL**       | 50.9x faster  | **8/8** 🏆 |
-| 🥈 2 | Knex          | 33.2x faster  | 0/8       |
-| 🥉 3 | Sequelize     | 17.1x faster  | 0/8       |
-| 4    | Kysely        | 16.3x faster  | 0/8       |
-| 5    | TypeORM       | 8.6x faster   | 0/8       |
-| 6    | MikroORM      | 4.2x faster   | 0/8       |
-| 7    | Drizzle       | 1.0x baseline | 0/8       |
+| 🥇 1 | **[UQL](https://uql-orm.dev)**       | 50.9x faster  | **8/8** 🏆 |
+| 🥈 2 | [Knex](https://knexjs.org)          | 33.2x faster  | 0/8       |
+| 🥉 3 | [Sequelize](https://sequelize.org)     | 17.1x faster  | 0/8       |
+| 4    | [Kysely](https://kysely.dev)        | 16.3x faster  | 0/8       |
+| 5    | [TypeORM](https://typeorm.io)       | 8.6x faster   | 0/8       |
+| 6    | [MikroORM](https://mikro-orm.io)      | 4.2x faster   | 0/8       |
+| 7    | [Drizzle](https://orm.drizzle.team)       | 1.0x baseline | 0/8       |
 
 ### Why No Prisma?
 
@@ -82,13 +82,13 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| UQL       | 0.2.4   |
-| Sequelize | 6.37.8  |
-| TypeORM   | 0.3.28  |
-| MikroORM  | 6.6.9   |
-| Drizzle   | 0.45.1  |
-| Knex      | 3.1.0   |
-| Kysely    | 0.28.11 |
+| [UQL](https://uql-orm.dev)       | 0.2.4   |
+| [Sequelize](https://sequelize.org) | 6.37.8  |
+| [TypeORM](https://typeorm.io)   | 0.3.28  |
+| [MikroORM](https://mikro-orm.io)  | 6.6.9   |
+| [Drizzle](https://orm.drizzle.team)   | 0.45.1  |
+| [Knex](https://knexjs.org)      | 3.1.0   |
+| [Kysely](https://kysely.dev)    | 0.28.11 |
 
 ## Contributing
 
