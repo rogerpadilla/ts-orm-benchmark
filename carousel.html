@@ -624,22 +624,10 @@
 
 <script src="results.js"></script>
 <script>
-  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
+  const { entries, categories, data } = window.BENCH_DATA;
   const cssClasses = { UQL: 'color-uql', Sequelize: 'color-sequelize', TypeORM: 'color-typeorm', MikroORM: 'color-mikroorm', Drizzle: 'color-drizzle', Knex: 'color-knex', Kysely: 'color-kysely' };
-
-  const writeCategories = [
-    { key: 'insert',  label: 'INSERT — 10 rows' },
-    { key: 'update',  label: 'UPDATE — SET + WHERE' },
-    { key: 'upsert',  label: 'UPSERT — ON CONFLICT' },
-    { key: 'delete',  label: 'DELETE — WHERE' },
-  ];
-  const readCategories = [
-    { key: 'simple',    label: 'SELECT — 1 field' },
-    { key: 'filter',    label: 'SELECT — WHERE + SORT + LIMIT' },
-    { key: 'complex',   label: 'SELECT — Complex $or' },
-    { key: 'aggregate', label: 'AGGREGATE — GROUP BY + HAVING' },
-  ];
-  const allCategories = [...writeCategories, ...readCategories];
+  const writeCats = categories.filter(c => c.group === 'write');
+  const readCats = categories.filter(c => c.group === 'read');
 
   function fmtK(v) {
     if (v >= 1000) {
@@ -651,42 +639,40 @@
   }
 
   function renderChart(container, cats) {
-    const { data } = window.BENCH_DATA;
     for (const { key, label } of cats) {
       const values = data[key];
       const max = Math.max(...values);
       const sorted = [...values].sort((a, b) => b - a);
       const multiplier = (max / sorted[1]).toFixed(2);
-      const winnerName = orms[values.indexOf(max)];
+      const winnerName = entries[values.indexOf(max)];
 
       const sortedEntries = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v);
 
       let html = `<div class="chart-category"><div class="chart-label">${label} <span class="chart-winner">${winnerName} ${multiplier}x</span></div>`;
       for (const { v, i } of sortedEntries) {
         const pct = Math.max(Math.round((v / max) * 100), 2);
-        html += `<div class="bar-row"><span class="bar-name">${orms[i]}</span><div class="bar-track"><div class="bar-fill ${cssClasses[orms[i]]}" style="width:${pct}%"></div></div><span class="bar-val">${fmtK(v)}</span></div>`;
+        html += `<div class="bar-row"><span class="bar-name">${entries[i]}</span><div class="bar-track"><div class="bar-fill ${cssClasses[entries[i]]}" style="width:${pct}%"></div></div><span class="bar-val">${fmtK(v)}</span></div>`;
       }
       html += '</div>';
       container.insertAdjacentHTML('beforeend', html);
     }
   }
 
-  renderChart(document.getElementById('write-charts'), writeCategories);
-  renderChart(document.getElementById('read-charts'), readCategories);
+  renderChart(document.getElementById('write-charts'), writeCats);
+  renderChart(document.getElementById('read-charts'), readCats);
 
   // Scoreboard
   (() => {
-    const { data } = window.BENCH_DATA;
-    const catKeys = allCategories.map(c => c.key);
-    const wins = new Array(orms.length).fill(0);
+    const catKeys = categories.map(c => c.key);
+    const wins = new Array(entries.length).fill(0);
     for (const cat of catKeys) {
       const maxIdx = data[cat].indexOf(Math.max(...data[cat]));
       wins[maxIdx]++;
     }
-    const bestMultipliers = orms.map((_, i) =>
+    const bestMultipliers = entries.map((_, i) =>
       Math.max(...catKeys.map(cat => data[cat][i] / Math.min(...data[cat])))
     );
-    const rows = orms.map((name, i) => ({ name, wins: wins[i], best: bestMultipliers[i] }))
+    const rows = entries.map((name, i) => ({ name, wins: wins[i], best: bestMultipliers[i] }))
       .sort((a, b) => b.best - a.best);
     const medals = ['🥇', '🥈', '🥉'];
     const baseline = rows.at(-1).name;
@@ -709,15 +695,13 @@
 
   // Production impact: compute slowest avg vs UQL
   (() => {
-    const { data } = window.BENCH_DATA;
-    const catKeys = allCategories.map(c => c.key);
+    const catKeys = categories.map(c => c.key);
     const uqlIdx = 0;
-    // Find the entry with the worst average ratio vs UQL
-    let worstName = 'MikroORM';
+    let worstName = entries[1];
     let worstRatio = 0;
-    for (let i = 1; i < orms.length; i++) {
+    for (let i = 1; i < entries.length; i++) {
       const avgRatio = catKeys.reduce((sum, cat) => sum + data[cat][uqlIdx] / data[cat][i], 0) / catKeys.length;
-      if (avgRatio > worstRatio) { worstRatio = avgRatio; worstName = orms[i]; }
+      if (avgRatio > worstRatio) { worstRatio = avgRatio; worstName = entries[i]; }
     }
     const cpuSec = Math.round(worstRatio);
     document.getElementById('prod-slowest-name').textContent = worstName;

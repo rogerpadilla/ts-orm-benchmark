@@ -71,8 +71,6 @@
       letter-spacing: 0.3px;
     }
 
-    .winner-uql { background: rgba(91, 106, 191, 0.15); color: #5b6abf; }
-
     .bars { display: flex; flex-direction: column; gap: 4px; }
 
     .bar-row {
@@ -169,11 +167,6 @@
     }
 
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .dot-uql { background: #5b6abf; }
-    .dot-sequelize { background: #02afef; }
-    .dot-typeorm { background: #ff7733; }
-    .dot-mikro { background: #1abc9c; }
-    .dot-drizzle { background: #7ab82d; }
 
     .footer-right { font-size: 11px; color: #484f58; font-weight: 500; }
 
@@ -189,8 +182,6 @@
       color: #8b949e;
     }
 
-    .score-text .uql-color { color: #5b6abf; }
-    .score-text .sequelize-color { color: #02afef; }
     .score-text .sep { color: #30363d; margin: 0 6px; }
   </style>
 </head>
@@ -205,71 +196,39 @@
   <div id="categories"></div>
 
   <div class="score">
-    <span class="score-text">
-      <span class="uql-color">UQL 8</span>
-      <span class="sep">·</span>
-      ORMs and Query Builders
-    </span>
+    <span class="score-text" id="score"></span>
   </div>
 
   <div class="footer">
-    <div class="footer-left">
-      <div class="legend-item"><div class="legend-dot dot-uql"></div><a href="https://uql-orm.dev" target="_blank" rel="noopener">UQL</a></div>
-      <div class="legend-item"><div class="legend-dot dot-sequelize"></div><a href="https://sequelize.org" target="_blank" rel="noopener">Sequelize</a></div>
-      <div class="legend-item"><div class="legend-dot dot-typeorm"></div><a href="https://typeorm.io" target="_blank" rel="noopener">TypeORM</a></div>
-      <div class="legend-item"><div class="legend-dot dot-mikro"></div><a href="https://mikro-orm.io" target="_blank" rel="noopener">MikroORM</a></div>
-      <div class="legend-item"><div class="legend-dot dot-drizzle"></div><a href="https://orm.drizzle.team" target="_blank" rel="noopener">Drizzle</a></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#e24a33"></div><a href="https://knexjs.org" target="_blank" rel="noopener">Knex</a></div>
-      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div><a href="https://kysely.dev" target="_blank" rel="noopener">Kysely</a></div>
-    </div>
+    <div class="footer-left" id="legend"></div>
     <div class="footer-right">Node.js v24 · Apple Silicon · github.com/rogerpadilla/ts-orm-benchmark</div>
   </div>
 </div>
 
 <script src="results.js"></script>
 <script>
-  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
-  const fills = ['fill-uql', 'fill-sequelize', 'fill-typeorm', 'fill-mikro', 'fill-drizzle', 'fill-knex', 'fill-kysely'];
-  const colors = ['#5b6abf', '#02afef', '#ff7733', '#1abc9c', '#7ab82d', '#e24a33', '#c084fc'];
-  const urls = [
-    'https://uql-orm.dev',
-    'https://sequelize.org',
-    'https://typeorm.io',
-    'https://mikro-orm.io',
-    'https://orm.drizzle.team',
-    'https://knexjs.org',
-    'https://kysely.dev',
-  ];
-  const logos = [
-    'assets/uql-icon.svg',                                   // UQL
-    'https://avatars.githubusercontent.com/u/3591786?s=32',   // Sequelize
-    'https://avatars.githubusercontent.com/u/20165699?s=32',  // TypeORM
-    'https://mikro-orm.io/img/logo.svg',                     // MikroORM
-    'https://avatars.githubusercontent.com/u/108468352?s=32', // Drizzle
-    'https://avatars.githubusercontent.com/u/3137232?s=32',  // Knex
-    'https://avatars.githubusercontent.com/u/123764858?s=32', // Kysely
-  ];
+  const { entries, categories, data } = window.BENCH_DATA;
 
-  const chartCategories = [
-    { key: 'insert',    label: 'INSERT — 10 rows in batch' },
-    { key: 'update',    label: 'UPDATE — SET + WHERE' },
-    { key: 'upsert',    label: 'UPSERT — ON CONFLICT by id' },
-    { key: 'delete',    label: 'DELETE — simple WHERE' },
-    { key: 'simple',    label: 'SELECT — 1 field' },
-    { key: 'filter',    label: 'SELECT — WHERE + SORT + LIMIT' },
-    { key: 'complex',   label: 'SELECT — Complex $or + Operators' },
-    { key: 'aggregate', label: 'AGGREGATE — GROUP BY + COUNT + HAVING' },
-  ];
+  const entryMeta = {
+    UQL:       { fill: 'fill-uql',      color: '#5b6abf', logo: 'assets/uql-icon.svg',                                   url: 'https://uql-orm.dev' },
+    Sequelize: { fill: 'fill-sequelize', color: '#02afef', logo: 'https://avatars.githubusercontent.com/u/3591786?s=32',   url: 'https://sequelize.org' },
+    TypeORM:   { fill: 'fill-typeorm',   color: '#ff7733', logo: 'https://avatars.githubusercontent.com/u/20165699?s=32',  url: 'https://typeorm.io' },
+    MikroORM:  { fill: 'fill-mikro',     color: '#1abc9c', logo: 'https://mikro-orm.io/img/logo.svg',                     url: 'https://mikro-orm.io' },
+    Drizzle:   { fill: 'fill-drizzle',   color: '#7ab82d', logo: 'https://avatars.githubusercontent.com/u/108468352?s=32', url: 'https://orm.drizzle.team' },
+    Knex:      { fill: 'fill-knex',      color: '#e24a33', logo: 'https://avatars.githubusercontent.com/u/3137232?s=32',  url: 'https://knexjs.org' },
+    Kysely:    { fill: 'fill-kysely',    color: '#c084fc', logo: 'https://avatars.githubusercontent.com/u/123764858?s=32', url: 'https://kysely.dev' },
+  };
 
   function renderBars(containerId, values) {
     const container = document.getElementById(containerId);
     const max = Math.max(...values);
-
     const sorted = values.map((val, i) => ({ val, i }))
       .filter(({ val }) => val > 0)
       .sort((a, b) => b.val - a.val);
 
-    sorted.forEach(({ val, i }) => {
+    for (const { val, i } of sorted) {
+      const name = entries[i];
+      const meta = entryMeta[name];
       const pct = Math.max((val / max) * 100, 4);
       const isWinner = val === max;
       const label = val >= 1000 ? (val / 1000).toFixed(1) + 'M' : val + 'K';
@@ -277,39 +236,58 @@
       const row = document.createElement('div');
       row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
       row.innerHTML = `
-        <span class="bar-name" style="color:${colors[i]}"><img src="${logos[i]}" alt=""><a href="${urls[i]}" target="_blank" rel="noopener">${orms[i]}</a></span>
+        <span class="bar-name" style="color:${meta.color}"><img src="${meta.logo}" alt=""><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></span>
         <div class="bar-track" style="display:flex;align-items:center">
-          <div class="bar-fill ${fills[i]}" style="width: ${pct}%">
+          <div class="bar-fill ${meta.fill}" style="width: ${pct}%">
             ${labelInside ? `<span style="margin-left:auto;padding-right:8px;white-space:nowrap">${label}</span>` : ''}
           </div>
-          ${!labelInside ? `<span style="padding-left:8px;font-size:11px;font-weight:700;color:${colors[i]};white-space:nowrap">${label}</span>` : ''}
+          ${!labelInside ? `<span style="padding-left:8px;font-size:11px;font-weight:700;color:${meta.color};white-space:nowrap">${label}</span>` : ''}
         </div>
       `;
       container.appendChild(row);
-    });
+    }
   }
 
-  // Render all categories dynamically from results.js
-  const { data } = window.BENCH_DATA;
+  // Render all categories
   const root = document.getElementById('categories');
+  const catKeys = categories.map(c => c.key);
 
-  for (const { key, label } of chartCategories) {
+  for (const { key, label } of categories) {
     const values = data[key];
     const max = Math.max(...values);
     const sorted = [...values].sort((a, b) => b - a);
     const multiplier = (max / sorted[1]).toFixed(2);
-    const winnerName = orms[values.indexOf(max)];
+    const winnerName = entries[values.indexOf(max)];
+    const winnerColor = entryMeta[winnerName].color;
 
     const cat = document.createElement('div');
     cat.className = 'category';
     cat.innerHTML = `
-      <div class="category-label">${label} <span class="winner-badge winner-uql">${winnerName} ${multiplier}x</span></div>
+      <div class="category-label">${label} <span class="winner-badge" style="background:${winnerColor}26;color:${winnerColor}">${winnerName} ${multiplier}x</span></div>
       <div class="bars" id="bars-${key}"></div>
     `;
     root.appendChild(cat);
-
     renderBars(`bars-${key}`, values);
   }
+
+  // Dynamic score
+  const wins = new Array(entries.length).fill(0);
+  for (const key of catKeys) {
+    wins[data[key].indexOf(Math.max(...data[key]))]++;
+  }
+  const topIdx = wins.indexOf(Math.max(...wins));
+  const topColor = entryMeta[entries[topIdx]].color;
+  document.getElementById('score').innerHTML = `
+    <span style="color:${topColor}">${entries[topIdx]} ${wins[topIdx]}</span>
+    <span class="sep">·</span>
+    ORMs and Query Builders
+  `;
+
+  // Dynamic legend
+  document.getElementById('legend').innerHTML = entries.map(name => {
+    const meta = entryMeta[name];
+    return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
+  }).join('');
 </script>
 
 </body>
