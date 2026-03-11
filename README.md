@@ -12,14 +12,14 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
-| INSERT (10 rows)          | **611K** 🥇 | 205K | 50K | 50K | 12K | 398K | 196K |
-| UPDATE (SET+WHERE)        | **1,824K** 🥇 | 229K | 327K | 122K | 78K | 591K | 823K |
-| UPSERT (ON CONFLICT)      | **690K** 🥇 | 332K | 313K | 131K | 37K | 347K | 333K |
-| DELETE (WHERE)            | **3,641K** 🥇 | 1,334K | 560K | 151K | 208K | 955K | 1,303K |
-| SELECT (1 field)          | **3,955K** 🥇 | 3,180K | 859K | 300K | 231K | 1,009K | 1,565K |
-| SELECT (WHERE+SORT+LIMIT) | **1,199K** 🥇 | 400K | 374K | 55K | 61K | 488K | 434K |
-| SELECT (complex $or)      | **657K** 🥇 | 153K | 206K | 24K | 36K | 206K | 219K |
-| AGGREGATE (GROUP+HAVING)  | **1,328K** 🥇 | 412K | 367K | 65K | 74K | 285K | 224K |
+| INSERT (10 rows)          | **634K** 🥇 | 214K | 49K | 52K | 13K | 413K | 190K |
+| UPDATE (SET+WHERE)        | **1,871K** 🥇 | 245K | 337K | 126K | 84K | 627K | 849K |
+| UPSERT (ON CONFLICT)      | **702K** 🥇 | 347K | 319K | 133K | 38K | 361K | 347K |
+| DELETE (WHERE)            | **3,702K** 🥇 | 1,410K | 584K | 153K | 220K | 1,004K | 1,343K |
+| SELECT (1 field)          | **4,158K** 🥇 | 3,238K | 902K | 307K | 248K | 1,056K | 1,618K |
+| SELECT (WHERE+SORT+LIMIT) | **1,242K** 🥇 | 418K | 396K | 58K | 64K | 508K | 444K |
+| SELECT (complex $or)      | **691K** 🥇 | 161K | 216K | 25K | 37K | 214K | 227K |
+| AGGREGATE (GROUP+HAVING)  | **1,541K** 🥇 | 431K | 381K | 66K | 78K | 297K | 228K |
 
 **UQL wins 8 out of 8** — even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
 
@@ -27,13 +27,13 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | P   | Entry         | Best          | Wins      |
 | --- | ------------- | ------------- | --------- |
-| 🥇 1 | **[UQL](https://uql-orm.dev)**       | 50.9x faster  | **8/8** 🏆 |
-| 🥈 2 | [Knex](https://knexjs.org)          | 33.2x faster  | 0/8       |
-| 🥉 3 | [Sequelize](https://sequelize.org)     | 17.1x faster  | 0/8       |
-| 4    | [Kysely](https://kysely.dev)        | 16.3x faster  | 0/8       |
-| 5    | [TypeORM](https://typeorm.io)       | 8.6x faster   | 0/8       |
-| 6    | [MikroORM](https://mikro-orm.io)      | 4.2x faster   | 0/8       |
-| 7    | [Drizzle](https://orm.drizzle.team)       | 1.0x baseline | 0/8       |
+| 🥇 1 | **UQL**       | 48.8x faster  | **8/8** 🏆 |
+| 🥈 2 | Knex          | 31.8x faster  | 0/8       |
+| 🥉 3 | Sequelize     | 16.5x faster  | 0/8       |
+| 4    | Kysely        | 14.6x faster  | 0/8       |
+| 5    | TypeORM       | 8.6x faster   | 0/8       |
+| 6    | MikroORM      | 4.0x faster   | 0/8       |
+| 7    | Drizzle       | 1.0x baseline | 0/8       |
 
 ### Why No Prisma?
 
@@ -65,6 +65,16 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 > **Fairness note**: TypeORM and MikroORM are benchmarked at their **QueryBuilder** level (the fastest API available from them), skipping the entity-resolution overhead of their higher-level `find()` APIs. UQL generates SQL directly from its `find()` — there is no intermediate QueryBuilder layer. This means the benchmark is actually **more generous** to TypeORM and MikroORM than real-world usage would be.
 
 ## Methodology
+
+### Environment
+
+| Detail       | Value                     |
+| ------------ | ------------------------- |
+| CPU          | Apple Silicon M-series    |
+| Runtime      | Node.js v24 (LTS)        |
+| OS           | macOS                     |
+| Runs         | 3 averaged                |
+| Date         | March 2026                |
 
 ### Fairness Guarantees
 
