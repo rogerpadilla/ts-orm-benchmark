@@ -5,7 +5,7 @@
  * - UQL         — Object-based queries, pre-computed metadata
  * - Sequelize   — Classic ORM, QueryGenerator API
  * - TypeORM     — EntitySchema + QueryBuilder
- * - MikroORM    — EntitySchema + Knex-backed QueryBuilder
+ * - MikroORM    — EntitySchema + QueryBuilder (v7, no Knex)
  * - Drizzle     — Functional SQL builder
  * - Knex        — Standalone query builder
  * - Kysely      — Type-safe query builder
@@ -13,15 +13,10 @@
  * Each entry defines the same User entity and compiles equivalent queries.
  * Run: npm run bench
  */
-import { beforeAll, bench, describe } from 'vitest';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Entity Definitions — same schema across all ORMs
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ── UQL ──────────────────────────────────────────────────────────────────────
 import { Entity, Field, Id } from 'uql-orm';
 import { PostgresDialect as UqlDialect } from 'uql-orm/postgres';
+import { beforeAll, bench, describe } from 'vitest';
 
 @Entity()
 class User {
@@ -69,8 +64,8 @@ const TypeORMUserSchema = new EntitySchema({
 let typeormDs: DataSource;
 
 // ── MikroORM ─────────────────────────────────────────────────────────────────
-import { EntitySchema as MikroEntitySchema, MikroORM, defineConfig } from '@mikro-orm/core';
-import type { SqlEntityManager } from '@mikro-orm/knex';
+import { EntitySchema as MikroEntitySchema, MikroORM, raw } from '@mikro-orm/core';
+import { defineConfig, type SqlEntityManager } from '@mikro-orm/sqlite';
 
 interface MikroUser {
   id: number;
@@ -117,12 +112,12 @@ const knexDb = knexLib({ client: 'pg', connection: {} });
 // ── Kysely ────────────────────────────────────────────────────────────────────
 import {
   DummyDriver,
+  type Generated,
   Kysely,
+  sql as kyselySql,
   PostgresAdapter,
   PostgresIntrospector,
   PostgresQueryCompiler,
-  sql as kyselySql,
-  type Generated,
 } from 'kysely';
 
 interface KyselyDb {
@@ -163,9 +158,7 @@ beforeAll(async () => {
   const orm = await MikroORM.init(
     defineConfig({
       dbName: ':memory:',
-      driver: (await import('@mikro-orm/better-sqlite')).BetterSqliteDriver,
       entities: [MikroUserSchema],
-      connect: false,
     }),
   );
   mikroEm = orm.em.fork() as unknown as SqlEntityManager;
@@ -190,7 +183,7 @@ describe('SELECT — simple (1 field, no WHERE)', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).select(['name']).getKnexQuery().toSQL();
+    mikroEm.createQueryBuilder(MikroUserSchema).select(['name']).getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -249,8 +242,7 @@ describe('SELECT — WHERE + SORT + LIMIT', () => {
       .orderBy({ name: 'ASC' })
       .limit(10)
       .offset(20)
-      .getKnexQuery()
-      .toSQL();
+      .getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -358,8 +350,7 @@ describe('SELECT — complex $or + operators', () => {
       })
       .orderBy({ createdAt: 'DESC', name: 'ASC' })
       .limit(50)
-      .getKnexQuery()
-      .toSQL();
+      .getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -432,7 +423,7 @@ describe('INSERT — batch (10 rows)', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(rows).getKnexQuery().toSQL();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(rows).getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -472,8 +463,7 @@ describe('UPDATE — simple SET + WHERE', () => {
       .createQueryBuilder(MikroUserSchema)
       .update({ name: 'Updated', email: 'new@test.com' })
       .where({ id: 1 })
-      .getKnexQuery()
-      .toSQL();
+      .getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -519,7 +509,7 @@ describe('UPSERT — ON CONFLICT by id', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().getKnexQuery().toSQL();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -565,7 +555,7 @@ describe('DELETE — simple WHERE', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).getKnexQuery().toSQL();
+    mikroEm.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).getFormattedQuery();
   });
 
   bench('Drizzle', () => {
@@ -629,14 +619,13 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
     mikroEm
       .createQueryBuilder(MikroUserSchema)
       .select(['companyId'])
-      .addSelect('COUNT(*) as count')
-      .addSelect('MAX(createdAt) as maxCreated')
+      .addSelect(raw('COUNT(*) as count'))
+      .addSelect(raw('MAX(createdAt) as maxCreated'))
       .groupBy('companyId')
       .having('COUNT(*) > ?', [5])
+      .orderBy({ [raw('COUNT(*)')]: 'DESC' })
       .limit(10)
-      .getKnexQuery()
-      .orderByRaw('COUNT(*) DESC')
-      .toSQL();
+      .getFormattedQuery();
   });
 
   bench('Drizzle', () => {

@@ -385,7 +385,7 @@
     text-align: center;
     margin-top: 2px;
   }
-  .method-content {}
+
   .method-label {
     font-size: 22px;
     font-weight: 700;
@@ -404,11 +404,11 @@
   }
   @media print {
     * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      color-adjust: exact !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      color-adjust: exact;
     }
-    body { background: #0f0f23 !important; margin: 0; }
+    body { background: #0f0f23; margin: 0; }
     .slides { gap: 0; padding: 0; }
     .slide {
       width: 100vw;
@@ -457,155 +457,24 @@
     <div class="slide-footer"><span>3 runs averaged · Apple Silicon M4</span><span class="slide-num">2/9</span></div>
   </div>
 
-  <!-- SLIDE 3: Write Operations -->
+  <!-- SLIDE 3: Write Operations (rendered by JS) -->
   <div class="slide" id="slide-3">
     <div class="chart-slide-title">Write Operations (K ops/sec)</div>
-
-    <div class="chart-category">
-      <div class="chart-label">INSERT — 10 rows <span class="chart-winner">UQL 1.49x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">606K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:67%"></div></div><span class="bar-val">407K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:33%"></div></div><span class="bar-val">202K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:33%"></div></div><span class="bar-val">197K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:8%"></div></div><span class="bar-val">50K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:8%"></div></div><span class="bar-val">47K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:2%"></div></div><span class="bar-val">13K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">UPDATE — SET + WHERE <span class="chart-winner">UQL 2.22x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,817K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:45%"></div></div><span class="bar-val">819K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:33%"></div></div><span class="bar-val">601K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:18%"></div></div><span class="bar-val">321K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:13%"></div></div><span class="bar-val">234K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:7%"></div></div><span class="bar-val">119K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:4%"></div></div><span class="bar-val">81K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">UPSERT — ON CONFLICT <span class="chart-winner">UQL 1.99x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">693K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:50%"></div></div><span class="bar-val">349K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:48%"></div></div><span class="bar-val">334K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:48%"></div></div><span class="bar-val">334K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:46%"></div></div><span class="bar-val">316K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:19%"></div></div><span class="bar-val">130K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">38K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">DELETE — WHERE <span class="chart-winner">UQL 2.70x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">3,642K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:37%"></div></div><span class="bar-val">1,349K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:35%"></div></div><span class="bar-val">1,290K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:26%"></div></div><span class="bar-val">962K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:15%"></div></div><span class="bar-val">542K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:6%"></div></div><span class="bar-val">212K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">148K</span></div>
-    </div>
-
+    <div id="write-charts"></div>
     <div class="slide-footer"><span>Higher is better · 3-run average</span><span class="slide-num">3/9</span></div>
   </div>
 
-  <!-- SLIDE 4: Read Operations -->
+  <!-- SLIDE 4: Read Operations (rendered by JS) -->
   <div class="slide" id="slide-4">
     <div class="chart-slide-title">Read & Aggregate Operations (K ops/sec)</div>
-
-    <div class="chart-category">
-      <div class="chart-label">SELECT — 1 field <span class="chart-winner">UQL 1.27x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">3,994K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:79%"></div></div><span class="bar-val">3,143K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:39%"></div></div><span class="bar-val">1,559K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:25%"></div></div><span class="bar-val">994K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:20%"></div></div><span class="bar-val">817K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:7%"></div></div><span class="bar-val">297K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:6%"></div></div><span class="bar-val">238K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">SELECT — WHERE + SORT + LIMIT <span class="chart-winner">UQL 2.50x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,200K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:40%"></div></div><span class="bar-val">480K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:35%"></div></div><span class="bar-val">425K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:32%"></div></div><span class="bar-val">385K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:30%"></div></div><span class="bar-val">355K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">60K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">46K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">SELECT — Complex $or <span class="chart-winner">UQL 2.95x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">644K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:34%"></div></div><span class="bar-val">218K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:31%"></div></div><span class="bar-val">199K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:29%"></div></div><span class="bar-val">186K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:24%"></div></div><span class="bar-val">152K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">35K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:3%"></div></div><span class="bar-val">22K</span></div>
-    </div>
-
-    <div class="chart-category">
-      <div class="chart-label">AGGREGATE — GROUP BY + HAVING <span class="chart-winner">UQL 3.66x</span></div>
-      <div class="bar-row"><span class="bar-name">UQL</span><div class="bar-track"><div class="bar-fill color-uql" style="width:100%"></div></div><span class="bar-val">1,489K</span></div>
-      <div class="bar-row"><span class="bar-name">Sequelize</span><div class="bar-track"><div class="bar-fill color-sequelize" style="width:27%"></div></div><span class="bar-val">407K</span></div>
-      <div class="bar-row"><span class="bar-name">TypeORM</span><div class="bar-track"><div class="bar-fill color-typeorm" style="width:24%"></div></div><span class="bar-val">364K</span></div>
-      <div class="bar-row"><span class="bar-name">Knex</span><div class="bar-track"><div class="bar-fill color-knex" style="width:19%"></div></div><span class="bar-val">284K</span></div>
-      <div class="bar-row"><span class="bar-name">Kysely</span><div class="bar-track"><div class="bar-fill color-kysely" style="width:15%"></div></div><span class="bar-val">227K</span></div>
-      <div class="bar-row"><span class="bar-name">Drizzle</span><div class="bar-track"><div class="bar-fill color-drizzle" style="width:5%"></div></div><span class="bar-val">77K</span></div>
-      <div class="bar-row"><span class="bar-name">MikroORM</span><div class="bar-track"><div class="bar-fill color-mikroorm" style="width:4%"></div></div><span class="bar-val">64K</span></div>
-    </div>
-
+    <div id="read-charts"></div>
     <div class="slide-footer"><span>Higher is better · 3-run average</span><span class="slide-num">4/9</span></div>
   </div>
 
-  <!-- SLIDE 5: Scoreboard -->
+  <!-- SLIDE 5: Scoreboard (rendered by JS) -->
   <div class="slide" id="slide-5">
     <div class="score-title">Final Scoreboard</div>
-    <div class="score-table">
-      <div class="score-row winner">
-        <span class="score-pos">🥇</span>
-        <span class="score-name" style="color:#a78bfa">UQL</span>
-        <span class="score-best">46.6x faster</span>
-        <span class="score-wins won">8/8 🏆</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#888">🥈</span>
-        <span class="score-name">Knex</span>
-        <span class="score-best">31.3x faster</span>
-        <span class="score-wins">0/8</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#888">🥉</span>
-        <span class="score-name">Sequelize</span>
-        <span class="score-best">15.5x faster</span>
-        <span class="score-wins">0/8</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#555">4</span>
-        <span class="score-name">Kysely</span>
-        <span class="score-best">15.2x faster</span>
-        <span class="score-wins">0/8</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#555">5</span>
-        <span class="score-name">TypeORM</span>
-        <span class="score-best">8.5x faster</span>
-        <span class="score-wins">0/8</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#555">6</span>
-        <span class="score-name">MikroORM</span>
-        <span class="score-best">3.8x faster</span>
-        <span class="score-wins">0/8</span>
-      </div>
-      <div class="score-row">
-        <span class="score-pos" style="color:#555">7</span>
-        <span class="score-name">Drizzle</span>
-        <span class="score-best">1.0x baseline</span>
-        <span class="score-wins">0/8</span>
-      </div>
-    </div>
+    <div class="score-table" id="scoreboard"></div>
     <div style="margin-top:40px;font-size:22px;color:#888;text-align:center">
       Including standalone query builders (Knex, Kysely)<br>
       that have zero entity/relation overhead
@@ -631,8 +500,8 @@
 
     <div class="surprise-card">
       <div class="surprise-num">Surprise #3</div>
-      <div class="surprise-headline">MikroORM pays double.</div>
-      <div class="surprise-body">MikroORM uses Knex internally. Every query compiles twice: MikroORM → Knex → SQL. Result: 4-5x slower than Knex alone.</div>
+      <div class="surprise-headline">MikroORM v7 improved, but complex queries remain expensive.</div>
+      <div class="surprise-body">v7 dropped Knex and builds SQL directly — simple ops doubled in speed. But complex queries still show heavy abstraction cost: 23x slower than UQL.</div>
     </div>
 
     <div class="slide-footer"><span></span><span class="slide-num">6/9</span></div>
@@ -666,7 +535,7 @@
     <div class="slide-footer"><span></span><span class="slide-num">7/9</span></div>
   </div>
 
-  <!-- SLIDE 8: Production impact -->
+  <!-- SLIDE 8: Production impact (numbers rendered by JS) -->
   <div class="slide" id="slide-8">
     <div class="prod-title">Does This Matter in Production?</div>
 
@@ -679,14 +548,14 @@
         <div class="prod-unit">CPU-second</div>
       </div>
       <div class="prod-box slow">
-        <div class="prod-label" style="color:#f87171">MikroORM</div>
-        <div class="prod-number">20</div>
+        <div class="prod-label" style="color:#f87171" id="prod-slowest-name">MikroORM</div>
+        <div class="prod-number" id="prod-slowest-cpu">14</div>
         <div class="prod-unit">CPU-seconds</div>
       </div>
     </div>
 
-    <div class="prod-context">
-      <span class="prod-highlight">20x more CPU</span> burned on generating SQL strings — pure waste before a single byte hits the network.
+    <div class="prod-context" id="prod-cpu-ratio">
+      <span class="prod-highlight">14x more CPU</span> burned on generating SQL strings — pure waste before a single byte hits the network.
     </div>
     <div class="prod-context" style="margin-top:20px">
       In serverless → that's your <span class="prod-highlight">bill</span>.<br>
@@ -752,5 +621,110 @@
   </div>
 
 </div>
+
+<script src="results.js"></script>
+<script>
+  const orms = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
+  const cssClasses = { UQL: 'color-uql', Sequelize: 'color-sequelize', TypeORM: 'color-typeorm', MikroORM: 'color-mikroorm', Drizzle: 'color-drizzle', Knex: 'color-knex', Kysely: 'color-kysely' };
+
+  const writeCategories = [
+    { key: 'insert',  label: 'INSERT — 10 rows' },
+    { key: 'update',  label: 'UPDATE — SET + WHERE' },
+    { key: 'upsert',  label: 'UPSERT — ON CONFLICT' },
+    { key: 'delete',  label: 'DELETE — WHERE' },
+  ];
+  const readCategories = [
+    { key: 'simple',    label: 'SELECT — 1 field' },
+    { key: 'filter',    label: 'SELECT — WHERE + SORT + LIMIT' },
+    { key: 'complex',   label: 'SELECT — Complex $or' },
+    { key: 'aggregate', label: 'AGGREGATE — GROUP BY + HAVING' },
+  ];
+  const allCategories = [...writeCategories, ...readCategories];
+
+  function fmtK(v) {
+    if (v >= 1000) {
+      const t = Math.floor(v / 1000);
+      const r = v % 1000;
+      return r === 0 ? `${t},000K` : `${t},${String(r).padStart(3, '0')}K`;
+    }
+    return `${v}K`;
+  }
+
+  function renderChart(container, cats) {
+    const { data } = window.BENCH_DATA;
+    for (const { key, label } of cats) {
+      const values = data[key];
+      const max = Math.max(...values);
+      const sorted = [...values].sort((a, b) => b - a);
+      const multiplier = (max / sorted[1]).toFixed(2);
+      const winnerName = orms[values.indexOf(max)];
+
+      const sortedEntries = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v);
+
+      let html = `<div class="chart-category"><div class="chart-label">${label} <span class="chart-winner">${winnerName} ${multiplier}x</span></div>`;
+      for (const { v, i } of sortedEntries) {
+        const pct = Math.max(Math.round((v / max) * 100), 2);
+        html += `<div class="bar-row"><span class="bar-name">${orms[i]}</span><div class="bar-track"><div class="bar-fill ${cssClasses[orms[i]]}" style="width:${pct}%"></div></div><span class="bar-val">${fmtK(v)}</span></div>`;
+      }
+      html += '</div>';
+      container.insertAdjacentHTML('beforeend', html);
+    }
+  }
+
+  renderChart(document.getElementById('write-charts'), writeCategories);
+  renderChart(document.getElementById('read-charts'), readCategories);
+
+  // Scoreboard
+  (() => {
+    const { data } = window.BENCH_DATA;
+    const catKeys = allCategories.map(c => c.key);
+    const wins = new Array(orms.length).fill(0);
+    for (const cat of catKeys) {
+      const maxIdx = data[cat].indexOf(Math.max(...data[cat]));
+      wins[maxIdx]++;
+    }
+    const bestMultipliers = orms.map((_, i) =>
+      Math.max(...catKeys.map(cat => data[cat][i] / Math.min(...data[cat])))
+    );
+    const rows = orms.map((name, i) => ({ name, wins: wins[i], best: bestMultipliers[i] }))
+      .sort((a, b) => b.best - a.best);
+    const medals = ['🥇', '🥈', '🥉'];
+    const baseline = rows.at(-1).name;
+    const total = catKeys.length;
+    const board = document.getElementById('scoreboard');
+    rows.forEach((r, i) => {
+      const isWinner = r.wins > 0;
+      const pos = medals[i] || `${i + 1}`;
+      const posColor = i < 3 ? (i === 0 ? '' : 'color:#888') : 'color:#555';
+      const bestStr = r.name === baseline ? `${r.best.toFixed(1)}x baseline` : `${r.best.toFixed(1)}x faster`;
+      const winsStr = isWinner ? `${r.wins}/${total} 🏆` : `0/${total}`;
+      board.innerHTML += `<div class="score-row${isWinner ? ' winner' : ''}">
+        <span class="score-pos" style="${posColor}">${pos}</span>
+        <span class="score-name"${isWinner ? ' style="color:#a78bfa"' : ''}>${r.name}</span>
+        <span class="score-best">${bestStr}</span>
+        <span class="score-wins${isWinner ? ' won' : ''}">${winsStr}</span>
+      </div>`;
+    });
+  })();
+
+  // Production impact: compute slowest avg vs UQL
+  (() => {
+    const { data } = window.BENCH_DATA;
+    const catKeys = allCategories.map(c => c.key);
+    const uqlIdx = 0;
+    // Find the entry with the worst average ratio vs UQL
+    let worstName = 'MikroORM';
+    let worstRatio = 0;
+    for (let i = 1; i < orms.length; i++) {
+      const avgRatio = catKeys.reduce((sum, cat) => sum + data[cat][uqlIdx] / data[cat][i], 0) / catKeys.length;
+      if (avgRatio > worstRatio) { worstRatio = avgRatio; worstName = orms[i]; }
+    }
+    const cpuSec = Math.round(worstRatio);
+    document.getElementById('prod-slowest-name').textContent = worstName;
+    document.getElementById('prod-slowest-cpu').textContent = cpuSec;
+    document.getElementById('prod-cpu-ratio').innerHTML =
+      `<span class="prod-highlight">${cpuSec}x more CPU</span> burned on generating SQL strings — pure waste before a single byte hits the network.`;
+  })();
+</script>
 </body>
 </html>

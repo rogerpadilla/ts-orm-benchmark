@@ -156,6 +156,7 @@
         }
       },
       "suspicious": {
+        "noControlCharactersInRegex": "off",
         "noConfusingVoidType": "off",
         "noTemplateCurlyInString": "off",
         "noAsyncPromiseExecutor": "error",
@@ -163,7 +164,6 @@
         "noClassAssign": "error",
         "noCommentText": "error",
         "noCompareNegZero": "error",
-        "noControlCharactersInRegex": "error",
         "noDebugger": "error",
         "noDuplicateCase": "error",
         "noDuplicateClassMembers": "error",

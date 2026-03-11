@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "bench": "npx vitest bench --run 2>&1 | tee /dev/stderr | bun scripts/update-results.ts",
-    "ts": "tsc --noEmit"
+    "ts": "tsc --noEmit",
+    "lint": "biome check",
+    "lint.fix": "biome check --write --unsafe"
   },
   "keywords": [
     "orm",
@@ -23,9 +25,8 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
-    "@mikro-orm/better-sqlite": "^6.6.9",
-    "@mikro-orm/core": "^6.6.9",
-    "@mikro-orm/knex": "^6.6.9",
+    "@mikro-orm/core": "^7.0.1",
+    "@mikro-orm/sqlite": "^7.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "^1.3.10",
     "better-sqlite3": "^12.6.2",
@@ -36,7 +37,7 @@
     "sequelize": "^6.37.8",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3",
-    "uql-orm": "^0.2.4",
+    "uql-orm": "^0.2.6",
     "vitest": "^4.0.18"
   }
 }

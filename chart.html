@@ -202,47 +202,7 @@
     <p>ORMs and Query Builders · Ops/Sec · Higher = Better</p>
   </div>
 
-  <div class="category">
-    <div class="category-label">INSERT — 10 rows in batch <span class="winner-badge winner-uql">UQL 1.56x</span></div>
-    <div class="bars" id="bars-insert"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">UPDATE — SET + WHERE <span class="winner-badge winner-uql">UQL 2.20x</span></div>
-    <div class="bars" id="bars-update"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">UPSERT — ON CONFLICT by id <span class="winner-badge winner-uql">UQL 2.01x</span></div>
-    <div class="bars" id="bars-upsert"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">DELETE — simple WHERE <span class="winner-badge winner-uql">UQL 2.71x</span></div>
-    <div class="bars" id="bars-delete"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">SELECT — 1 field <span class="winner-badge winner-uql">UQL 1.26x</span></div>
-    <div class="bars" id="bars-simple"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">SELECT — WHERE + SORT + LIMIT <span class="winner-badge winner-uql">UQL 2.48x</span></div>
-    <div class="bars" id="bars-filter"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">SELECT — Complex $or + Operators <span class="winner-badge winner-uql">UQL 3.03x</span></div>
-    <div class="bars" id="bars-complex"></div>
-  </div>
-
-  <div class="category">
-    <div class="category-label">AGGREGATE — GROUP BY + COUNT + HAVING <span class="winner-badge winner-uql">UQL 3.78x</span></div>
-    <div class="bars" id="bars-aggregate"></div>
-  </div>
-
-
+  <div id="categories"></div>
 
   <div class="score">
     <span class="score-text">
@@ -290,20 +250,29 @@
     'https://avatars.githubusercontent.com/u/123764858?s=32', // Kysely
   ];
 
-  function renderBars(containerId, values, unit, invert) {
+  const chartCategories = [
+    { key: 'insert',    label: 'INSERT — 10 rows in batch' },
+    { key: 'update',    label: 'UPDATE — SET + WHERE' },
+    { key: 'upsert',    label: 'UPSERT — ON CONFLICT by id' },
+    { key: 'delete',    label: 'DELETE — simple WHERE' },
+    { key: 'simple',    label: 'SELECT — 1 field' },
+    { key: 'filter',    label: 'SELECT — WHERE + SORT + LIMIT' },
+    { key: 'complex',   label: 'SELECT — Complex $or + Operators' },
+    { key: 'aggregate', label: 'AGGREGATE — GROUP BY + COUNT + HAVING' },
+  ];
+
+  function renderBars(containerId, values) {
     const container = document.getElementById(containerId);
-    const nonZero = values.filter(v => v > 0);
-    const max = Math.max(...nonZero);
-    const min = Math.min(...nonZero);
+    const max = Math.max(...values);
 
     const sorted = values.map((val, i) => ({ val, i }))
       .filter(({ val }) => val > 0)
-      .sort((a, b) => invert ? a.val - b.val : b.val - a.val);
+      .sort((a, b) => b.val - a.val);
 
     sorted.forEach(({ val, i }) => {
       const pct = Math.max((val / max) * 100, 4);
-      const isWinner = invert ? val === min : val === max;
-      const label = unit ? val + unit : (val >= 1000 ? (val / 1000).toFixed(1) + 'M' : val + 'K');
+      const isWinner = val === max;
+      const label = val >= 1000 ? (val / 1000).toFixed(1) + 'M' : val + 'K';
       const labelInside = pct >= 15;
       const row = document.createElement('div');
       row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
@@ -320,16 +289,27 @@
     });
   }
 
-  // Data loaded from results.js (single source of truth)
+  // Render all categories dynamically from results.js
   const { data } = window.BENCH_DATA;
-  renderBars('bars-insert', data.insert);
-  renderBars('bars-update', data.update);
-  renderBars('bars-upsert', data.upsert);
-  renderBars('bars-delete', data.delete);
-  renderBars('bars-simple', data.simple);
-  renderBars('bars-filter', data.filter);
-  renderBars('bars-complex', data.complex);
-  renderBars('bars-aggregate', data.aggregate);
+  const root = document.getElementById('categories');
+
+  for (const { key, label } of chartCategories) {
+    const values = data[key];
+    const max = Math.max(...values);
+    const sorted = [...values].sort((a, b) => b - a);
+    const multiplier = (max / sorted[1]).toFixed(2);
+    const winnerName = orms[values.indexOf(max)];
+
+    const cat = document.createElement('div');
+    cat.className = 'category';
+    cat.innerHTML = `
+      <div class="category-label">${label} <span class="winner-badge winner-uql">${winnerName} ${multiplier}x</span></div>
+      <div class="bars" id="bars-${key}"></div>
+    `;
+    root.appendChild(cat);
+
+    renderBars(`bars-${key}`, values);
+  }
 </script>
 
 </body>
