@@ -5,42 +5,42 @@
     "": {
       "name": "ts-orm-benchmark",
       "devDependencies": {
-        "@biomejs/biome": "^2.4.6",
-        "@mikro-orm/core": "^7.0.1",
-        "@mikro-orm/sqlite": "^7.0.1",
+        "@biomejs/biome": "^2.4.7",
+        "@mikro-orm/core": "^7.0.2",
+        "@mikro-orm/sqlite": "^7.0.2",
         "@types/better-sqlite3": "^7.6.13",
         "@types/bun": "^1.3.10",
-        "better-sqlite3": "^12.6.2",
+        "better-sqlite3": "^12.8.0",
         "drizzle-orm": "^0.45.1",
         "knex": "^3.1.0",
-        "kysely": "^0.28.11",
+        "kysely": "^0.28.12",
         "pg": "^8.20.0",
         "sequelize": "^6.37.8",
         "typeorm": "^0.3.28",
         "typescript": "^5.9.3",
-        "uql-orm": "^0.4.0",
+        "uql-orm": "^0.5.2",
         "vitest": "^4.1.0",
       },
     },
   },
   "packages": {
-    "@biomejs/biome": ["@biomejs/biome@2.4.6", "", { "optionalDependencies": { "@biomejs/cli-darwin-arm64": "2.4.6", "@biomejs/cli-darwin-x64": "2.4.6", "@biomejs/cli-linux-arm64": "2.4.6", "@biomejs/cli-linux-arm64-musl": "2.4.6", "@biomejs/cli-linux-x64": "2.4.6", "@biomejs/cli-linux-x64-musl": "2.4.6", "@biomejs/cli-win32-arm64": "2.4.6", "@biomejs/cli-win32-x64": "2.4.6" }, "bin": { "biome": "bin/biome" } }, "sha512-QnHe81PMslpy3mnpL8DnO2M4S4ZnYPkjlGCLWBZT/3R9M6b5daArWMMtEfP52/n174RKnwRIf3oT8+wc9ihSfQ=="],
+    "@biomejs/biome": ["@biomejs/biome@2.4.7", "", { "optionalDependencies": { "@biomejs/cli-darwin-arm64": "2.4.7", "@biomejs/cli-darwin-x64": "2.4.7", "@biomejs/cli-linux-arm64": "2.4.7", "@biomejs/cli-linux-arm64-musl": "2.4.7", "@biomejs/cli-linux-x64": "2.4.7", "@biomejs/cli-linux-x64-musl": "2.4.7", "@biomejs/cli-win32-arm64": "2.4.7", "@biomejs/cli-win32-x64": "2.4.7" }, "bin": { "biome": "bin/biome" } }, "sha512-vXrgcmNGZ4lpdwZSpMf1hWw1aWS6B+SyeSYKTLrNsiUsAdSRN0J4d/7mF3ogJFbIwFFSOL3wT92Zzxia/d5/ng=="],
 
-    "@biomejs/cli-darwin-arm64": ["@biomejs/cli-darwin-arm64@2.4.6", "", { "os": "darwin", "cpu": "arm64" }, "sha512-NW18GSyxr+8sJIqgoGwVp5Zqm4SALH4b4gftIA0n62PTuBs6G2tHlwNAOj0Vq0KKSs7Sf88VjjmHh0O36EnzrQ=="],
+    "@biomejs/cli-darwin-arm64": ["@biomejs/cli-darwin-arm64@2.4.7", "", { "os": "darwin", "cpu": "arm64" }, "sha512-Oo0cF5mHzmvDmTXw8XSjhCia8K6YrZnk7aCS54+/HxyMdZMruMO3nfpDsrlar/EQWe41r1qrwKiCa2QDYHDzWA=="],
 
-    "@biomejs/cli-darwin-x64": ["@biomejs/cli-darwin-x64@2.4.6", "", { "os": "darwin", "cpu": "x64" }, "sha512-4uiE/9tuI7cnjtY9b07RgS7gGyYOAfIAGeVJWEfeCnAarOAS7qVmuRyX6d7JTKw28/mt+rUzMasYeZ+0R/U1Mw=="],
+    "@biomejs/cli-darwin-x64": ["@biomejs/cli-darwin-x64@2.4.7", "", { "os": "darwin", "cpu": "x64" }, "sha512-I+cOG3sd/7HdFtvDSnF9QQPrWguUH7zrkIMMykM3PtfWU9soTcS2yRb9Myq6MHmzbeCT08D1UmY+BaiMl5CcoQ=="],
 
-    "@biomejs/cli-linux-arm64": ["@biomejs/cli-linux-arm64@2.4.6", "", { "os": "linux", "cpu": "arm64" }, "sha512-kMLaI7OF5GN1Q8Doymjro1P8rVEoy7BKQALNz6fiR8IC1WKduoNyteBtJlHT7ASIL0Cx2jR6VUOBIbcB1B8pew=="],
+    "@biomejs/cli-linux-arm64": ["@biomejs/cli-linux-arm64@2.4.7", "", { "os": "linux", "cpu": "arm64" }, "sha512-om6FugwmibzfP/6ALj5WRDVSND4H2G9X0nkI1HZpp2ySf9lW2j0X68oQSaHEnls6666oy4KDsc5RFjT4m0kV0w=="],
 
-    "@biomejs/cli-linux-arm64-musl": ["@biomejs/cli-linux-arm64-musl@2.4.6", "", { "os": "linux", "cpu": "arm64" }, "sha512-F/JdB7eN22txiTqHM5KhIVt0jVkzZwVYrdTR1O3Y4auBOQcXxHK4dxULf4z43QyZI5tsnQJrRBHZy7wwtL+B3A=="],
+    "@biomejs/cli-linux-arm64-musl": ["@biomejs/cli-linux-arm64-musl@2.4.7", "", { "os": "linux", "cpu": "arm64" }, "sha512-I2NvM9KPb09jWml93O2/5WMfNR7Lee5Latag1JThDRMURVhPX74p9UDnyTw3Ae6cE1DgXfw7sqQgX7rkvpc0vw=="],
 
-    "@biomejs/cli-linux-x64": ["@biomejs/cli-linux-x64@2.4.6", "", { "os": "linux", "cpu": "x64" }, "sha512-oHXmUFEoH8Lql1xfc3QkFLiC1hGR7qedv5eKNlC185or+o4/4HiaU7vYODAH3peRCfsuLr1g6v2fK9dFFOYdyw=="],
+    "@biomejs/cli-linux-x64": ["@biomejs/cli-linux-x64@2.4.7", "", { "os": "linux", "cpu": "x64" }, "sha512-bV8/uo2Tj+gumnk4sUdkerWyCPRabaZdv88IpbmDWARQQoA/Q0YaqPz1a+LSEDIL7OfrnPi9Hq1Llz4ZIGyIQQ=="],
 
-    "@biomejs/cli-linux-x64-musl": ["@biomejs/cli-linux-x64-musl@2.4.6", "", { "os": "linux", "cpu": "x64" }, "sha512-C9s98IPDu7DYarjlZNuzJKTjVHN03RUnmHV5htvqsx6vEUXCDSJ59DNwjKVD5XYoSS4N+BYhq3RTBAL8X6svEg=="],
+    "@biomejs/cli-linux-x64-musl": ["@biomejs/cli-linux-x64-musl@2.4.7", "", { "os": "linux", "cpu": "x64" }, "sha512-00kx4YrBMU8374zd2wHuRV5wseh0rom5HqRND+vDldJPrWwQw+mzd/d8byI9hPx926CG+vWzq6AeiT7Yi5y59g=="],
 
-    "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.4.6", "", { "os": "win32", "cpu": "arm64" }, "sha512-xzThn87Pf3YrOGTEODFGONmqXpTwUNxovQb72iaUOdcw8sBSY3+3WD8Hm9IhMYLnPi0n32s3L3NWU6+eSjfqFg=="],
+    "@biomejs/cli-win32-arm64": ["@biomejs/cli-win32-arm64@2.4.7", "", { "os": "win32", "cpu": "arm64" }, "sha512-hOUHBMlFCvDhu3WCq6vaBoG0dp0LkWxSEnEEsxxXvOa9TfT6ZBnbh72A/xBM7CBYB7WgwqboetzFEVDnMxelyw=="],
 
-    "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.6", "", { "os": "win32", "cpu": "x64" }, "sha512-7++XhnsPlr1HDbor5amovPjOH6vsrFOCdp93iKXhFn6bcMUI6soodj3WWKfgEO6JosKU1W5n3uky3WW9RlRjTg=="],
+    "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.4.7", "", { "os": "win32", "cpu": "x64" }, "sha512-qEpGjSkPC3qX4ycbMUthXvi9CkRq7kZpkqMY1OyhmYlYLnANnooDQ7hDerM8+0NJ+DZKVnsIc07h30XOpt7LtQ=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.3", "", { "os": "aix", "cpu": "ppc64" }, "sha512-9fJMTNFTWZMh5qwrBItuziu834eOCUcEqymSH7pY+zoMVEZg3gcPuBNxH1EvfVYe9h0x/Ptw8KBzv7qxb7l8dg=="],
 
@@ -124,11 +124,11 @@
 
     "@libsql/win32-x64-msvc": ["@libsql/win32-x64-msvc@0.5.22", "", { "os": "win32", "cpu": "x64" }, "sha512-Fj0j8RnBpo43tVZUVoNK6BV/9AtDUM5S7DF3LB4qTYg1LMSZqi3yeCneUTLJD6XomQJlZzbI4mst89yspVSAnA=="],
 
-    "@mikro-orm/core": ["@mikro-orm/core@7.0.1", "", { "peerDependencies": { "dataloader": "2.2.3" }, "optionalPeers": ["dataloader"] }, "sha512-m6Q0xzZij4nR3vbEVwxRXE25L0YuDN4z2+NkqjqPKs+N1A09HfZPadBqgr0Wj9YYxEh/CBf9RGFsRCLFdlRNQA=="],
+    "@mikro-orm/core": ["@mikro-orm/core@7.0.2", "", { "peerDependencies": { "dataloader": "2.2.3" }, "optionalPeers": ["dataloader"] }, "sha512-OzbvkyPiJnQhLpdbWcYQPh41v1jmv1KKrtJm9Irf1H7e55Kk5W2fogy74OOPIQN2mWpBz7VP6iz+o/ncEX29PQ=="],
 
-    "@mikro-orm/sql": ["@mikro-orm/sql@7.0.1", "", { "dependencies": { "kysely": "0.28.11" }, "peerDependencies": { "@mikro-orm/core": "7.0.1" } }, "sha512-mSe33DrTDRYUzSbczBdtpOfkoaDDSEnpS5Y3wWqvXfu4e2qKFnov2dvHxiO5UqzNG2LHGd9CwBUY2If4CBblYg=="],
+    "@mikro-orm/sql": ["@mikro-orm/sql@7.0.2", "", { "dependencies": { "kysely": "0.28.12" }, "peerDependencies": { "@mikro-orm/core": "7.0.2" } }, "sha512-qWCtHdjgvDYHIaJDvgY0uEu4O3hzlTJn6nrfyGxHC2d3VGbAdx8UNSq8icNmb40CO8IK4MjbwOssUqcaDLwStQ=="],
 
-    "@mikro-orm/sqlite": ["@mikro-orm/sqlite@7.0.1", "", { "dependencies": { "@mikro-orm/sql": "7.0.1", "better-sqlite3": "12.6.2", "kysely": "0.28.11" }, "peerDependencies": { "@mikro-orm/core": "7.0.1" } }, "sha512-3B3/8lpipWo583QLVUQGO+pbtFafU51pBA3aZ1P6qjvA5OL1En5Ud2GyRHgiOKGn8/En76dpGkVyqPsiyQTINw=="],
+    "@mikro-orm/sqlite": ["@mikro-orm/sqlite@7.0.2", "", { "dependencies": { "@mikro-orm/sql": "7.0.2", "better-sqlite3": "12.8.0", "kysely": "0.28.12" }, "peerDependencies": { "@mikro-orm/core": "7.0.2" } }, "sha512-wOskJG/ZVpvfKqzdYsewo/jpg+W+EYFMW7REG9Dnor1GLX+QDGQRm0KkdL8gl/OYFujwKrZUeMJRfmqXFr2tZw=="],
 
     "@mongodb-js/saslprep": ["@mongodb-js/saslprep@1.4.6", "", { "dependencies": { "sparse-bitfield": "^3.0.3" } }, "sha512-y+x3H1xBZd38n10NZF/rEBlvDOOMQ6LKUTHqr8R9VkJ+mmQOYtJFxIlkkK8fZrtOiL6VixbOBWMbZGBdal3Z1g=="],
 
@@ -250,7 +250,7 @@
 
     "base64-js": ["base64-js@1.5.1", "", {}, "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA=="],
 
-    "better-sqlite3": ["better-sqlite3@12.6.2", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-8VYKM3MjCa9WcaSAI3hzwhmyHVlH8tiGFwf0RlTsZPWJ1I5MkzjiudCo4KC4DxOaL/53A5B1sI/IbldNFDbsKA=="],
+    "better-sqlite3": ["better-sqlite3@12.8.0", "", { "dependencies": { "bindings": "^1.5.0", "prebuild-install": "^7.1.1" } }, "sha512-RxD2Vd96sQDjQr20kdP+F+dK/1OUNiVOl200vKBZY8u0vTwysfolF6Hq+3ZK2+h8My9YvZhHsF+RSGZW2VYrPQ=="],
 
     "bindings": ["bindings@1.5.0", "", { "dependencies": { "file-uri-to-path": "1.0.0" } }, "sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ=="],
 
@@ -420,7 +420,7 @@
 
     "knex": ["knex@3.1.0", "", { "dependencies": { "colorette": "2.0.19", "commander": "^10.0.0", "debug": "4.3.4", "escalade": "^3.1.1", "esm": "^3.2.25", "get-package-type": "^0.1.0", "getopts": "2.3.0", "interpret": "^2.2.0", "lodash": "^4.17.21", "pg-connection-string": "2.6.2", "rechoir": "^0.8.0", "resolve-from": "^5.0.0", "tarn": "^3.0.2", "tildify": "2.0.0" }, "bin": { "knex": "bin/cli.js" } }, "sha512-GLoII6hR0c4ti243gMs5/1Rb3B+AjwMOfjYm97pu0FOQa7JH56hgBxYf5WK2525ceSbBY1cjeZ9yk99GPMB6Kw=="],
 
-    "kysely": ["kysely@0.28.11", "", {}, "sha512-zpGIFg0HuoC893rIjYX1BETkVWdDnzTzF5e0kWXJFg5lE0k1/LfNWBejrcnOFu8Q2Rfq/hTDTU7XLUM8QOrpzg=="],
+    "kysely": ["kysely@0.28.12", "", {}, "sha512-kWiueDWXhbCchgiotwXkwdxZE/6h56IHAeFWg4euUfW0YsmO9sxbAxzx1KLLv2lox15EfuuxHQvgJ1qIfZuHGw=="],
 
     "libsql": ["libsql@0.5.22", "", { "dependencies": { "@neon-rs/load": "^0.0.4", "detect-libc": "2.0.2" }, "optionalDependencies": { "@libsql/darwin-arm64": "0.5.22", "@libsql/darwin-x64": "0.5.22", "@libsql/linux-arm-gnueabihf": "0.5.22", "@libsql/linux-arm-musleabihf": "0.5.22", "@libsql/linux-arm64-gnu": "0.5.22", "@libsql/linux-arm64-musl": "0.5.22", "@libsql/linux-x64-gnu": "0.5.22", "@libsql/linux-x64-musl": "0.5.22", "@libsql/win32-x64-msvc": "0.5.22" }, "os": [ "linux", "win32", "darwin", ], "cpu": [ "arm", "x64", "arm64", ] }, "sha512-NscWthMQt7fpU8lqd7LXMvT9pi+KhhmTHAJWUB/Lj6MWa0MKFv0F2V4C6WKKpjCVZl0VwcDz4nOI3CyaT1DDiA=="],
 
@@ -636,7 +636,7 @@
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
 
-    "uql-orm": ["uql-orm@0.4.0", "", { "dependencies": { "jiti": "^2.6.1", "reflect-metadata": "^0.2.2", "sqlstring": "^2.3.3", "sqlstring-sqlite": "^0.1.1", "tslib": "^2.8.1" }, "peerDependencies": { "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0" }, "optionalPeers": ["@libsql/client", "@neondatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-q/BqJ6XH5RCnpYmz5IAEGXeATcZuN+/NA/eX32chNrD0BhCWiDa1dsSB0d5LQaDSvhGVzqnm0/dvlaugzQqwAw=="],
+    "uql-orm": ["uql-orm@0.5.2", "", { "dependencies": { "jiti": "^2.6.1", "reflect-metadata": "^0.2.2", "sqlstring": "^2.3.3", "sqlstring-sqlite": "^0.1.1", "tslib": "^2.8.1" }, "peerDependencies": { "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0" }, "optionalPeers": ["@libsql/client", "@neondatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-UB8cDUTNH80oI5wLfdhUqXpxpHPNq5l5MG0GUd/mg2N0btBiAiK/gbw+7tA1qKQTHG9CtVrFqOmRhUdWtx9kNg=="],
 
     "util-deprecate": ["util-deprecate@1.0.2", "", {}, "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw=="],
 
