@@ -92,13 +92,13 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| [UQL](https://uql-orm.dev)       | 0.4.0   |
+| [UQL](https://uql-orm.dev)       | 0.5.2   |
 | [Sequelize](https://sequelize.org) | 6.37.8  |
 | [TypeORM](https://typeorm.io)   | 0.3.28  |
-| [MikroORM](https://mikro-orm.io)  | 7.0.1   |
+| [MikroORM](https://mikro-orm.io)  | 7.0.2   |
 | [Drizzle](https://orm.drizzle.team)   | 0.45.1  |
 | [Knex](https://knexjs.org)      | 3.1.0   |
-| [Kysely](https://kysely.dev)    | 0.28.11 |
+| [Kysely](https://kysely.dev)    | 0.28.12 |
 
 ## Contributing
 
