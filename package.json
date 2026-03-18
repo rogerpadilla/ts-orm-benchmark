@@ -24,9 +24,9 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.4.7",
-    "@mikro-orm/core": "^7.0.2",
-    "@mikro-orm/sqlite": "^7.0.2",
+    "@biomejs/biome": "^2.4.8",
+    "@mikro-orm/core": "^7.0.3",
+    "@mikro-orm/sqlite": "^7.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/bun": "^1.3.10",
     "better-sqlite3": "^12.8.0",
@@ -37,7 +37,7 @@
     "sequelize": "^6.37.8",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3",
-    "uql-orm": "^0.5.2",
+    "uql-orm": "^0.5.3",
     "vitest": "^4.1.0"
   }
 }
