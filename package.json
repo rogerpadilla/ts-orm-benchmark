@@ -1,10 +1,10 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "⚡ TypeScript ORM & query builder SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
   "type": "module",
   "scripts": {
-    "bench": "npx vitest bench --run --outputJson bench-latest.json && bun scripts/update-results.ts bench-latest.json && rm -f bench-latest.json",
+    "bench": "rm -f bench-1.json bench-2.json bench-3.json && npx vitest bench --run --outputJson bench-1.json && npx vitest bench --run --outputJson bench-2.json && npx vitest bench --run --outputJson bench-3.json && bun scripts/average-bench.ts bench-1.json bench-2.json bench-3.json && rm -f bench-1.json bench-2.json bench-3.json",
     "ts": "tsc --noEmit",
     "lint": "biome check",
     "lint.fix": "biome check --write --unsafe"
