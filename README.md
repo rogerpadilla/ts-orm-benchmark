@@ -12,14 +12,14 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
-| INSERT (10 rows)          | **524K** 🥇 | 176K | 41K | 58K | 11K | 370K | 174K |
-| UPDATE (SET+WHERE)        | **1,589K** 🥇 | 205K | 282K | 193K | 70K | 547K | 709K |
-| UPSERT (ON CONFLICT)      | **583K** 🥇 | 292K | 273K | 207K | 32K | 313K | 286K |
-| DELETE (WHERE)            | **3,061K** 🥇 | 1,172K | 494K | 235K | 182K | 882K | 1,113K |
-| SELECT (1 field)          | **3,499K** 🥇 | 2,514K | 705K | 522K | 206K | 896K | 1,332K |
-| SELECT (WHERE+SORT+LIMIT) | **1,055K** 🥇 | 339K | 321K | 64K | 52K | 454K | 359K |
-| SELECT (complex $or)      | **554K** 🥇 | 130K | 177K | 24K | 31K | 189K | 182K |
-| AGGREGATE (GROUP+HAVING)  | **1,262K** 🥇 | 357K | 307K | 62K | 62K | 254K | 187K |
+| INSERT (10 rows)          | **516K** 🥇 | 174K | 39K | 55K | 10K | 359K | 166K |
+| UPDATE (SET+WHERE)        | **1,506K** 🥇 | 208K | 269K | 183K | 68K | 499K | 680K |
+| UPSERT (ON CONFLICT)      | **557K** 🥇 | 281K | 270K | 208K | 32K | 316K | 287K |
+| DELETE (WHERE)            | **3,041K** 🥇 | 1,184K | 487K | 240K | 181K | 878K | 1,090K |
+| SELECT (1 field)          | **3,623K** 🥇 | 2,687K | 683K | 517K | 198K | 853K | 1,319K |
+| SELECT (WHERE+SORT+LIMIT) | **1,022K** 🥇 | 330K | 321K | 64K | 53K | 473K | 382K |
+| SELECT (complex $or)      | **558K** 🥇 | 130K | 176K | 25K | 31K | 195K | 192K |
+| AGGREGATE (GROUP+HAVING)  | **1,241K** 🥇 | 362K | 307K | 65K | 59K | 270K | 198K |
 
 **UQL wins 8 out of 8** — even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
 
@@ -27,12 +27,12 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | P   | Entry         | Best          | Wins      |
 | --- | ------------- | ------------- | --------- |
-| 🥇 1 | **UQL**       | 40.5x faster  | **8/8** 🏆 |
-| 🥈 2 | Knex          | 33.5x faster  | 0/8       |
-| 🥉 3 | Sequelize     | 16.6x faster  | 0/8       |
-| 4    | Kysely        | 15.7x faster  | 0/8       |
-| 5    | TypeORM       | 8.1x faster   | 0/8       |
-| 6    | MikroORM      | 5.9x faster   | 0/8       |
+| 🥇 1 | **UQL**       | 51.6x faster  | **8/8** 🏆 |
+| 🥈 2 | Knex          | 35.9x faster  | 0/8       |
+| 🥉 3 | Sequelize     | 17.4x faster  | 0/8       |
+| 4    | Kysely        | 16.6x faster  | 0/8       |
+| 5    | TypeORM       | 8.4x faster   | 0/8       |
+| 6    | MikroORM      | 6.5x faster   | 0/8       |
 | 7    | Drizzle       | 1.2x baseline | 0/8       |
 
 ### Why No Prisma?

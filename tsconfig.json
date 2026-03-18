@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
+    "lib": ["ESNext", "ES2024.Collection"],
     "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
@@ -12,5 +13,5 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["src"]
+  "include": ["src", "scripts"]
 }
