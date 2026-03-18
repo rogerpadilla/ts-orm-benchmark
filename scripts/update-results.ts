@@ -6,18 +6,10 @@
  *   bun scripts/update-results.ts bench-latest.json
  */
 
-import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { VitestBenchJson } from './bench-common';
-import {
-  categoryKeys,
-  entries,
-  extractKOpsPerCategoryAndEntry,
-  generateResultsJs,
-  root,
-  updateReadme,
-} from './bench-common';
+import { categoryKeys, entries, root, syncResultsArtifactsFromVitestJson } from './bench-common';
 
 const jsonPath = process.argv[2];
 if (!jsonPath) {
@@ -26,27 +18,14 @@ if (!jsonPath) {
 }
 
 const vitestJson = JSON.parse(readFileSync(jsonPath, 'utf8')) as VitestBenchJson;
-const data = extractKOpsPerCategoryAndEntry(vitestJson);
-
-const resultsJsPath = resolve(root, 'results.js');
-const readmePath = resolve(root, 'README.md');
-
-writeFileSync(resultsJsPath, generateResultsJs(data));
-console.log('✅ results.js updated');
-
-let readme = readFileSync(readmePath, 'utf8');
-readme = updateReadme(readme, data);
-writeFileSync(readmePath, readme);
-console.log('✅ README.md updated');
+const data = syncResultsArtifactsFromVitestJson(vitestJson);
+console.log('✅ results.js + README.md updated');
 
 // Results summary (printed for CI logs)
 console.log('\nResults (K ops/sec):');
 for (const catKey of categoryKeys) {
   console.log(`  ${catKey}: ${entries.map((e, i) => `${e}: ${data[catKey][i]}K`).join('  ')}`);
 }
-
-// Keep generated artifacts formatter-clean.
-execSync('biome check --write --unsafe results.js README.md', { stdio: 'ignore' });
 
 // ── Open chart in browser (local only) ───────────────────────────────────────
 if (!process.env.CI) {

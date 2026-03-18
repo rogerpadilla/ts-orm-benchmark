@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -90,11 +91,11 @@ export type VitestBenchJson = {
 
 export const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
-export function escapeRegExp(s: string): string {
+function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function formatOps(v: number): string {
+function formatOps(v: number): string {
   // v is already in "K ops/sec" units (e.g. 517 -> 517K)
   if (v >= 1000) {
     const thousands = Math.floor(v / 1000);
@@ -107,6 +108,19 @@ export function formatOps(v: number): string {
 function findCategoryFromFullName(fullName: string): CategoryKey | null {
   const cat = categories.find((c) => c.match(fullName));
   return cat ? cat.key : null;
+}
+
+function argMaxIndex(values: readonly number[]): number {
+  let bestIdx = 0;
+  let bestVal = values[0] ?? Number.NEGATIVE_INFINITY;
+  for (let i = 1; i < values.length; i++) {
+    const v = values[i]!;
+    if (v > bestVal) {
+      bestVal = v;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
 }
 
 export function extractKOpsPerCategoryAndEntry(vitestJson: VitestBenchJson): Record<CategoryKey, number[]> {
@@ -123,25 +137,26 @@ export function extractKOpsPerCategoryAndEntry(vitestJson: VitestBenchJson): Rec
 
   const groupList = vitestJson.files.flatMap((f) => f.groups);
 
+  type Group = (typeof groupList)[number];
   const groupsWithCategory = groupList
     .map((group) => {
       const catKey = findCategoryFromFullName(group.fullName);
       return catKey ? { catKey, group } : null;
     })
-    .filter((x): x is { catKey: CategoryKey; group: (typeof groupList)[number] } => Boolean(x));
+    .filter((x): x is { catKey: CategoryKey; group: Group } => x !== null);
 
   const grouped = Map.groupBy(groupsWithCategory, (x) => x.catKey);
 
   for (const catKey of categoryKeys) {
     const candidates = grouped.get(catKey);
     if (!candidates || candidates.length === 0) {
-      throw new Error(`Could not find vitest group for category "${catKey}"`);
+      throw new TypeError(`Could not find vitest group for category "${catKey}"`);
     }
     if (candidates.length > 1) {
-      throw new Error(`Multiple vitest groups matched category "${catKey}".`);
+      throw new TypeError(`Multiple vitest groups matched category "${catKey}".`);
     }
 
-    const group = candidates[0]!.group;
+    const group = candidates[0].group;
 
     const hzByEntry = new Map<string, number>();
     for (const b of group.benchmarks) {
@@ -162,7 +177,7 @@ export function extractKOpsPerCategoryAndEntry(vitestJson: VitestBenchJson): Rec
   return out;
 }
 
-export function generateResultsJs(data: Record<CategoryKey, number[]>): string {
+function generateResultsJs(data: Record<CategoryKey, number[]>): string {
   const benchData = {
     entries: [...entries],
     categories: categories.map(({ key, label, group }) => ({ key, label, group })),
@@ -176,7 +191,7 @@ export function generateResultsJs(data: Record<CategoryKey, number[]>): string {
   ].join('\n');
 }
 
-export function updateReadme(readme: string, data: Record<CategoryKey, number[]>): string {
+function updateReadme(readme: string, data: Record<CategoryKey, number[]>): string {
   // Category rows (the 8 tables)
   for (const { key, readmeLabel } of categories) {
     const values = data[key];
@@ -224,7 +239,7 @@ export function updateReadme(readme: string, data: Record<CategoryKey, number[]>
     readme = readme.replace(speedTableHeaderRegex, header + speedTableRows.join('\n') + '\n');
   }
 
-  const topWinnerIdx = wins.indexOf(Math.max(...wins));
+  const topWinnerIdx = argMaxIndex(wins);
   const topWinnerName = entries[topWinnerIdx];
   readme = readme.replace(
     /\*\*\w+ wins \d+ out of \d+\*\*/,
@@ -234,10 +249,44 @@ export function updateReadme(readme: string, data: Record<CategoryKey, number[]>
   return readme;
 }
 
-export function readJsonFile(path: string): unknown {
-  return JSON.parse(readFileSync(path, 'utf8'));
+function writeResultsArtifacts(data: Record<CategoryKey, number[]>): void {
+  const resultsJsPath = resolve(root, 'results.js');
+  const readmePath = resolve(root, 'README.md');
+
+  writeFileSync(resultsJsPath, generateResultsJs(data));
+  let readme = readFileSync(readmePath, 'utf8');
+  readme = updateReadme(readme, data);
+  writeFileSync(readmePath, readme);
 }
 
-export function writeFile(path: string, contents: string): void {
-  writeFileSync(path, contents);
+function formatResultsArtifacts(): void {
+  execFileSync('biome', ['check', '--write', '--unsafe', resolve(root, 'results.js'), resolve(root, 'README.md')], {
+    stdio: 'ignore',
+  });
+}
+
+export function syncResultsArtifactsFromData(data: Record<CategoryKey, number[]>): void {
+  writeResultsArtifacts(data);
+  formatResultsArtifacts();
+}
+
+export function syncResultsArtifactsFromVitestJson(vitestJson: VitestBenchJson): Record<CategoryKey, number[]> {
+  const data = extractKOpsPerCategoryAndEntry(vitestJson);
+  syncResultsArtifactsFromData(data);
+  return data;
+}
+
+export function averageKOpsPerCategoryAndEntry(
+  runs: readonly [VitestBenchJson, VitestBenchJson, VitestBenchJson],
+): Record<CategoryKey, number[]> {
+  const [r1, r2, r3] = runs;
+  const d1 = extractKOpsPerCategoryAndEntry(r1);
+  const d2 = extractKOpsPerCategoryAndEntry(r2);
+  const d3 = extractKOpsPerCategoryAndEntry(r3);
+
+  const out = {} as Record<CategoryKey, number[]>;
+  for (const cat of categoryKeys) {
+    out[cat] = entries.map((_, i) => Math.round((d1[cat][i] + d2[cat][i] + d3[cat][i]) / 3));
+  }
+  return out;
 }
