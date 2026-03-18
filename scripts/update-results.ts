@@ -9,7 +9,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { VitestBenchJson } from './bench-common';
-import { categoryKeys, entries, root, syncResultsArtifactsFromVitestJson } from './bench-common';
+import { printResultsSummary, root, syncResultsArtifactsFromVitestJson } from './bench-common';
 
 const jsonPath = process.argv[2];
 if (!jsonPath) {
@@ -21,11 +21,7 @@ const vitestJson = JSON.parse(readFileSync(jsonPath, 'utf8')) as VitestBenchJson
 const data = syncResultsArtifactsFromVitestJson(vitestJson);
 console.log('✅ results.js + README.md updated');
 
-// Results summary (printed for CI logs)
-console.log('\nResults (K ops/sec):');
-for (const catKey of categoryKeys) {
-  console.log(`  ${catKey}: ${entries.map((e, i) => `${e}: ${data[catKey][i]}K`).join('  ')}`);
-}
+printResultsSummary(data);
 
 // ── Open chart in browser (local only) ───────────────────────────────────────
 if (!process.env.CI) {

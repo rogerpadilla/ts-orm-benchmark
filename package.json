@@ -4,7 +4,7 @@
   "description": "⚡ TypeScript ORM & query builder SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
   "type": "module",
   "scripts": {
-    "bench": "npx vitest bench --run --outputJson bench-latest.json && bun scripts/update-results.ts bench-latest.json && biome check --write --unsafe results.js README.md && rm -f bench-latest.json",
+    "bench": "npx vitest bench --run --outputJson bench-latest.json && bun scripts/update-results.ts bench-latest.json && rm -f bench-latest.json",
     "ts": "tsc --noEmit",
     "lint": "biome check",
     "lint.fix": "biome check --write --unsafe"

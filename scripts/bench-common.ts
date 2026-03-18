@@ -276,6 +276,13 @@ export function syncResultsArtifactsFromVitestJson(vitestJson: VitestBenchJson):
   return data;
 }
 
+export function printResultsSummary(data: Record<CategoryKey, number[]>): void {
+  console.log('\nResults (K ops/sec):');
+  for (const catKey of categoryKeys) {
+    console.log(`  ${catKey}: ${entries.map((e, i) => `${e}: ${data[catKey][i]}K`).join('  ')}`);
+  }
+}
+
 export function averageKOpsPerCategoryAndEntry(
   runs: readonly [VitestBenchJson, VitestBenchJson, VitestBenchJson],
 ): Record<CategoryKey, number[]> {

@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { VitestBenchJson } from './bench-common';
-import { averageKOpsPerCategoryAndEntry, categoryKeys, entries, syncResultsArtifactsFromData } from './bench-common';
+import { averageKOpsPerCategoryAndEntry, printResultsSummary, syncResultsArtifactsFromData } from './bench-common';
 
 function loadVitestRunJson(path: string): VitestBenchJson {
   return JSON.parse(readFileSync(path, 'utf8')) as VitestBenchJson;
@@ -27,11 +27,7 @@ function main() {
   syncResultsArtifactsFromData(data);
   console.log('✅ results.js + README.md updated (averaged results)');
 
-  // Results summary
-  console.log('\nResults (K ops/sec):');
-  for (const cat of categoryKeys) {
-    console.log(`  ${cat}: ${entries.map((e, i) => `${e}: ${data[cat][i]}K`).join('  ')}`);
-  }
+  printResultsSummary(data);
 }
 
 main();
