@@ -5,7 +5,7 @@
  * - UQL         — Object-based queries, pre-computed metadata
  * - Sequelize   — Classic ORM, QueryGenerator API
  * - TypeORM     — EntitySchema + QueryBuilder
- * - MikroORM    — EntitySchema + QueryBuilder (v7, no Knex)
+ * - MikroORM    — defineEntity + QueryBuilder (v7, no Knex)
  * - Drizzle     — Functional SQL builder
  * - Knex        — Standalone query builder
  * - Kysely      — Type-safe query builder
@@ -64,7 +64,7 @@ const TypeORMUserSchema = new EntitySchema({
 let typeormDs: DataSource;
 
 // ── MikroORM ─────────────────────────────────────────────────────────────────
-import { EntitySchema as MikroEntitySchema, MikroORM, raw } from '@mikro-orm/core';
+import { defineEntity, MikroORM, p as mikroP, raw } from '@mikro-orm/core';
 import { defineConfig, type SqlEntityManager } from '@mikro-orm/sqlite';
 
 interface MikroUser {
@@ -75,17 +75,20 @@ interface MikroUser {
   createdAt: number;
 }
 
-const MikroUserSchema = new MikroEntitySchema<MikroUser>({
-  name: 'MikroUser',
-  tableName: 'User',
+const MikroUserSchema = defineEntity({
+  // Keep the same table name (`User`) as the other benchmark entries.
+  name: 'User',
   properties: {
-    id: { type: 'number', primary: true },
-    name: { type: 'string' },
-    email: { type: 'string' },
-    companyId: { type: 'number' },
-    createdAt: { type: 'number' },
+    id: mikroP.integer().primary(),
+    name: mikroP.string(),
+    email: mikroP.string(),
+    companyId: mikroP.integer(),
+    createdAt: mikroP.integer(),
   },
 });
+
+class MikroUserEntity extends MikroUserSchema.class {}
+MikroUserSchema.setClass(MikroUserEntity);
 
 let mikroEm: SqlEntityManager;
 

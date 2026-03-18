@@ -1,9 +1,9 @@
 /**
- * Parse vitest bench output and update results.js + README.md + long.md + short.md.
+ * Update `results.js` + `README.md` from Vitest benchmark JSON.
  *
  * Usage:
- *   npm run bench          # runs bench → parses → updates everything
- *   npx vitest bench --run 2>&1 | tee /dev/stderr | bun scripts/update-results.ts
+ *   npx vitest bench --run --outputJson bench-latest.json
+ *   bun scripts/update-results.ts bench-latest.json
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,114 +12,129 @@ const root = resolve(import.meta.dirname, '..');
 const resultsJsPath = resolve(root, 'results.js');
 const readmePath = resolve(root, 'README.md');
 
-// ── Entries and categories ───────────────────────────────────────────────────
-
-const entries = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'];
+const entries = ['UQL', 'Sequelize', 'TypeORM', 'MikroORM', 'Drizzle', 'Knex', 'Kysely'] as const;
 
 const categories = [
   {
     key: 'insert',
     label: 'INSERT — 10 rows in batch',
     readmeLabel: 'INSERT (10 rows)',
-    pattern: 'INSERT',
+    pattern: 'INSERT — batch (10 rows)',
     group: 'write',
   },
   {
     key: 'update',
     label: 'UPDATE — SET + WHERE',
     readmeLabel: 'UPDATE (SET+WHERE)',
-    pattern: 'UPDATE',
+    pattern: 'UPDATE — simple SET + WHERE',
     group: 'write',
   },
   {
     key: 'upsert',
     label: 'UPSERT — ON CONFLICT by id',
     readmeLabel: 'UPSERT (ON CONFLICT)',
-    pattern: 'UPSERT',
+    pattern: 'UPSERT — ON CONFLICT by id',
     group: 'write',
   },
-  { key: 'delete', label: 'DELETE — simple WHERE', readmeLabel: 'DELETE (WHERE)', pattern: 'DELETE', group: 'write' },
+  {
+    key: 'delete',
+    label: 'DELETE — simple WHERE',
+    readmeLabel: 'DELETE (WHERE)',
+    pattern: 'DELETE — simple WHERE',
+    group: 'write',
+  },
   {
     key: 'simple',
     label: 'SELECT — 1 field',
     readmeLabel: 'SELECT (1 field)',
-    pattern: 'SELECT — simple',
+    pattern: 'SELECT — simple (1 field, no WHERE)',
     group: 'read',
   },
   {
     key: 'filter',
     label: 'SELECT — WHERE + SORT + LIMIT',
     readmeLabel: 'SELECT (WHERE+SORT+LIMIT)',
-    pattern: 'SELECT — WHERE',
+    pattern: 'SELECT — WHERE + SORT + LIMIT',
     group: 'read',
   },
   {
     key: 'complex',
     label: 'SELECT — Complex $or + operators',
     readmeLabel: 'SELECT (complex $or)',
-    pattern: 'SELECT — complex',
+    pattern: 'SELECT — complex $or + operators',
     group: 'read',
   },
   {
     key: 'aggregate',
     label: 'AGGREGATE — GROUP BY + COUNT + HAVING',
     readmeLabel: 'AGGREGATE (GROUP+HAVING)',
-    pattern: 'AGGREGATE',
+    pattern: 'AGGREGATE — GROUP BY + COUNT + HAVING',
     group: 'read',
   },
 ];
 
-const categoryKeys = categories.map((c) => c.key);
+type CategoryKey = (typeof categories)[number]['key'];
+const categoryKeys = categories.map((c) => c.key) as CategoryKey[];
 
-// ── Parse stdin ──────────────────────────────────────────────────────────────
+type VitestBenchJson = {
+  files: Array<{
+    filepath: string;
+    groups: Array<{
+      fullName: string;
+      benchmarks: Array<{
+        name: string;
+        hz: number;
+      }>;
+    }>;
+  }>;
+};
 
-const raw = readFileSync('/dev/stdin', 'utf-8');
-const input = raw.replace(/\x1b\[[0-9;]*m/g, ''); // strip ANSI color codes
-const lines = input.split('\n');
-
-let currentCategory: string | undefined;
-const parsed: Record<string, Record<string, number>> = {};
-
-for (const line of lines) {
-  if (line.includes('✓') && line.includes('>')) {
-    currentCategory = categories.find((c) => line.includes(c.pattern))?.key;
-    if (currentCategory) parsed[currentCategory] = {};
-    continue;
-  }
-
-  if (currentCategory && line.trim().startsWith('·')) {
-    const match = line.match(/·\s+(\S+)\s+([\d,]+\.\d+)/);
-    if (match) {
-      const name = match[1];
-      const hz = Number.parseFloat(match[2].replace(/,/g, ''));
-      parsed[currentCategory][name] = Math.round(hz / 1000);
-    }
-  }
+const jsonPath = process.argv[2];
+if (!jsonPath) {
+  console.error('Usage: bun scripts/update-results.ts <vitest-bench-json-path>');
+  process.exit(1);
 }
 
-// ── Validate ─────────────────────────────────────────────────────────────────
+const vitestJson = JSON.parse(readFileSync(jsonPath, 'utf8')) as VitestBenchJson;
+const groupList = vitestJson.files.flatMap((f) => f.groups);
 
-for (const cat of categoryKeys) {
-  if (!parsed[cat]) {
-    console.error(`Missing category in bench output: ${cat}`);
+const groupByCategory = new Map<CategoryKey, (typeof groupList)[number]>();
+for (const group of groupList) {
+  const cat = categories.find((c) => group.fullName.includes(c.pattern));
+  if (!cat) continue;
+
+  if (groupByCategory.has(cat.key)) {
+    console.error(`Multiple Vitest groups matched category "${cat.key}". Patterns may be ambiguous.`);
     process.exit(1);
   }
-  const missing = entries.filter((e) => !(e in parsed[cat]));
+
+  groupByCategory.set(cat.key as CategoryKey, group);
+}
+
+// data[categoryKey][entryIndex] = K ops/sec (rounded from hz / 1000)
+const data: Record<CategoryKey, number[]> = {} as any;
+for (const catKey of categoryKeys) {
+  const group = groupByCategory.get(catKey);
+  if (!group) {
+    console.error(`Missing category in bench JSON output: ${catKey}`);
+    process.exit(1);
+  }
+
+  const hzByEntry = new Map<string, number>();
+  for (const b of group.benchmarks) {
+    if (typeof b.hz === 'number' && Number.isFinite(b.hz)) hzByEntry.set(b.name, b.hz);
+  }
+
+  const missing = entries.filter((e) => !hzByEntry.has(e));
   if (missing.length) {
-    console.error(`Category "${cat}" missing entries: ${missing.join(', ')}`);
+    console.error(`Category "${catKey}" missing entries or invalid hz: ${missing.join(', ')}`);
     process.exit(1);
   }
-}
 
-// ── Build data ───────────────────────────────────────────────────────────────
-
-const data: Record<string, number[]> = {};
-for (const cat of categoryKeys) {
-  data[cat] = entries.map((e) => parsed[cat][e]);
+  data[catKey] = entries.map((e) => Math.round((hzByEntry.get(e) as number) / 1000));
 }
 
 // ── Write results.js ─────────────────────────────────────────────────────────
-
 const benchData = {
   entries,
   categories: categories.map(({ key, label, group }) => ({ key, label, group })),
@@ -136,7 +151,6 @@ writeFileSync(resultsJsPath, resultsJs);
 console.log('✅ results.js updated');
 
 // ── Update README.md ─────────────────────────────────────────────────────────
-
 function formatOps(v: number): string {
   if (v >= 1000) {
     const thousands = Math.floor(v / 1000);
@@ -146,10 +160,9 @@ function formatOps(v: number): string {
   return `${v}K`;
 }
 
-let readme = readFileSync(readmePath, 'utf-8');
-
+let readme = readFileSync(readmePath, 'utf8');
 for (const { key, readmeLabel } of categories) {
-  const values = data[key];
+  const values = data[key as CategoryKey];
   const max = Math.max(...values);
   const cells = values.map((v) => {
     const formatted = formatOps(v);
@@ -157,15 +170,14 @@ for (const { key, readmeLabel } of categories) {
   });
 
   const row = `| ${readmeLabel.padEnd(25)} | ${cells.join(' | ')} |`;
-  const rowRegex = new RegExp(`^\\|\\s*\\*?\\*?${readmeLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*$`, 'm');
+  const rowRegex = new RegExp(`^\\|\\s*\\*?\\*?${readmeLabel.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}.*$`, 'm');
   readme = readme.replace(rowRegex, row);
 }
 
 // ── Update speed comparison table ────────────────────────────────────────────
-
 const wins = new Array(entries.length).fill(0);
-for (const cat of categoryKeys) {
-  const maxIdx = data[cat].indexOf(Math.max(...data[cat]));
+for (const catKey of categoryKeys) {
+  const maxIdx = data[catKey].indexOf(Math.max(...data[catKey]));
   wins[maxIdx]++;
 }
 
@@ -180,6 +192,7 @@ const speedRows = entries
 const baselineName = speedRows.at(-1)!.name;
 const totalCategories = categoryKeys.length;
 const medals = ['🥇', '🥈', '🥉'];
+
 const speedTableRows = speedRows.map((r, i) => {
   const pos = medals[i] ? `${medals[i]} ${i + 1}` : `${i + 1}`;
   const bestStr = r.name === baselineName ? `${r.best.toFixed(1)}x baseline` : `${r.best.toFixed(1)}x faster`;
@@ -204,145 +217,13 @@ readme = readme.replace(
 writeFileSync(readmePath, readme);
 console.log('✅ README.md updated');
 
-// ── Generate long.md ─────────────────────────────────────────────────────────
-
-function buildTable(catKey: string, label: string): string {
-  const values = data[catKey];
-  const max = Math.max(...values);
-  const sorted = entries.map((name, i) => ({ name, val: values[i] })).sort((a, b) => b.val - a.val);
-  const rows = sorted.map((r) => {
-    const isWinner = r.val === max;
-    const vsWinner = isWinner ? '—' : `${(r.val / max).toFixed(2)}x`;
-    return `| ${r.name.padEnd(9)} | ${(formatOps(r.val) + (isWinner ? ' 🥇' : '')).padEnd(12)} | ${vsWinner.padEnd(9)} |`;
-  });
-  return `### ${label}\n\n| Entry     | ops/sec      | vs winner |\n| --------- | ------------ | --------- |\n${rows.join('\n')}`;
-}
-
-// Compute production impact
-const uqlIdx = 0;
-let worstName = entries[1];
-let worstRatio = 0;
-for (let i = 1; i < entries.length; i++) {
-  const avgRatio = categoryKeys.reduce((sum, cat) => sum + data[cat][uqlIdx] / data[cat][i], 0) / categoryKeys.length;
-  if (avgRatio > worstRatio) {
-    worstRatio = avgRatio;
-    worstName = entries[i];
-  }
-}
-const cpuSeconds = Math.round(worstRatio);
-const mikroIdx = entries.indexOf('MikroORM');
-const complexRatio = Math.round(data.complex[uqlIdx] / data.complex[mikroIdx]);
-const maxBestMultiplier = Math.max(...categoryKeys.map((cat) => Math.max(...data[cat]) / Math.min(...data[cat])));
-
-const longMd = `## I benchmarked every major TypeScript ORM — the "lightweight" query builder was the slowest
-
-I kept seeing "just use Drizzle, it's lightweight" and "ORMs are slow, use a query builder" repeated everywhere. So I decided to actually measure it.
-
-Pure SQL generation speed — no database, no network, no connection pool. Just the overhead your ORM adds to every single request.
-
-7 entries: UQL, Sequelize, TypeORM, MikroORM, Drizzle, Knex, Kysely.
-8 query types. 3 runs averaged. Apple Silicon M4.
-
----
-
-### Methodology
-
-- **Environment:** Node.js v24, Apple Silicon M4, 3 runs averaged.
-- **Versions:** Latest stable of every ORM/QB as of March 2026.
-- **Fairness:** Each ORM uses its most idiomatic API — QueryBuilder for TypeORM/MikroORM, which benefits them by skipping entity overhead.
-- **What's measured:** Pure SQL string generation — no database, no I/O, no connection pool. This isolates ORM overhead only.
-- **Why no Prisma?** Prisma is not a pure TypeScript/JavaScript ORM — only its client is JS/TS. The query engine is a separate Rust binary that builds SQL, making it architecturally incomparable and not even testable this way.
-
----
-
-### The results
-
-${categories.map((c) => buildTable(c.key, c.label)).join('\n\n')}
-
----
-
-### Three things that surprised me
-
-**1. The "lightweight" query builder is the slowest thing in the benchmark.**
-
-Drizzle — marketed as lightweight — is slower than Sequelize (a full ORM from 2014) in every single category. The functional expression-tree approach creates more intermediate objects than Sequelize's simple string concatenation.
-
-**2. Standalone query builders can't beat a well-designed ORM.**
-
-Knex and Kysely have zero entity/relation overhead. They're just SQL string builders. Yet UQL — a full ORM with entities, relations, and migrations — is faster than both in all 8 categories. The conventional wisdom that "ORMs are slow, query builders are fast" doesn't hold when the ORM is designed for performance from day one.
-
-**3. MikroORM v7 improved significantly, but complex queries remain expensive.**
-
-MikroORM v7 dropped Knex as its internal SQL generator and now builds queries directly. This eliminated the double-compilation overhead, improving simple operations by 80-100%. But complex queries with multiple conditions still show the cost of MikroORM's heavy abstraction layer — ${complexRatio}x slower than UQL on complex SELECTs.
-
----
-
-### How UQL gets there
-
-I got curious why the gap was so large, so I dug into the approach. Most ORMs figure out your schema at query time: "What table does \\\`User\\\` map to? What column is \\\`companyId\\\`? Is it nullable?" — they answer these questions on every single query.
-
-UQL answers them once at startup. Field-to-column mappings, table names, relation paths — all pre-computed into lookup tables before the first query runs. At query time, generating SQL is just reading from a cache.
-
-The other difference is allocation. When TypeORM builds a SELECT, it creates a QueryBuilder, then an expression tree, then walks the tree to produce SQL. UQL pushes SQL fragments directly into a string buffer — no intermediate objects, no garbage collection pressure.
-
----
-
-### Does this matter in production?
-
-Database latency is 1-50ms. ORM overhead is microseconds. So who cares?
-
-You care at scale. If you're running a moderately busy API — say 1,000 req/s:
-- UQL adds **1 CPU-second** of ORM overhead
-- ${worstName} adds **${cpuSeconds} CPU-seconds** — for the same queries
-
-That's ${cpuSeconds}x more CPU burned on generating SQL strings — pure waste before a single byte hits the network. In serverless (where you pay per ms), that's your bill. In containers, that's your horizontal scaling cost.
-
----
-
-Full disclosure: I'm the author of UQL. That's exactly why I built the benchmark as an independent repo anyone can audit and reproduce.
-
-Interactive charts: https://rogerpadilla.github.io/ts-orm-benchmark/chart.html
-
-The full benchmark is open source — clone it, run it, prove me wrong. No database needed, finishes in seconds:
-
-https://github.com/rogerpadilla/ts-orm-benchmark
-`;
-
-writeFileSync(resolve(root, 'long.md'), longMd);
-console.log('✅ long.md updated');
-
-// ── Generate short.md ────────────────────────────────────────────────────────
-
-const shortMd = `I benchmarked SQL generation speed across every major TypeScript ORM.
-
-The fastest was ${Math.round(maxBestMultiplier)}x faster than the slowest.
-The slowest was a query builder — not an ORM.
-
-📊 7 entries. 8 query types. No database.
-Pure ORM overhead — the tax you pay on every single request.
-
-Results? One ORM won all 8 categories.
-Even beat standalone query builders that have zero entity overhead.
-
-The numbers: github.com/rogerpadilla/ts-orm-benchmark
-
-(Reproduce it yourself — no database needed, runs in seconds)
-
-#typescript #orm #performance #nodejs #webdev
-`;
-
-writeFileSync(resolve(root, 'short.md'), shortMd);
-console.log('✅ short.md updated');
-
 // ── Summary ──────────────────────────────────────────────────────────────────
-
 console.log('\nResults (K ops/sec):');
-for (const cat of categoryKeys) {
-  console.log(`  ${cat}: ${entries.map((e, i) => `${e}: ${data[cat][i]}K`).join('  ')}`);
+for (const catKey of categoryKeys) {
+  console.log(`  ${catKey}: ${entries.map((e, i) => `${e}: ${data[catKey][i]}K`).join('  ')}`);
 }
 
 // ── Open chart in browser (local only) ───────────────────────────────────────
-
 if (!process.env.CI) {
   const { exec } = await import('node:child_process');
   const chartPath = resolve(root, 'chart.html');

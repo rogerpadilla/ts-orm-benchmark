@@ -3,5 +3,7 @@ dist/
 target/
 _site/
 *.node
-short.md
-long.md
+bench-latest.json
+bench-*.json
+bench-*.txt
+.bench-snapshots/

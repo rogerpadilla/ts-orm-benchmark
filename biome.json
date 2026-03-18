@@ -9,7 +9,10 @@
       "!dist",
       "!config",
       "!packages/**/node_modules",
-      "!packages/**/dist"
+      "!packages/**/dist",
+      "!bench*.json",
+      "!bench*.txt",
+      "!.bench-snapshots"
     ]
   },
   "javascript": {
