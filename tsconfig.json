@@ -2,8 +2,9 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "lib": ["ESNext", "ES2024.Collection"],
+    "lib": ["ESNext", "ESNext.Collection"],
     "moduleResolution": "bundler",
+    "types": ["bun"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
