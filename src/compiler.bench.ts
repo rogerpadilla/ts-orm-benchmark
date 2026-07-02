@@ -5,7 +5,7 @@
  * - UQL         — Object-based queries, pre-computed metadata
  * - Sequelize   — Classic ORM, QueryGenerator API
  * - TypeORM     — EntitySchema + QueryBuilder
- * - MikroORM    — defineEntity + QueryBuilder (v7, no Knex)
+ * - MikroORM    — defineEntity + QueryBuilder (v7, Kysely-based internally)
  * - Drizzle     — Functional SQL builder
  * - Knex        — Standalone query builder
  * - Kysely      — Type-safe query builder
@@ -49,6 +49,30 @@ const seqQg = sequelize.getQueryInterface().queryGenerator as any;
 // ── TypeORM ──────────────────────────────────────────────────────────────────
 import { Brackets, DataSource, EntitySchema } from 'typeorm';
 
+// minimal `pg` stub so DataSource.initialize() works offline (answers the three startup queries)
+const pgStub = {
+  Pool: class {
+    on() {}
+    connect(cb: (err: null, connection: unknown, release: () => void) => void) {
+      const connection = {
+        on() {},
+        once() {},
+        removeListener() {},
+        query(text: string) {
+          if (text.includes('version()')) return Promise.resolve({ rows: [{ version: 'PostgreSQL 17.5' }] });
+          if (text.includes('current_database()')) return Promise.resolve({ rows: [{ current_database: 'bench' }] });
+          if (text.includes('current_schema()')) return Promise.resolve({ rows: [{ current_schema: 'public' }] });
+          return Promise.resolve({ rows: [] });
+        },
+      };
+      cb(null, connection, () => {});
+    }
+    end(cb: (err?: Error) => void) {
+      cb();
+    }
+  },
+};
+
 const TypeORMUserSchema = new EntitySchema({
   name: 'User',
   tableName: 'User',
@@ -64,19 +88,10 @@ const TypeORMUserSchema = new EntitySchema({
 let typeormDs: DataSource;
 
 // ── MikroORM ─────────────────────────────────────────────────────────────────
-import { defineEntity, MikroORM, p as mikroP, raw } from '@mikro-orm/core';
-import { defineConfig, type SqlEntityManager } from '@mikro-orm/sqlite';
-
-interface MikroUser {
-  id: number;
-  name: string;
-  email: string;
-  companyId: number;
-  createdAt: number;
-}
+import { defineEntity, EntityCaseNamingStrategy, MikroORM, p as mikroP, raw } from '@mikro-orm/core';
+import { defineConfig, type SqlEntityManager } from '@mikro-orm/postgresql';
 
 const MikroUserSchema = defineEntity({
-  // Keep the same table name (`User`) as the other benchmark entries.
   name: 'User',
   properties: {
     id: mikroP.integer().primary(),
@@ -147,21 +162,25 @@ const kyselyDb = new Kysely<KyselyDb>({
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  // TypeORM needs a DataSource for metadata (in-memory SQLite, no real DB)
+  // TypeORM needs an initialized DataSource for metadata; the pg stub avoids a real DB
   typeormDs = new DataSource({
-    type: 'better-sqlite3',
-    database: ':memory:',
+    type: 'postgres',
+    driver: pgStub,
+    database: 'bench',
     entities: [TypeORMUserSchema],
     synchronize: false,
     logging: false,
+    installExtensions: false,
   });
   await typeormDs.initialize();
 
-  // MikroORM needs an EntityManager (in-memory SQLite, no real DB)
+  // MikroORM v7 `init()` discovers metadata without connecting (no real DB needed)
   const orm = await MikroORM.init(
     defineConfig({
-      dbName: ':memory:',
+      dbName: 'bench',
       entities: [MikroUserSchema],
+      // keep the same identifiers ("User", "companyId") as the other entries
+      namingStrategy: EntityCaseNamingStrategy,
     }),
   );
   mikroEm = orm.em.fork() as unknown as SqlEntityManager;
@@ -186,7 +205,7 @@ describe('SELECT — simple (1 field, no WHERE)', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).select(['name']).getFormattedQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).select(['name']).toQuery();
   });
 
   bench('Drizzle', () => {
@@ -245,7 +264,7 @@ describe('SELECT — WHERE + SORT + LIMIT', () => {
       .orderBy({ name: 'ASC' })
       .limit(10)
       .offset(20)
-      .getFormattedQuery();
+      .toQuery();
   });
 
   bench('Drizzle', () => {
@@ -353,7 +372,7 @@ describe('SELECT — complex $or + operators', () => {
       })
       .orderBy({ createdAt: 'DESC', name: 'ASC' })
       .limit(50)
-      .getFormattedQuery();
+      .toQuery();
   });
 
   bench('Drizzle', () => {
@@ -426,7 +445,7 @@ describe('INSERT — batch (10 rows)', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(rows).getFormattedQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(rows).toQuery();
   });
 
   bench('Drizzle', () => {
@@ -466,7 +485,7 @@ describe('UPDATE — simple SET + WHERE', () => {
       .createQueryBuilder(MikroUserSchema)
       .update({ name: 'Updated', email: 'new@test.com' })
       .where({ id: 1 })
-      .getFormattedQuery();
+      .toQuery();
   });
 
   bench('Drizzle', () => {
@@ -512,7 +531,7 @@ describe('UPSERT — ON CONFLICT by id', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().getFormattedQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().toQuery();
   });
 
   bench('Drizzle', () => {
@@ -558,7 +577,7 @@ describe('DELETE — simple WHERE', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).getFormattedQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).toQuery();
   });
 
   bench('Drizzle', () => {
@@ -628,7 +647,7 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .having('COUNT(*) > ?', [5])
       .orderBy({ [raw('COUNT(*)')]: 'DESC' })
       .limit(10)
-      .getFormattedQuery();
+      .toQuery();
   });
 
   bench('Drizzle', () => {
