@@ -433,7 +433,7 @@ describe('INSERT — batch (10 rows)', () => {
 
   bench('UQL', () => {
     const ctx = uqlDialect.createContext();
-    uqlDialect.insert(ctx, User, rows);
+    uqlDialect.insert<User>(ctx, User, rows);
   });
 
   bench('Sequelize', () => {
