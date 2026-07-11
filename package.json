@@ -1,6 +1,6 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "⚡ TypeScript ORM & query builder SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
   "type": "module",
   "scripts": {
@@ -24,18 +24,18 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
+    "@biomejs/biome": "^2.5.3",
     "@mikro-orm/core": "^7.1.5",
     "@mikro-orm/postgresql": "^7.1.5",
     "@types/bun": "^1.3.14",
     "drizzle-orm": "^0.45.2",
     "knex": "^3.3.0",
-    "kysely": "^0.29.2",
+    "kysely": "^0.29.3",
     "pg": "^8.22.0",
     "sequelize": "^6.37.8",
     "typeorm": "^1.0.0",
-    "typescript": "^6.0.3",
-    "uql-orm": "^0.9.4",
-    "vitest": "^4.1.9"
+    "typescript": "^7.0.2",
+    "uql-orm": "^0.15.4",
+    "vitest": "^4.1.10"
   }
 }
