@@ -35,7 +35,7 @@
     "sequelize": "^6.37.8",
     "typeorm": "^1.0.0",
     "typescript": "^7.0.2",
-    "uql-orm": "^0.15.4",
+    "uql-orm": "^0.15.5",
     "vitest": "^4.1.10"
   }
 }
