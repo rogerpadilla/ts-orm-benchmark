@@ -12,14 +12,14 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
-| INSERT (10 rows)          | **472K** 🥇 | 205K | 43K | 108K | 11K | 464K | 187K |
-| UPDATE (SET+WHERE)        | **1,748K** 🥇 | 237K | 294K | 210K | 74K | 699K | 729K |
-| UPSERT (ON CONFLICT)      | **591K** 🥇 | 343K | 266K | 259K | 34K | 451K | 314K |
-| DELETE (WHERE)            | **3,388K** 🥇 | 1,233K | 519K | 250K | 195K | 1,093K | 1,177K |
-| SELECT (1 field)          | **3,951K** 🥇 | 3,154K | 605K | 565K | 217K | 1,117K | 1,456K |
-| SELECT (WHERE+SORT+LIMIT) | **1,299K** 🥇 | 396K | 285K | 74K | 56K | 607K | 362K |
-| SELECT (complex $or)      | **663K** 🥇 | 149K | 167K | 28K | 32K | 242K | 195K |
-| AGGREGATE (GROUP+HAVING)  | **1,494K** 🥇 | 404K | 280K | 73K | 67K | 326K | 187K |
+| INSERT (10 rows)          | **675K** 🥇 | 207K | 42K | 112K | 13K | 479K | 196K |
+| UPDATE (SET+WHERE)        | **2,238K** 🥇 | 234K | 287K | 225K | 80K | 714K | 818K |
+| UPSERT (ON CONFLICT)      | **713K** 🥇 | 332K | 266K | 266K | 37K | 451K | 341K |
+| DELETE (WHERE)            | **3,816K** 🥇 | 1,360K | 516K | 268K | 210K | 1,119K | 1,274K |
+| SELECT (1 field)          | **3,916K** 🥇 | 3,164K | 598K | 570K | 232K | 1,124K | 1,552K |
+| SELECT (WHERE+SORT+LIMIT) | **1,298K** 🥇 | 399K | 277K | 76K | 60K | 619K | 426K |
+| SELECT (complex $or)      | **728K** 🥇 | 157K | 160K | 28K | 35K | 247K | 215K |
+| AGGREGATE (GROUP+HAVING)  | **1,462K** 🥇 | 412K | 288K | 70K | 68K | 343K | 224K |
 
 **UQL wins 8 out of 8**, even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
 
@@ -27,13 +27,13 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | P   | Entry         | Best          | Wins      |
 | --- | ------------- | ------------- | --------- |
-| 🥇 1 | **UQL**       | 42.9x faster  | **8/8** 🏆 |
-| 🥈 2 | Knex          | 42.2x faster  | 0/8       |
-| 🥉 3 | Sequelize     | 18.6x faster  | 0/8       |
-| 4    | Kysely        | 17.0x faster  | 0/8       |
-| 5    | MikroORM      | 9.8x faster   | 0/8       |
-| 6    | TypeORM       | 7.8x faster   | 0/8       |
-| 7    | Drizzle       | 1.1x baseline | 0/8       |
+| 🥇 1 | **UQL**       | 51.9x faster  | **8/8** 🏆 |
+| 🥈 2 | Knex          | 36.8x faster  | 0/8       |
+| 🥉 3 | Sequelize     | 15.9x faster  | 0/8       |
+| 4    | Kysely        | 15.1x faster  | 0/8       |
+| 5    | MikroORM      | 8.6x faster   | 0/8       |
+| 6    | TypeORM       | 7.2x faster   | 0/8       |
+| 7    | Drizzle       | 1.3x baseline | 0/8       |
 
 ### Why No Prisma?
 
@@ -71,7 +71,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 | Detail       | Value                     |
 | ------------ | ------------------------- |
 | CPU          | Apple Silicon M-series    |
-| Runtime      | Node.js v24 (LTS)        |
+| Runtime      | Node.js v24.18.1 (LTS)   |
 | OS           | macOS                     |
 | Runs         | 3 averaged                |
 | Date         | July 2026                 |
@@ -93,13 +93,13 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| [UQL](https://uql-orm.dev)       | 0.15.5  |
+| [UQL](https://uql-orm.dev)       | 0.21.0  |
 | [Sequelize](https://sequelize.org) | 6.37.8  |
-| [TypeORM](https://typeorm.io)   | 1.0.0   |
-| [MikroORM](https://mikro-orm.io)  | 7.1.5   |
+| [TypeORM](https://typeorm.io)   | 1.1.0   |
+| [MikroORM](https://mikro-orm.io)  | 7.1.9   |
 | [Drizzle](https://orm.drizzle.team)   | 0.45.2  |
 | [Knex](https://knexjs.org)      | 3.3.0   |
-| [Kysely](https://kysely.dev)    | 0.29.3  |
+| [Kysely](https://kysely.dev)    | 0.29.4  |
 
 ## Contributing
 

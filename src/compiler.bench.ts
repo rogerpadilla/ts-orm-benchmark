@@ -14,6 +14,7 @@
  * Run: npm run bench
  */
 
+import 'reflect-metadata';
 import { Entity, Field, Id } from 'uql-orm';
 import { PostgresDialect as UqlDialect } from 'uql-orm/postgres';
 import { beforeAll, bench, describe } from 'vitest';
