@@ -598,8 +598,8 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
   bench('UQL', () => {
     const ctx = uqlDialect.createContext();
     uqlDialect.aggregate(ctx, User, {
-      $group: {
-        companyId: true,
+      $group: { companyId: true },
+      $agg: {
         count: { $count: '*' },
         maxCreated: { $max: 'createdAt' },
       },
