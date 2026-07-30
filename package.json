@@ -1,6 +1,6 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "description": "⚡ TypeScript ORM & query builder SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
   "type": "module",
   "scripts": {

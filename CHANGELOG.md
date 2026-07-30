@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 - 2026-07-30
+
+- Dependencies: uql-orm 0.15.5 → 0.21.0, TypeORM 1.0.0 → 1.1.0, MikroORM 7.1.5 → 7.1.9, Kysely 0.29.3 → 0.29.4, Biome 2.5.3 → 2.5.6; added `reflect-metadata`, now an optional peer of uql-orm.
+- Benchmark: split the AGGREGATE case into uql-orm's `$group` (columns) and `$agg` (computed aggregates); added an explicit `import 'reflect-metadata'` instead of relying on TypeORM's import to load it.
+- Results: re-ran on Node.js v24.18.1 (3 runs averaged). UQL is again fastest in all 8 categories, ~2.3x ahead of the runner-up on average; batch INSERT went from a tie to 1.4x over Knex.
+
 ## 0.4.0 - 2026-07-12
 
 - Dependencies: uql-orm 0.15.4 → 0.15.5.
