@@ -8,7 +8,7 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 ## Results
 
-> Node.js v24, Apple Silicon M-series, July 2026. All values in **ops/sec** (higher = better).
+> Node.js v24.18.1, Apple Silicon M-series, July 2026. All values in **ops/sec** (higher = better).
 
 | Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
