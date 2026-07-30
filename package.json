@@ -24,18 +24,19 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.5.3",
-    "@mikro-orm/core": "^7.1.5",
-    "@mikro-orm/postgresql": "^7.1.5",
+    "@biomejs/biome": "^2.5.6",
+    "@mikro-orm/core": "^7.1.8",
+    "@mikro-orm/postgresql": "^7.1.8",
     "@types/bun": "^1.3.14",
     "drizzle-orm": "^0.45.2",
     "knex": "^3.3.0",
-    "kysely": "^0.29.3",
+    "kysely": "^0.29.4",
     "pg": "^8.22.0",
     "sequelize": "^6.37.8",
-    "typeorm": "^1.0.0",
+    "typeorm": "^1.1.0",
     "typescript": "^7.0.2",
-    "uql-orm": "^0.15.5",
-    "vitest": "^4.1.10"
+    "uql-orm": "^0.20.2",
+    "vitest": "^4.1.10",
+    "reflect-metadata": "^0.2.2"
   }
 }
