@@ -25,8 +25,8 @@
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
-    "@mikro-orm/core": "^7.1.8",
-    "@mikro-orm/postgresql": "^7.1.8",
+    "@mikro-orm/core": "^7.1.9",
+    "@mikro-orm/postgresql": "^7.1.9",
     "@types/bun": "^1.3.14",
     "drizzle-orm": "^0.45.2",
     "knex": "^3.3.0",
@@ -35,7 +35,7 @@
     "sequelize": "^6.37.8",
     "typeorm": "^1.1.0",
     "typescript": "^7.0.2",
-    "uql-orm": "^0.20.2",
+    "uql-orm": "^0.21.0",
     "vitest": "^4.1.10",
     "reflect-metadata": "^0.2.2"
   }
