@@ -14,18 +14,17 @@
  * Run: npm run bench
  */
 
-import 'reflect-metadata';
 import { Entity, Field, Id } from 'uql-orm';
 import { PostgresDialect as UqlDialect } from 'uql-orm/postgres';
 import { beforeAll, bench, describe } from 'vitest';
 
 @Entity()
 class User {
-  @Id() id?: number;
-  @Field() name?: string;
-  @Field() email?: string;
-  @Field() companyId?: number;
-  @Field() createdAt?: number;
+  @Id({ type: Number }) id?: number;
+  @Field({ type: String }) name?: string;
+  @Field({ type: String }) email?: string;
+  @Field({ type: Number }) companyId?: number;
+  @Field({ type: Number }) createdAt?: number;
 }
 
 const uqlDialect = new UqlDialect();

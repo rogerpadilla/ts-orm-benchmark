@@ -8,18 +8,18 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 ## Results
 
-> Node.js v24.18.1, Apple Silicon M-series, July 2026. All values in **ops/sec** (higher = better).
+> Node.js v24.18.1, Apple Silicon M-series, August 2026. All values in **ops/sec** (higher = better).
 
 | Query Type                | [UQL](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Knex](https://knexjs.org) | [Kysely](https://kysely.dev) |
 | ------------------------- | ------------------------------------------ | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------------------------------------ | ---------------------------------------------- |
-| INSERT (10 rows)          | **675K** 🥇 | 207K | 42K | 112K | 13K | 479K | 196K |
-| UPDATE (SET+WHERE)        | **2,238K** 🥇 | 234K | 287K | 225K | 80K | 714K | 818K |
-| UPSERT (ON CONFLICT)      | **713K** 🥇 | 332K | 266K | 266K | 37K | 451K | 341K |
-| DELETE (WHERE)            | **3,816K** 🥇 | 1,360K | 516K | 268K | 210K | 1,119K | 1,274K |
-| SELECT (1 field)          | **3,916K** 🥇 | 3,164K | 598K | 570K | 232K | 1,124K | 1,552K |
-| SELECT (WHERE+SORT+LIMIT) | **1,298K** 🥇 | 399K | 277K | 76K | 60K | 619K | 426K |
-| SELECT (complex $or)      | **728K** 🥇 | 157K | 160K | 28K | 35K | 247K | 215K |
-| AGGREGATE (GROUP+HAVING)  | **1,462K** 🥇 | 412K | 288K | 70K | 68K | 343K | 224K |
+| INSERT (10 rows)          | **698K** 🥇 | 196K | 42K | 111K | 12K | 463K | 189K |
+| UPDATE (SET+WHERE)        | **2,161K** 🥇 | 236K | 282K | 218K | 79K | 695K | 796K |
+| UPSERT (ON CONFLICT)      | **691K** 🥇 | 327K | 261K | 260K | 36K | 433K | 335K |
+| DELETE (WHERE)            | **3,996K** 🥇 | 1,361K | 507K | 263K | 207K | 1,084K | 1,264K |
+| SELECT (1 field)          | **4,675K** 🥇 | 3,084K | 591K | 565K | 229K | 1,092K | 1,520K |
+| SELECT (WHERE+SORT+LIMIT) | **1,365K** 🥇 | 381K | 276K | 73K | 59K | 614K | 419K |
+| SELECT (complex $or)      | **741K** 🥇 | 150K | 158K | 28K | 34K | 243K | 216K |
+| AGGREGATE (GROUP+HAVING)  | **1,482K** 🥇 | 416K | 277K | 69K | 74K | 304K | 201K |
 
 **UQL wins 8 out of 8**, even against standalone query builders (Knex, Kysely) that have zero entity/relation overhead.
 
@@ -27,13 +27,13 @@ Independent benchmark comparing SQL generation speed across TypeScript **ORMs** 
 
 | P   | Entry         | Best          | Wins      |
 | --- | ------------- | ------------- | --------- |
-| 🥇 1 | **UQL**       | 51.9x faster  | **8/8** 🏆 |
-| 🥈 2 | Knex          | 36.8x faster  | 0/8       |
-| 🥉 3 | Sequelize     | 15.9x faster  | 0/8       |
-| 4    | Kysely        | 15.1x faster  | 0/8       |
-| 5    | MikroORM      | 8.6x faster   | 0/8       |
-| 6    | TypeORM       | 7.2x faster   | 0/8       |
-| 7    | Drizzle       | 1.3x baseline | 0/8       |
+| 🥇 1 | **UQL**       | 58.2x faster  | **8/8** 🏆 |
+| 🥈 2 | Knex          | 38.6x faster  | 0/8       |
+| 🥉 3 | Sequelize     | 16.3x faster  | 0/8       |
+| 4    | Kysely        | 15.8x faster  | 0/8       |
+| 5    | MikroORM      | 9.3x faster   | 0/8       |
+| 6    | TypeORM       | 7.3x faster   | 0/8       |
+| 7    | Drizzle       | 1.2x baseline | 0/8       |
 
 ### Why No Prisma?
 
@@ -74,7 +74,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 | Runtime      | Node.js v24.18.1 (LTS)   |
 | OS           | macOS                     |
 | Runs         | 3 averaged                |
-| Date         | July 2026                 |
+| Date         | August 2026               |
 
 ### Fairness Guarantees
 
@@ -84,6 +84,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 - All generate **logically equivalent** queries, and all entries compile the **PostgreSQL** dialect (TypeORM initializes with a minimal `pg` stub via its `driver` option, the same injection seam [pg-mem](https://github.com/oguimbal/pg-mem) uses; the stub is only touched at startup, never in the measured path)
 - Each uses its **idiomatic API** with no raw SQL shortcuts
 - TypeORM's queries use safe `Brackets` queries (not raw string WHERE)
+- UQL uses its decorators, which are the standard TC39 ones: no `experimentalDecorators`, no `emitDecoratorMetadata`, no `reflect-metadata`. They only run at class-definition time, never in the measured path
 - MikroORM uses `defineEntity` (no decorator overhead) and `toQuery()`, which returns the parameterized `{ sql, params }` like the other entries; `getFormattedQuery()` is a debug helper that inlines parameters and is never on the execution hot path
 - MikroORM uses `EntityCaseNamingStrategy` so it emits the same identifiers (`"User"`, `"companyId"`) as the other entries
 - Sequelize uses `QueryGenerator` (no connection needed); it inlines escaped values because that is how Sequelize executes queries at runtime
@@ -93,7 +94,7 @@ Each ORM generates equivalent SQL from the same logical query definition. We mea
 
 | Entry     | Version |
 | --------- | ------- |
-| [UQL](https://uql-orm.dev)       | 0.21.0  |
+| [UQL](https://uql-orm.dev)       | 0.24.0  |
 | [Sequelize](https://sequelize.org) | 6.37.8  |
 | [TypeORM](https://typeorm.io)   | 1.1.0   |
 | [MikroORM](https://mikro-orm.io)  | 7.1.9   |

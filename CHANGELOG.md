@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 - 2026-08-02
+
+- Dependencies: uql-orm 0.21.0 → 0.24.0; dropped `reflect-metadata` (TypeORM still pulls it in as its own dependency, and nothing here needs it directly); added `esbuild`.
+- Tooling: removed `experimentalDecorators` and `emitDecoratorMetadata` from `tsconfig.json`. uql-orm 0.24 ships standard TC39 decorators, which need neither flag.
+- Tooling: `vitest.config.ts` now transforms TypeScript with esbuild. Vite 8's own transformer (Oxc) implements no decorators and left `@Entity()` verbatim in the output, which Node rejected with a SyntaxError.
+- Benchmark: `@Field`/`@Id` now state their type (`@Field({ type: String })`), mandatory in uql-orm 0.24 since nothing is reflected anymore. The generated SQL is byte-identical to 0.5.0's.
+- Results: re-ran on Node.js v24.18.1 (3 runs averaged). UQL is again fastest in all 8 categories, ~2.4x ahead of the runner-up on average.
+
 ## 0.5.0 - 2026-07-30
 
 - Dependencies: uql-orm 0.15.5 → 0.21.0, TypeORM 1.0.0 → 1.1.0, MikroORM 7.1.5 → 7.1.9, Kysely 0.29.3 → 0.29.4, Biome 2.5.3 → 2.5.6; added `reflect-metadata`, now an optional peer of uql-orm.
