@@ -11,17 +11,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Benchmark results are updated locally on Apple Silicon (M-series)
-  # to ensure consistent, reproducible numbers without Github Actions VM noise.
-  # To update reports: npm run bench (locally)
+  # Published numbers are produced locally on Apple Silicon, so that consistent hardware rather than a
+  # shared runner decides them. This job only proves both benchmarks still run and still agree with the
+  # database: `--verify` runs the full lifecycle with every step's assertions on, and writes nothing,
+  # since three iterations on a CI runner say nothing about speed.
+  # To update the reports: `npm run bench` and `npm run bench.flow`, locally.
   check:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bunx tsc --noEmit
+      - run: bunx biome check
       - run: bunx vitest bench --run
+      - run: bun scripts/flow-bench.ts --iterations 3 --verify
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
   deploy:
     if: github.event_name == 'push'
