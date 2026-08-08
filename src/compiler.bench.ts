@@ -14,40 +14,34 @@
  * Run: npm run bench
  */
 
-import { Entity, Field, Id } from 'uql-orm';
 import { PostgresDialect as UqlDialect } from 'uql-orm/postgres';
 import { beforeAll, bench, describe } from 'vitest';
-
-@Entity()
-class User {
-  @Id({ type: Number }) id?: number;
-  @Field({ type: String }) name?: string;
-  @Field({ type: String }) email?: string;
-  @Field({ type: Number }) companyId?: number;
-  @Field({ type: Number }) createdAt?: number;
-}
+import {
+  COMPANY_TABLE,
+  defineSequelizeModels,
+  drizzleCompanies,
+  drizzleUsers,
+  type KyselyDb,
+  MikroCompanySchema,
+  MikroUserSchema,
+  TypeORMCompanySchema,
+  TypeORMUserSchema,
+  USER_TABLE,
+  User,
+} from './schema';
 
 const uqlDialect = new UqlDialect();
 
 // ── Sequelize ────────────────────────────────────────────────────────────────
-import { DataTypes, Op, Sequelize } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 
 const sequelize = new Sequelize('postgres://x:x@localhost/x', { logging: false, dialect: 'postgres' });
-sequelize.define(
-  'User',
-  {
-    name: DataTypes.STRING,
-    email: DataTypes.STRING,
-    companyId: DataTypes.INTEGER,
-    createdAt: DataTypes.INTEGER,
-  },
-  { timestamps: false, tableName: 'User', freezeTableName: true },
-);
+defineSequelizeModels(sequelize);
 
 const seqQg = sequelize.getQueryInterface().queryGenerator as any;
 
 // ── TypeORM ──────────────────────────────────────────────────────────────────
-import { Brackets, DataSource, EntitySchema } from 'typeorm';
+import { Brackets, DataSource } from 'typeorm';
 
 // minimal `pg` stub so DataSource.initialize() works offline (answers the three startup queries)
 const pgStub = {
@@ -73,52 +67,17 @@ const pgStub = {
   },
 };
 
-const TypeORMUserSchema = new EntitySchema({
-  name: 'User',
-  tableName: 'User',
-  columns: {
-    id: { type: Number, primary: true, generated: true },
-    name: { type: String },
-    email: { type: String },
-    companyId: { type: Number },
-    createdAt: { type: Number },
-  },
-});
-
 let typeormDs: DataSource;
 
 // ── MikroORM ─────────────────────────────────────────────────────────────────
-import { defineEntity, EntityCaseNamingStrategy, MikroORM, p as mikroP, raw } from '@mikro-orm/core';
+import { EntityCaseNamingStrategy, MikroORM, raw } from '@mikro-orm/core';
 import { defineConfig, type SqlEntityManager } from '@mikro-orm/postgresql';
-
-const MikroUserSchema = defineEntity({
-  name: 'User',
-  properties: {
-    id: mikroP.integer().primary(),
-    name: mikroP.string(),
-    email: mikroP.string(),
-    companyId: mikroP.integer(),
-    createdAt: mikroP.integer(),
-  },
-});
-
-class MikroUserEntity extends MikroUserSchema.class {}
-MikroUserSchema.setClass(MikroUserEntity);
 
 let mikroEm: SqlEntityManager;
 
 // ── Drizzle ──────────────────────────────────────────────────────────────────
 import { and, asc, desc, eq, gt, ilike, inArray, like, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
-
-const drizzleUsers = pgTable('User', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  companyId: integer('companyId'),
-  createdAt: integer('createdAt'),
-});
 
 const drizzleDb = drizzle({ client: { connect: () => ({}) } as any });
 
@@ -130,23 +89,12 @@ const knexDb = knexLib({ client: 'pg', connection: {} });
 // ── Kysely ────────────────────────────────────────────────────────────────────
 import {
   DummyDriver,
-  type Generated,
   Kysely,
   sql as kyselySql,
   PostgresAdapter,
   PostgresIntrospector,
   PostgresQueryCompiler,
 } from 'kysely';
-
-interface KyselyDb {
-  User: {
-    id: Generated<number>;
-    name: string;
-    email: string;
-    companyId: number;
-    createdAt: number;
-  };
-}
 
 const kyselyDb = new Kysely<KyselyDb>({
   dialect: {
@@ -167,7 +115,7 @@ beforeAll(async () => {
     type: 'postgres',
     driver: pgStub,
     database: 'bench',
-    entities: [TypeORMUserSchema],
+    entities: [TypeORMCompanySchema, TypeORMUserSchema],
     synchronize: false,
     logging: false,
     installExtensions: false,
@@ -178,7 +126,7 @@ beforeAll(async () => {
   const orm = await MikroORM.init(
     defineConfig({
       dbName: 'bench',
-      entities: [MikroUserSchema],
+      entities: [MikroCompanySchema, MikroUserSchema],
       // keep the same identifiers ("User", "companyId") as the other entries
       namingStrategy: EntityCaseNamingStrategy,
     }),
@@ -260,7 +208,7 @@ describe('SELECT — WHERE + SORT + LIMIT', () => {
     mikroEm
       .createQueryBuilder(MikroUserSchema)
       .select(['id', 'name'])
-      .where({ name: 'John', companyId: { $gt: 5 } })
+      .where({ name: 'John', company: { $gt: 5 } })
       .orderBy({ name: 'ASC' })
       .limit(10)
       .offset(20)
@@ -366,7 +314,7 @@ describe('SELECT — complex $or + operators', () => {
       .select(['id', 'name', 'email'])
       .where({
         $or: [
-          { name: { $ilike: '%john%' }, companyId: { $in: [1, 2, 3] } },
+          { name: { $ilike: '%john%' }, company: { $in: [1, 2, 3] } },
           { email: { $like: '%@example.com' }, createdAt: { $gt: 1000 } },
         ],
       })
@@ -431,6 +379,16 @@ describe('INSERT — batch (10 rows)', () => {
     createdAt: Date.now(),
   }));
 
+  // MikroORM's model has no scalar `companyId` (see `src/schema.ts`), so it names the relation instead.
+  // Keys stay in the same order because MikroORM derives column order from the payload, and the point
+  // is to compile the identical statement the other six do.
+  const mikroRows = rows.map((r) => ({
+    name: r.name,
+    email: r.email,
+    company: r.companyId,
+    createdAt: r.createdAt,
+  }));
+
   bench('UQL', () => {
     const ctx = uqlDialect.createContext();
     uqlDialect.insert<User>(ctx, User, rows);
@@ -445,7 +403,7 @@ describe('INSERT — batch (10 rows)', () => {
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(rows).toQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(mikroRows).toQuery();
   });
 
   bench('Drizzle', () => {
@@ -507,6 +465,13 @@ describe('UPDATE — simple SET + WHERE', () => {
 
 describe('UPSERT — ON CONFLICT by id', () => {
   const row = { id: 1, name: 'Upserted', email: 'upsert@test.com', companyId: 10, createdAt: Date.now() };
+  const mikroRow = {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    company: row.companyId,
+    createdAt: row.createdAt,
+  };
 
   bench('UQL', () => {
     const ctx = uqlDialect.createContext();
@@ -524,14 +489,17 @@ describe('UPSERT — ON CONFLICT by id', () => {
     typeormDs
       .createQueryBuilder()
       .insert()
-      .into('User')
+      // Columns stated explicitly: `id` is `generated: true`, so without this TypeORM omits it from the
+      // INSERT and `ON CONFLICT ("id")` can never fire, making this a plain insert of a new row while
+      // the other six genuinely upsert.
+      .into('User', ['id', 'name', 'email', 'companyId', 'createdAt'])
       .values(row)
       .orUpdate(['name', 'email', 'companyId', 'createdAt'], ['id'])
       .getQueryAndParameters();
   });
 
   bench('MikroORM', () => {
-    mikroEm.createQueryBuilder(MikroUserSchema).insert(row).onConflict('id').merge().toQuery();
+    mikroEm.createQueryBuilder(MikroUserSchema).insert(mikroRow).onConflict('id').merge().toQuery();
   });
 
   bench('Drizzle', () => {
@@ -640,10 +608,10 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
   bench('MikroORM', () => {
     mikroEm
       .createQueryBuilder(MikroUserSchema)
-      .select(['companyId'])
+      .select(['company'])
       .addSelect(raw('COUNT(*) as count'))
       .addSelect(raw('MAX(createdAt) as maxCreated'))
-      .groupBy('companyId')
+      .groupBy('company')
       .having('COUNT(*) > ?', [5])
       .orderBy({ [raw('COUNT(*)')]: 'DESC' })
       .limit(10)
@@ -687,6 +655,82 @@ describe('AGGREGATE — GROUP BY + COUNT + HAVING', () => {
       .having(kyselySql`COUNT(*)`, '>', 5)
       .orderBy(kyselySql`COUNT(*)`, 'desc')
       .limit(10)
+      .compile();
+  });
+});
+
+// ── SELECT — populate (many-to-one JOIN) ─────────────────────────────────────
+// Many-to-one, not one-to-many, because that is the direction every entry compiles as a single JOIN.
+// UQL populates a to-many with a second `IN (parent ids)` query rather than a join (see
+// `fillToManyRelations` in uql-orm), and Drizzle uses a `LEFT JOIN LATERAL ... json_agg`, so a
+// one-to-many case here would compare a root query against two different join strategies. That
+// difference is worth measuring end-to-end, which is what the flow benchmark does.
+describe('SELECT — populate (m:1 JOIN)', () => {
+  bench('UQL', () => {
+    const ctx = uqlDialect.createContext();
+    uqlDialect.find(ctx, User, {
+      $select: { id: true, name: true },
+      $populate: { company: { $select: { id: true, name: true } } },
+      $limit: 50,
+    });
+  });
+
+  // Sequelize is absent: its `include` never reaches SQL without executing. `QueryGenerator.selectQuery`
+  // throws on an include, and conforming one via `_conformIncludes`/`_validateIncludedElements` throws
+  // too, because joins are assembled inside `Model.findAll`. It is measured in the flow benchmark, where
+  // executing is the point.
+
+  bench('TypeORM', () => {
+    typeormDs
+      .createQueryBuilder(TypeORMUserSchema, 'User')
+      .select(['User.id', 'User.name'])
+      .leftJoinAndSelect('User.company', 'company')
+      .limit(50)
+      .getQueryAndParameters();
+  });
+
+  bench('MikroORM', () => {
+    mikroEm
+      .createQueryBuilder(MikroUserSchema, 'u')
+      .select(['id', 'name'])
+      .leftJoinAndSelect('u.company', 'c')
+      .limit(50)
+      .toQuery();
+  });
+
+  bench('Drizzle', () => {
+    drizzleDb
+      .select({
+        id: drizzleUsers.id,
+        name: drizzleUsers.name,
+        companyId: drizzleCompanies.id,
+        companyName: drizzleCompanies.name,
+      })
+      .from(drizzleUsers)
+      .leftJoin(drizzleCompanies, eq(drizzleUsers.companyId, drizzleCompanies.id))
+      .limit(50)
+      .toSQL();
+  });
+
+  bench('Knex', () => {
+    knexDb(USER_TABLE)
+      .select(
+        `${USER_TABLE}.id`,
+        `${USER_TABLE}.name`,
+        `${COMPANY_TABLE}.id as companyId`,
+        `${COMPANY_TABLE}.name as companyName`,
+      )
+      .leftJoin(COMPANY_TABLE, `${USER_TABLE}.companyId`, `${COMPANY_TABLE}.id`)
+      .limit(50)
+      .toSQL();
+  });
+
+  bench('Kysely', () => {
+    kyselyDb
+      .selectFrom('User')
+      .leftJoin('Company', 'Company.id', 'User.companyId')
+      .select(['User.id', 'User.name', 'Company.id as companyId', 'Company.name as companyName'])
+      .limit(50)
       .compile();
   });
 });

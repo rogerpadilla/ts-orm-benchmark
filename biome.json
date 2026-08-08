@@ -12,7 +12,8 @@
       "!packages/**/dist",
       "!bench*.json",
       "!bench*.txt",
-      "!.bench-snapshots"
+      "!.bench-snapshots",
+      "!results.js"
     ]
   },
   "javascript": {

@@ -1,13 +1,14 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.6.1",
-  "description": "⚡ TypeScript ORM & query builder SQL generation benchmark — UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
+  "version": "0.7.0",
+  "description": "\u26a1 TypeScript ORM & query builder benchmark: SQL generation and real PostgreSQL round trips. UQL vs Sequelize vs TypeORM vs MikroORM vs Drizzle vs Knex vs Kysely",
   "type": "module",
   "scripts": {
-    "bench": "rm -f bench-1.json bench-2.json bench-3.json && npx vitest bench --run --outputJson bench-1.json && npx vitest bench --run --outputJson bench-2.json && npx vitest bench --run --outputJson bench-3.json && bun scripts/average-bench.ts bench-1.json bench-2.json bench-3.json && rm -f bench-1.json bench-2.json bench-3.json",
+    "bench": "rm -f bench-1.json bench-2.json bench-3.json && npx vitest bench --run --outputJson bench-1.json && npx vitest bench --run --outputJson bench-2.json && npx vitest bench --run --outputJson bench-3.json && bun scripts/update-results.ts bench-1.json bench-2.json bench-3.json && rm -f bench-1.json bench-2.json bench-3.json",
     "ts": "tsc --noEmit",
     "lint": "biome check",
-    "lint.fix": "biome check --write --unsafe"
+    "lint.fix": "biome check --write --unsafe",
+    "bench.flow": "bun scripts/flow-bench.ts"
   },
   "keywords": [
     "orm",
@@ -29,14 +30,14 @@
     "@mikro-orm/postgresql": "^7.1.11",
     "@types/bun": "^1.3.14",
     "drizzle-orm": "^0.45.2",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "knex": "^3.3.0",
     "kysely": "^0.29.4",
-    "pg": "^8.22.0",
+    "pg": "^8.23.0",
     "sequelize": "^6.37.8",
     "typeorm": "^1.1.0",
     "typescript": "^7.0.2",
-    "uql-orm": "^0.24.7",
+    "uql-orm": "0.25.0",
     "vitest": "^4.1.10"
   }
 }
