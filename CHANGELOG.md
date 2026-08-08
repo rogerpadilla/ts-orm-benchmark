@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1 - 2026-08-08
+
+- Dependencies: uql-orm 0.24.0 → 0.24.7, MikroORM 7.1.9 → 7.1.11, Biome 2.5.6 → 2.5.7. Every entry is at its latest published version.
+- Results: re-ran on Node.js v24.18.1 (3 runs averaged). UQL is again fastest in all 8 categories, ~2.4x ahead of the runner-up on average. The generated SQL is unchanged from 0.6.0 for both upgraded ORMs, so the deltas are version-to-version speed, not a change in what is being compiled.
+
 ## 0.6.0 - 2026-08-02
 
 - Dependencies: uql-orm 0.21.0 → 0.24.0; dropped `reflect-metadata` (TypeORM still pulls it in as its own dependency, and nothing here needs it directly); added `esbuild`.
