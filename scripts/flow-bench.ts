@@ -13,6 +13,7 @@
  * Usage:
  *   DATABASE_URL=postgres:///postgres bun scripts/flow-bench.ts
  *   bun scripts/flow-bench.ts --iterations 400
+ *   bun scripts/flow-bench.ts --iterations 3 --verify   # assert every step, write nothing
  */
 
 import { asc, eq, gt } from 'drizzle-orm';
@@ -701,6 +702,9 @@ function arg(name: string, fallback: string): string {
 async function main() {
   const baseUrl = process.env.DATABASE_URL ?? 'postgres://localhost:5432/postgres';
   const iterations = Number(arg('iterations', '250'));
+  // CI runs a handful of iterations purely to exercise every step's assertions, where the timings are
+  // meaningless and must not reach the published artifacts.
+  const verifyOnly = process.argv.includes('--verify');
   // Generous warmup even though the entries are interleaved: an earlier 12-iteration warmup left Knex's
   // overhead swinging between +156µs and +886µs across runs.
   const warmup = Math.max(40, Math.round(iterations / 2));
@@ -778,6 +782,11 @@ async function main() {
   // Written straight into the shared artifacts rather than to a JSON file for another script to read.
   // `mergeDataset` keeps whatever generation results are already there, so either bench can be re-run
   // on its own without erasing the other.
+  if (verifyOnly) {
+    console.log('\n--verify: every step asserted, artifacts left alone');
+    return;
+  }
+
   syncResultsArtifacts(mergeDataset(flowDataset(data)));
   console.log('\nresults.js + README.md updated');
 }
