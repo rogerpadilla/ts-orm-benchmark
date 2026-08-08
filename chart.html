@@ -13,13 +13,14 @@
       color: #e6edf3;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       min-height: 100vh;
       padding: 20px;
     }
 
     .card {
-      max-width: 800px;
+      max-width: 840px;
+      width: 100%;
       background: linear-gradient(145deg, #12131a 0%, #0d0e14 100%);
       border: 1px solid rgba(255,255,255,0.06);
       border-radius: 24px;
@@ -27,10 +28,7 @@
       box-shadow: 0 0 80px rgba(88, 166, 255, 0.04);
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 36px;
-    }
+    .header { text-align: center; margin-bottom: 24px; }
 
     .header h1 {
       font-size: 32px;
@@ -42,10 +40,37 @@
       margin-bottom: 8px;
     }
 
-    .header p {
+    .header p { color: #6e7681; font-size: 14px; font-weight: 500; }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 28px;
+      padding: 4px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+    }
+
+    .tab {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
       color: #6e7681;
-      font-size: 14px;
-      font-weight: 500;
+      background: transparent;
+      padding: 8px 18px;
+      border-radius: 9px;
+      transition: color .15s, background .15s;
+    }
+
+    .tab:hover { color: #b1bac4; }
+
+    .tab[aria-selected="true"] {
+      color: #e6edf3;
+      background: rgba(255,255,255,0.06);
     }
 
     .category { margin-bottom: 20px; }
@@ -73,15 +98,10 @@
 
     .bars { display: flex; flex-direction: column; gap: 4px; }
 
-    .bar-row {
-      display: flex;
-      align-items: center;
-      height: 28px;
-    }
+    .bar-row { display: flex; align-items: center; height: 28px; }
 
     .bar-name {
-      width: 100px;
-      font-family: 'Inter', ui-sans-serif, -apple-system, system-ui, 'Segoe UI', Helvetica, 'Apple Color Emoji', Arial, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
+      width: 132px;
       font-size: 12px;
       font-weight: 700;
       color: #6e7681;
@@ -91,28 +111,16 @@
       gap: 6px;
     }
 
-    .bar-name a {
-      color: inherit;
-      text-decoration: none;
-    }
+    .bar-name a { color: inherit; text-decoration: none; }
+    .bar-name a:hover { text-decoration: underline; }
+    .bar-name img { width: 16px; height: 16px; border-radius: 4px; }
 
-    .bar-name a:hover {
-      text-decoration: underline;
-    }
-
-    .legend-item a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .legend-item a:hover {
-      text-decoration: underline;
-    }
-
-    .bar-name img {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
+    .bar-name .variant {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+      text-transform: uppercase;
     }
 
     .bar-track {
@@ -120,31 +128,33 @@
       height: 22px;
       background: rgba(255,255,255,0.02);
       border-radius: 6px;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
     }
 
+    /* One rule for every entry: the hue comes from `--c`, so adding an entry needs no new CSS. */
     .bar-fill {
       height: 100%;
       border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding-right: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      color: white;
-      min-width: 45px;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--c) 55%, #101018) 0%, var(--c) 100%);
+      min-width: 4px;
     }
 
-    .fill-uql       { background: linear-gradient(90deg, #3d4a8f 0%, #5b6abf 100%); }
-    .fill-sequelize  { background: linear-gradient(90deg, #0182b3 0%, #02afef 100%); }
-    .fill-typeorm    { background: linear-gradient(90deg, #c55a1a 0%, #ff7733 100%); opacity: 0.75; }
-    .fill-mikro      { background: linear-gradient(90deg, #148f75 0%, #1abc9c 100%); opacity: 0.65; }
-    .fill-drizzle    { background: linear-gradient(90deg, #5a8a1e 0%, #7ab82d 100%); opacity: 0.70; }
-    .fill-knex       { background: linear-gradient(90deg, #b83a28 0%, #e24a33 100%); opacity: 0.70; }
-    .fill-kysely     { background: linear-gradient(90deg, #9b5de5 0%, #c084fc 100%); opacity: 0.70; }
+    .bar-value {
+      padding-left: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
 
     .bar-row.is-winner .bar-name { color: #e6edf3; }
+
+    /* A reference floor is drawn but visibly not competing. */
+    .bar-row.is-baseline .bar-name { font-style: italic; font-weight: 600; }
+    .bar-row.is-baseline .bar-fill { opacity: 0.4; }
+
+    .bar-row.is-absent .bar-track { opacity: 0.35; }
+    .bar-row.is-absent .bar-value { color: #484f58; font-weight: 600; }
 
     .footer {
       margin-top: 32px;
@@ -153,9 +163,11 @@
       align-items: center;
       padding-top: 20px;
       border-top: 1px solid rgba(255,255,255,0.04);
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
-    .footer-left { display: flex; gap: 18px; }
+    .footer-left { display: flex; gap: 18px; flex-wrap: wrap; }
 
     .legend-item {
       display: flex;
@@ -166,22 +178,14 @@
       font-weight: 500;
     }
 
+    .legend-item a { color: inherit; text-decoration: none; }
+    .legend-item a:hover { text-decoration: underline; }
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
     .footer-right { font-size: 11px; color: #484f58; font-weight: 500; }
 
-    .score {
-      text-align: center;
-      margin-top: 28px;
-      margin-bottom: 4px;
-    }
-
-    .score-text {
-      font-size: 16px;
-      font-weight: 700;
-      color: #8b949e;
-    }
-
+    .score { text-align: center; margin-top: 28px; margin-bottom: 4px; }
+    .score-text { font-size: 16px; font-weight: 700; color: #8b949e; }
     .score-text .sep { color: #30363d; margin: 0 6px; }
   </style>
 </head>
@@ -189,9 +193,11 @@
 
 <div class="card">
   <div class="header">
-    <h1>⚡ TypeScript ORMs' SQL Generation Speed</h1>
-    <p>ORMs and Query Builders · Ops/Sec · Higher = Better</p>
+    <h1>⚡ TypeScript ORM Benchmark</h1>
+    <p id="subtitle"></p>
   </div>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
 
   <div id="categories"></div>
 
@@ -207,87 +213,186 @@
 
 <script src="results.js"></script>
 <script>
-  const { entries, categories, data } = window.BENCH_DATA;
+  const { datasets } = window.BENCH;
 
-  const entryMeta = {
-    UQL:       { fill: 'fill-uql',      color: '#5b6abf', logo: 'assets/uql-icon.svg',                                   url: 'https://uql-orm.dev' },
-    Sequelize: { fill: 'fill-sequelize', color: '#02afef', logo: 'https://avatars.githubusercontent.com/u/3591786?s=32',   url: 'https://sequelize.org' },
-    TypeORM:   { fill: 'fill-typeorm',   color: '#ff7733', logo: 'https://avatars.githubusercontent.com/u/20165699?s=32',  url: 'https://typeorm.io' },
-    MikroORM:  { fill: 'fill-mikro',     color: '#1abc9c', logo: 'https://mikro-orm.io/img/logo.svg',                     url: 'https://mikro-orm.io' },
-    Drizzle:   { fill: 'fill-drizzle',   color: '#7ab82d', logo: 'https://avatars.githubusercontent.com/u/108468352?s=32', url: 'https://orm.drizzle.team' },
-    Knex:      { fill: 'fill-knex',      color: '#e24a33', logo: 'https://avatars.githubusercontent.com/u/3137232?s=32',  url: 'https://knexjs.org' },
-    Kysely:    { fill: 'fill-kysely',    color: '#c084fc', logo: 'https://avatars.githubusercontent.com/u/123764858?s=32', url: 'https://kysely.dev' },
+  /**
+   * Keyed by base name. A driver variant like `UQL (bunSql)` resolves to the same entry, because it is
+   * the same query builder reached through a different driver: giving it its own colour would read as a
+   * separate contender.
+   */
+  const ENTRY_META = {
+    UQL:         { color: '#5b6abf', logo: 'assets/uql-icon.svg',                                    url: 'https://uql-orm.dev' },
+    Sequelize:   { color: '#02afef', logo: 'https://avatars.githubusercontent.com/u/3591786?s=32',   url: 'https://sequelize.org' },
+    TypeORM:     { color: '#ff7733', logo: 'https://avatars.githubusercontent.com/u/20165699?s=32',  url: 'https://typeorm.io' },
+    MikroORM:    { color: '#1abc9c', logo: 'https://mikro-orm.io/img/logo.svg',                      url: 'https://mikro-orm.io' },
+    Drizzle:     { color: '#7ab82d', logo: 'https://avatars.githubusercontent.com/u/108468352?s=32', url: 'https://orm.drizzle.team' },
+    Knex:        { color: '#e24a33', logo: 'https://avatars.githubusercontent.com/u/3137232?s=32',   url: 'https://knexjs.org' },
+    Kysely:      { color: '#c084fc', logo: 'https://avatars.githubusercontent.com/u/123764858?s=32', url: 'https://kysely.dev' },
+    'raw pg':    { color: '#8b949e', logo: 'https://avatars.githubusercontent.com/u/2947298?s=32',   url: 'https://node-postgres.com' },
+    'bun sql':   { color: '#a1a1aa', logo: 'https://avatars.githubusercontent.com/u/71667065?s=32',  url: 'https://bun.sh/docs/api/sql' },
   };
 
-  function renderBars(containerId, values) {
-    const container = document.getElementById(containerId);
-    const max = Math.max(...values);
-    const sorted = values.map((val, i) => ({ val, i }))
-      .filter(({ val }) => val > 0)
-      .sort((a, b) => b.val - a.val);
+  const FALLBACK = { color: '#6e7681', logo: '', url: '#' };
 
-    for (const { val, i } of sorted) {
-      const name = entries[i];
-      const meta = entryMeta[name];
-      const pct = Math.max((val / max) * 100, 4);
-      const isWinner = val === max;
-      const label = val >= 1000 ? (val / 1000).toFixed(1) + 'M' : val + 'K';
-      const labelInside = pct >= 15;
+  /** Splits `Drizzle (bunSql)` into the entry it styles as and the marker shown beside the name. */
+  function describeEntry(name) {
+    const match = /^(.*?)\s*\((.+)\)$/.exec(name);
+    const base = match ? match[1] : name;
+    return { base, variant: match ? match[2] : '', meta: ENTRY_META[base] ?? FALLBACK };
+  }
+
+  function present(values) {
+    return values.filter((v) => v !== null);
+  }
+
+  function bestOf(values, lowerIsBetter) {
+    const real = present(values);
+    if (!real.length) return null;
+    return lowerIsBetter ? Math.min(...real) : Math.max(...real);
+  }
+
+  function formatValue(value, dataset) {
+    if (value === null) return 'n/a';
+    if (dataset.lowerIsBetter) return `${value}µs`;
+    return value >= 1000 ? `${(value / 1000).toFixed(1)}M` : `${value}K`;
+  }
+
+  /** Values with the reference floors blanked out, so "who won" only ever considers real contenders. */
+  function contestedValues(dataset, values) {
+    return values.map((v, i) => (dataset.baselines.includes(dataset.entries[i]) ? null : v));
+  }
+
+  /**
+   * Bar length always means "better", in both directions: throughput scales by `value / best`, latency by
+   * `best / value`. Keeping the longest bar the winner in both datasets avoids a chart where the reader
+   * has to remember which way round this one is.
+   */
+  function fraction(value, best, lowerIsBetter) {
+    if (value === null || best === null) return 0;
+    return lowerIsBetter ? best / value : value / best;
+  }
+
+  function renderBars(container, dataset, values) {
+    const best = bestOf(values, dataset.lowerIsBetter);
+
+    const ordered = values
+      .map((value, i) => ({ value, i }))
+      .sort((a, b) => {
+        if (a.value === null) return 1;
+        if (b.value === null) return -1;
+        return dataset.lowerIsBetter ? a.value - b.value : b.value - a.value;
+      });
+
+    for (const { value, i } of ordered) {
+      const name = dataset.entries[i];
+      const { variant, meta } = describeEntry(name);
+      const isBaseline = dataset.baselines.includes(name);
+      const pct = Math.max(fraction(value, best, dataset.lowerIsBetter) * 100, 3);
+
       const row = document.createElement('div');
-      row.className = 'bar-row' + (isWinner ? ' is-winner' : '');
+      row.className = [
+        'bar-row',
+        value !== null && value === best && !isBaseline ? 'is-winner' : '',
+        isBaseline ? 'is-baseline' : '',
+        value === null ? 'is-absent' : '',
+      ].filter(Boolean).join(' ');
+
       row.innerHTML = `
-        <span class="bar-name" style="color:${meta.color}"><img src="${meta.logo}" alt=""><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></span>
-        <div class="bar-track" style="display:flex;align-items:center">
-          <div class="bar-fill ${meta.fill}" style="width: ${pct}%">
-            ${labelInside ? `<span style="margin-left:auto;padding-right:8px;white-space:nowrap">${label}</span>` : ''}
-          </div>
-          ${!labelInside ? `<span style="padding-left:8px;font-size:11px;font-weight:700;color:${meta.color};white-space:nowrap">${label}</span>` : ''}
+        <span class="bar-name" style="color:${meta.color}">
+          ${meta.logo ? `<img src="${meta.logo}" alt="">` : ''}
+          <a href="${meta.url}" target="_blank" rel="noopener">${describeEntry(name).base}</a>
+          ${variant ? `<span class="variant">${variant}</span>` : ''}
+        </span>
+        <div class="bar-track">
+          ${value === null ? '' : `<div class="bar-fill" style="--c:${meta.color};width:${pct}%"></div>`}
+          <span class="bar-value" style="color:${meta.color}">${formatValue(value, dataset)}</span>
         </div>
       `;
       container.appendChild(row);
     }
   }
 
-  // Render all categories
-  const root = document.getElementById('categories');
-  const catKeys = categories.map(c => c.key);
+  function renderDataset(dataset) {
+    document.getElementById('subtitle').textContent =
+      `${dataset.blurb} ${dataset.unit} · ${dataset.lowerIsBetter ? 'lower' : 'higher'} = better`;
 
-  for (const { key, label } of categories) {
-    const values = data[key];
-    const max = Math.max(...values);
-    const sorted = [...values].sort((a, b) => b - a);
-    const multiplier = (max / sorted[1]).toFixed(2);
-    const winnerName = entries[values.indexOf(max)];
-    const winnerColor = entryMeta[winnerName].color;
+    const root = document.getElementById('categories');
+    root.innerHTML = '';
 
-    const cat = document.createElement('div');
-    cat.className = 'category';
-    cat.innerHTML = `
-      <div class="category-label">${label} <span class="winner-badge" style="background:${winnerColor}26;color:${winnerColor}">${winnerName} ${multiplier}x</span></div>
-      <div class="bars" id="bars-${key}"></div>
+    for (const { key, label } of dataset.categories) {
+      const values = dataset.data[key];
+
+      // The gap to the runner-up, so the badge says how decisive the win was rather than just who won.
+      const contenders = contestedValues(dataset, values)
+        .map((value, i) => ({ value, i }))
+        .filter(({ value }) => value !== null)
+        .sort((a, b) => (dataset.lowerIsBetter ? a.value - b.value : b.value - a.value));
+
+      const winner = contenders[0];
+      const runnerUp = contenders[1];
+      const badge = winner && runnerUp
+        ? `${describeEntry(dataset.entries[winner.i]).base} ${(dataset.lowerIsBetter
+            ? runnerUp.value / winner.value
+            : winner.value / runnerUp.value).toFixed(2)}x`
+        : '';
+      const badgeColor = winner ? describeEntry(dataset.entries[winner.i]).meta.color : FALLBACK.color;
+
+      const category = document.createElement('div');
+      category.className = 'category';
+      category.innerHTML = `
+        <div class="category-label">${label}
+          ${badge ? `<span class="winner-badge" style="background:${badgeColor}26;color:${badgeColor}">${badge}</span>` : ''}
+        </div>
+        <div class="bars"></div>
+      `;
+      root.appendChild(category);
+      renderBars(category.querySelector('.bars'), dataset, values);
+    }
+
+    const wins = dataset.entries.map(() => 0);
+    for (const { key } of dataset.categories) {
+      // Baselines are dropped *before* the best is picked, matching the README. Picking the best across
+      // everything and then looking for a competitor that ties it left every entry on zero, since
+      // hand-written driver code wins nearly every round-trip step.
+      const contested = contestedValues(dataset, dataset.data[key]);
+      const best = bestOf(contested, dataset.lowerIsBetter);
+      if (best === null) continue;
+      wins[contested.indexOf(best)]++;
+    }
+
+    const topIdx = wins.indexOf(Math.max(...wins));
+    const topMeta = describeEntry(dataset.entries[topIdx]).meta;
+    document.getElementById('score').innerHTML = `
+      <span style="color:${topMeta.color}">${dataset.entries[topIdx]} ${wins[topIdx]}/${dataset.categories.length}</span>
+      <span class="sep">·</span>
+      ${dataset.label}
     `;
-    root.appendChild(cat);
-    renderBars(`bars-${key}`, values);
+
+    document.getElementById('legend').innerHTML = dataset.entries.map((name) => {
+      const { meta } = describeEntry(name);
+      return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
+    }).join('');
   }
 
-  // Dynamic score
-  const wins = new Array(entries.length).fill(0);
-  for (const key of catKeys) {
-    wins[data[key].indexOf(Math.max(...data[key]))]++;
-  }
-  const topIdx = wins.indexOf(Math.max(...wins));
-  const topColor = entryMeta[entries[topIdx]].color;
-  document.getElementById('score').innerHTML = `
-    <span style="color:${topColor}">${entries[topIdx]} ${wins[topIdx]}</span>
-    <span class="sep">·</span>
-    ORMs and Query Builders
-  `;
+  const tabs = document.getElementById('tabs');
+  datasets.forEach((dataset, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'tab';
+    tab.type = 'button';
+    tab.role = 'tab';
+    tab.textContent = dataset.label;
+    tab.setAttribute('aria-selected', String(i === 0));
+    tab.addEventListener('click', () => {
+      for (const other of tabs.children) other.setAttribute('aria-selected', 'false');
+      tab.setAttribute('aria-selected', 'true');
+      renderDataset(dataset);
+    });
+    tabs.appendChild(tab);
+  });
 
-  // Dynamic legend
-  document.getElementById('legend').innerHTML = entries.map(name => {
-    const meta = entryMeta[name];
-    return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
-  }).join('');
+  // A single dataset needs no switcher.
+  tabs.hidden = datasets.length < 2;
+  renderDataset(datasets[0]);
 </script>
 
 </body>

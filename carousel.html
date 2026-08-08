@@ -495,7 +495,7 @@
     <div class="surprise-card">
       <div class="surprise-num">Surprise #2</div>
       <div class="surprise-headline">Query builders can't beat a well-designed ORM.</div>
-      <div class="surprise-body">Knex and Kysely have zero entity overhead. Yet UQL — a full ORM with relations and migrations — beats both in all 8 categories.</div>
+      <div class="surprise-body">Knex and Kysely have zero entity overhead. Yet UQL — a full ORM with relations and migrations — beats both in every category.</div>
     </div>
 
     <div class="surprise-card">
@@ -624,7 +624,12 @@
 
 <script src="results.js"></script>
 <script>
-  const { entries, categories, data } = window.BENCH_DATA;
+  // This deck is a hand-written narrative about SQL generation, so it reads that one dataset rather
+  // than switching: the flow numbers would need their own slides and their own prose.
+  const { entries, categories, data } = window.BENCH.datasets.find((d) => d.key === 'generation');
+
+  /** Absent values (`null`) are skipped everywhere: a category can lack an entry, as populate lacks Sequelize. */
+  const real = (values) => values.filter((v) => v !== null);
   const cssClasses = { UQL: 'color-uql', Sequelize: 'color-sequelize', TypeORM: 'color-typeorm', MikroORM: 'color-mikroorm', Drizzle: 'color-drizzle', Knex: 'color-knex', Kysely: 'color-kysely' };
   const writeCats = categories.filter(c => c.group === 'write');
   const readCats = categories.filter(c => c.group === 'read');
@@ -641,12 +646,12 @@
   function renderChart(container, cats) {
     for (const { key, label } of cats) {
       const values = data[key];
-      const max = Math.max(...values);
-      const sorted = [...values].sort((a, b) => b - a);
+      const max = Math.max(...real(values));
+      const sorted = real(values).sort((a, b) => b - a);
       const multiplier = (max / sorted[1]).toFixed(2);
       const winnerName = entries[values.indexOf(max)];
 
-      const sortedEntries = values.map((v, i) => ({ v, i })).sort((a, b) => b.v - a.v);
+      const sortedEntries = values.map((v, i) => ({ v, i })).filter(({ v }) => v !== null).sort((a, b) => b.v - a.v);
 
       let html = `<div class="chart-category"><div class="chart-label">${label} <span class="chart-winner">${winnerName} ${multiplier}x</span></div>`;
       for (const { v, i } of sortedEntries) {
@@ -666,11 +671,13 @@
     const catKeys = categories.map(c => c.key);
     const wins = new Array(entries.length).fill(0);
     for (const cat of catKeys) {
-      const maxIdx = data[cat].indexOf(Math.max(...data[cat]));
+      const maxIdx = data[cat].indexOf(Math.max(...real(data[cat])));
       wins[maxIdx]++;
     }
     const bestMultipliers = entries.map((_, i) =>
-      Math.max(...catKeys.map(cat => data[cat][i] / Math.min(...data[cat])))
+      Math.max(...catKeys
+        .filter(cat => data[cat][i] !== null)
+        .map(cat => data[cat][i] / Math.min(...real(data[cat]))))
     );
     const rows = entries.map((name, i) => ({ name, wins: wins[i], best: bestMultipliers[i] }))
       .sort((a, b) => b.best - a.best);
@@ -700,7 +707,8 @@
     let worstName = entries[1];
     let worstRatio = 0;
     for (let i = 1; i < entries.length; i++) {
-      const avgRatio = catKeys.reduce((sum, cat) => sum + data[cat][uqlIdx] / data[cat][i], 0) / catKeys.length;
+      const shared = catKeys.filter(cat => data[cat][i] !== null && data[cat][uqlIdx] !== null);
+      const avgRatio = shared.reduce((sum, cat) => sum + data[cat][uqlIdx] / data[cat][i], 0) / shared.length;
       if (avgRatio > worstRatio) { worstRatio = avgRatio; worstName = entries[i]; }
     }
     const cpuSec = Math.round(worstRatio);

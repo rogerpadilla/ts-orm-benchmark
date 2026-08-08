@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0 - 2026-08-08
+
+- **New benchmark: a real database round trip.** `scripts/flow-bench.ts` runs a full lifecycle against PostgreSQL 18.4 (insert, read, update, read, nested read, delete, read) and reports µs per step. Generation only measures building the statement; this measures the rest of what a request costs, including decoding rows and assembling relations. Each step asserts on the rows it gets back, so a step that silently does nothing fails instead of scoring well.
+- Adds `raw pg` and `bun sql` as reference floors (hand-written driver code with manual row mapping), plus `UQL (bunSql)` and `Drizzle (bunSql)` to separate the cost of the driver from the cost of the query builder. Baselines are listed but excluded from win counts.
+- **New generation category: `SELECT` with a m:1 JOIN** (`populate`), taking the count to 9. Sequelize is reported as `n/a` there rather than 0: its `include` resolves associations during execution, so there is no compile-only path to measure.
+- Entries in the flow bench are **interleaved and rotated** rather than run to completion one at a time. Running each in turn made the result depend on declaration order, which is what made `UQL (bunSql)` look slower than `UQL` when measuring it alone showed the opposite.
+- Reporting is now one pipeline over N datasets. `results.js` exposes `window.BENCH.datasets` carrying units, direction, entries, baselines and absent values, so `chart.html` no longer assumes higher-is-better or a fixed 7 entries; the chart gained a dataset switcher. README tables are regenerated between `<!-- bench:key -->` markers, since matching rows by label could not change a table's width.
+- Fixed a ranking bug shared by the README and the chart: the best value was picked across every entry and then matched against non-baselines, so with reference floors present every real entry read `0/7`. Baselines are excluded before the winner is chosen. Ranking now sorts by wins, then total, rather than by the widest single-category lead, which had put an entry with one win above one with five.
+- Dependencies: uql-orm 0.24.7 → 0.25.0.
+- Removed `scripts/average-bench.ts`; `update-results.ts` takes any number of runs and averages them.
+
 ## 0.6.1 - 2026-08-08
 
 - Dependencies: uql-orm 0.24.0 → 0.24.7, MikroORM 7.1.9 → 7.1.11, Biome 2.5.6 → 2.5.7. Every entry is at its latest published version.
