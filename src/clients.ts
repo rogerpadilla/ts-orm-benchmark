@@ -65,7 +65,7 @@ export async function createClients(connectionString: string) {
       pool: { min: 0, max: 1 },
     }),
   );
-  const mikroEm = mikroOrm.em.fork() as unknown as SqlEntityManager;
+  const mikroEm = mikroOrm.em.fork() as SqlEntityManager;
 
   const drizzlePool = new pg.Pool(poolOpts);
   const drizzleDb: NodePgDatabase<typeof drizzleSchema> = drizzle(drizzlePool, { schema: drizzleSchema });

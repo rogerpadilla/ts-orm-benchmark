@@ -1,14 +1,12 @@
 /**
- * Real-database flow benchmark.
+ * What an ORM costs on a real PostgreSQL round trip: the trip itself, turning driver rows back into
+ * objects, and assembling nested relations. The steps are a lifecycle (insert, read, update, read,
+ * nested read, delete, read) so each read verifies the write before it, which means a step that
+ * silently does nothing fails instead of scoring well.
  *
- * `compiler.bench.ts` measures SQL *generation*. This measures the rest of what an ORM costs per
- * request: the round trip, turning driver rows back into objects, and assembling nested relations. It
- * runs a lifecycle (insert, read, update, read, nested read, delete, read) so each read verifies the
- * write before it, which means a step that silently does nothing fails instead of scoring well.
- *
- * Reported in µs per operation, lower is better, alongside a raw `pg` baseline. The baseline is the
- * point: absolute latency swings with how you reach Postgres, but the gap above raw `pg` is the ORM's
- * own overhead and is comparable across setups.
+ * Reported in µs per operation, lower is better, against the hand-written `raw pg` and `bun sql`
+ * floors. Those floors are the point: absolute latency swings with how you reach Postgres, but the gap
+ * above the floor is the ORM's own overhead and is comparable across setups.
  *
  * Usage:
  *   DATABASE_URL=postgres:///postgres bun scripts/flow-bench.ts
@@ -38,8 +36,18 @@ import { ENTRIES, type Entry, printSummary, type Results, STEPS, type Step, sync
 
 const BENCH_DB = 'ts_orm_bench';
 
-/** One step of the lifecycle: the call being timed, and what must be true of what it returned. */
-type Operation = { run: () => Promise<unknown>; check: (returned: unknown) => void };
+/**
+ * One step of the lifecycle. `run` is the only part that is timed; `rows` and `children` just read a
+ * count out of whatever this entry's API hands back, which is the entry's business. What that count has
+ * to be is the step's, and lives in {@link EXPECTED_ROWS} so no entry can assert less than its peers.
+ */
+type Operation = {
+  run: () => Promise<unknown>;
+  /** For an API that reports affected rows instead of returning them. Defaults to the array's length. */
+  rows?: (returned: unknown) => number;
+  /** For a nested read that does not hand back plain `{ users: [...] }` parents. */
+  children?: (parent: unknown) => unknown[] | undefined;
+};
 type Flow = Record<Step, Operation>;
 
 /** The 10 rows every entry inserts. Ids are left to the sequence so the insert is a real insert. */
@@ -65,9 +73,37 @@ function rowCount(returned: unknown): number {
   return Array.isArray(returned) ? returned.length : 0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Per-entry flows
-// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * What every entry has to produce, per step. Declared once rather than per entry: when each flow carried
+ * its own assertions, MikroORM's insert, update and delete asserted nothing and Prisma's update and
+ * delete only asserted a truthy return, so those steps could have done nothing and still scored well.
+ */
+const EXPECTED_ROWS: Record<Step, number> = {
+  insert: NEW_USERS.length,
+  read: READ_LIMIT,
+  update: 1,
+  readAgain: 1,
+  nested: NESTED_LIMIT,
+  delete: 1,
+  readEmpty: 0,
+};
+
+/** Runs after the timer stops, so normalising an entry's return shape here costs it nothing. */
+function checkStep(entry: Entry, step: Step, op: Operation, returned: unknown): void {
+  const rows = (op.rows ?? rowCount)(returned);
+  expect(rows === EXPECTED_ROWS[step], `${entry} ${step} returned ${rows} rows, expected ${EXPECTED_ROWS[step]}`);
+
+  if (step === 'readAgain') {
+    const name = (returned as { name?: string }[])[0]?.name;
+    expect(name === UPDATE_NAME, `${entry} readAgain saw ${JSON.stringify(name)}, expected the updated name`);
+  }
+
+  if (step === 'nested') {
+    const children = op.children ?? ((parent: unknown) => (parent as { users?: unknown[] }).users);
+    const populated = (returned as unknown[]).every((parent) => (children(parent)?.length ?? 0) > 0);
+    expect(populated, `${entry} nested left a company without its users`);
+  }
+}
 
 /** The floors map rows by hand, which is the point of them: no ORM assembles this. */
 function nestFlatRows(rows: { cId: number; cName: string; uId: number | null; uName: string | null }[]) {
@@ -95,7 +131,6 @@ function rawPgFlow(c: Clients): Flow {
   return {
     insert: {
       run: async () => (await db.query(insertSql, insertParams)).rows,
-      check: (r) => expect(rowCount(r) === 10, 'raw pg insert returned 10 ids'),
     },
     read: {
       run: async () =>
@@ -105,19 +140,13 @@ function rawPgFlow(c: Clients): Flow {
             [0, READ_LIMIT],
           )
         ).rows,
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `raw pg read returned ${READ_LIMIT}`),
     },
     update: {
       run: async () =>
         (await db.query(`UPDATE "${USER_TABLE}" SET name=$1 WHERE id=$2 RETURNING id`, [UPDATE_NAME, 1])).rows,
-      check: (r) => expect(rowCount(r) === 1, 'raw pg update touched 1 row'),
     },
     readAgain: {
       run: async () => (await db.query(`SELECT id,name FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows,
-      check: (r) => {
-        const rows = r as { name: string }[];
-        expect(rows[0]?.name === UPDATE_NAME, 'raw pg sees the updated name');
-      },
     },
     nested: {
       run: async () => {
@@ -131,22 +160,12 @@ function rawPgFlow(c: Clients): Flow {
         ).rows as { cId: number; cName: string; uId: number | null; uName: string | null }[];
         return nestFlatRows(rows);
       },
-      check: (r) => {
-        const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `raw pg nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => x.users.length > 0),
-          'raw pg nested populated users',
-        );
-      },
     },
     delete: {
       run: async () => (await db.query(`DELETE FROM "${USER_TABLE}" WHERE id=$1 RETURNING id`, [1])).rows,
-      check: (r) => expect(rowCount(r) === 1, 'raw pg delete removed 1 row'),
     },
     readEmpty: {
       run: async () => (await db.query(`SELECT id FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows,
-      check: (r) => expect(rowCount(r) === 0, 'raw pg sees the row gone'),
     },
   };
 }
@@ -157,20 +176,16 @@ function bunSqlFlow(c: Clients): Flow {
     insert: {
       // Bun expands an array of objects into the column list and the VALUES tuples itself.
       run: () => sql`INSERT INTO "User" ${sql(NEW_USERS)} RETURNING id`,
-      check: (r) => expect(rowCount(r) === 10, 'bun sql insert returned 10 ids'),
     },
     read: {
       run: () =>
         sql`SELECT id,name,email,"companyId","createdAt" FROM "User" WHERE "companyId" > 0 ORDER BY id LIMIT ${READ_LIMIT}`,
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `bun sql read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => sql`UPDATE "User" SET name=${UPDATE_NAME} WHERE id=1 RETURNING id`,
-      check: (r) => expect(rowCount(r) === 1, 'bun sql update touched 1 row'),
     },
     readAgain: {
       run: () => sql`SELECT id,name FROM "User" WHERE id=1`,
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'bun sql sees the updated name'),
     },
     nested: {
       run: async () => {
@@ -178,25 +193,15 @@ function bunSqlFlow(c: Clients): Flow {
           SELECT c.id AS "cId", c.name AS "cName", u.id AS "uId", u.name AS "uName"
           FROM "Company" c LEFT JOIN "User" u ON u."companyId" = c.id
           WHERE c.id <= ${NESTED_LIMIT} ORDER BY c.id
-        `) as unknown as { cId: number; cName: string; uId: number | null; uName: string | null }[];
+        `) as { cId: number; cName: string; uId: number | null; uName: string | null }[];
         return nestFlatRows(rows);
-      },
-      check: (r) => {
-        const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `bun sql nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => x.users.length > 0),
-          'bun sql nested populated users',
-        );
       },
     },
     delete: {
       run: () => sql`DELETE FROM "User" WHERE id=1 RETURNING id`,
-      check: (r) => expect(rowCount(r) === 1, 'bun sql delete removed 1 row'),
     },
     readEmpty: {
       run: () => sql`SELECT id FROM "User" WHERE id=1`,
-      check: (r) => expect(rowCount(r) === 0, 'bun sql sees the row gone'),
     },
   };
 }
@@ -205,7 +210,6 @@ function uqlFlow(c: Clients, q: Clients['uql'] | Clients['uqlBunSql'] = c.uql): 
   return {
     insert: {
       run: () => q.insertMany<User>(User, NEW_USERS),
-      check: (r) => expect(rowCount(r) === 10, 'UQL insert returned 10 ids'),
     },
     read: {
       run: () =>
@@ -215,15 +219,13 @@ function uqlFlow(c: Clients, q: Clients['uql'] | Clients['uqlBunSql'] = c.uql): 
           $sort: { id: 1 },
           $limit: READ_LIMIT,
         }),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `UQL read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => q.updateMany(User, { $where: { id: 1 } }, { name: UPDATE_NAME }),
-      check: (r) => expect(Number(r) === 1, 'UQL update touched 1 row'),
+      rows: (r) => Number(r),
     },
     readAgain: {
       run: () => q.findMany(User, { $select: { id: true, name: true }, $where: { id: 1 } }),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'UQL sees the updated name'),
     },
     nested: {
       run: () =>
@@ -233,22 +235,13 @@ function uqlFlow(c: Clients, q: Clients['uql'] | Clients['uqlBunSql'] = c.uql): 
           $where: { id: { $lte: NESTED_LIMIT } },
           $sort: { id: 1 },
         }),
-      check: (r) => {
-        const cs = r as { users?: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `UQL nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => (x.users?.length ?? 0) > 0),
-          'UQL nested populated users',
-        );
-      },
     },
     delete: {
       run: () => q.deleteMany(User, { $where: { id: 1 } }),
-      check: (r) => expect(Number(r) === 1, 'UQL delete removed 1 row'),
+      rows: (r) => Number(r),
     },
     readEmpty: {
       run: () => q.findMany(User, { $select: { id: true }, $where: { id: 1 } }),
-      check: (r) => expect(rowCount(r) === 0, 'UQL sees the row gone'),
     },
   };
 }
@@ -258,7 +251,6 @@ function sequelizeFlow(c: Clients): Flow {
   return {
     insert: {
       run: () => SqUser.bulkCreate(NEW_USERS as never[]),
-      check: (r) => expect(rowCount(r) === 10, 'Sequelize insert created 10'),
     },
     read: {
       run: () =>
@@ -268,16 +260,13 @@ function sequelizeFlow(c: Clients): Flow {
           order: [['id', 'ASC']],
           limit: READ_LIMIT,
         }),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `Sequelize read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => SqUser.update({ name: UPDATE_NAME }, { where: { id: 1 } }),
-      check: (r) => expect((r as number[])[0] === 1, 'Sequelize update touched 1 row'),
+      rows: (r) => (r as number[])[0],
     },
     readAgain: {
       run: () => SqUser.findAll({ attributes: ['id', 'name'], where: { id: 1 } }),
-      check: (r) =>
-        expect((r as { get(k: string): unknown }[])[0]?.get('name') === UPDATE_NAME, 'Sequelize sees updated name'),
     },
     nested: {
       run: () =>
@@ -287,22 +276,14 @@ function sequelizeFlow(c: Clients): Flow {
           where: { id: { [Op.lte]: NESTED_LIMIT } },
           order: [['id', 'ASC']],
         }),
-      check: (r) => {
-        const cs = r as { get(k: string): unknown }[];
-        expect(cs.length === NESTED_LIMIT, `Sequelize nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => (x.get('users') as unknown[])?.length > 0),
-          'Sequelize nested populated users',
-        );
-      },
+      children: (parent) => (parent as { get: (key: string) => unknown[] }).get('users'),
     },
     delete: {
       run: () => SqUser.destroy({ where: { id: 1 } }),
-      check: (r) => expect(Number(r) === 1, 'Sequelize delete removed 1 row'),
+      rows: (r) => Number(r),
     },
     readEmpty: {
       run: () => SqUser.findAll({ attributes: ['id'], where: { id: 1 } }),
-      check: (r) => expect(rowCount(r) === 0, 'Sequelize sees the row gone'),
     },
   };
 }
@@ -314,7 +295,7 @@ function typeormFlow(c: Clients): Flow {
   return {
     insert: {
       run: () => repo.insert(NEW_USERS as never),
-      check: (r) => expect(rowCount((r as { identifiers: unknown[] }).identifiers) === 10, 'TypeORM inserted 10'),
+      rows: (r) => (r as { identifiers: unknown[] }).identifiers.length,
     },
     read: {
       run: () =>
@@ -324,15 +305,13 @@ function typeormFlow(c: Clients): Flow {
           order: { id: 'ASC' },
           take: READ_LIMIT,
         }),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `TypeORM read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => repo.update({ id: 1 }, { name: UPDATE_NAME }),
-      check: (r) => expect((r as { affected?: number }).affected === 1, 'TypeORM update touched 1 row'),
+      rows: (r) => (r as { affected?: number }).affected ?? 0,
     },
     readAgain: {
       run: () => repo.find({ select: { id: true, name: true }, where: { id: 1 } }),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'TypeORM sees updated name'),
     },
     nested: {
       run: () =>
@@ -342,22 +321,13 @@ function typeormFlow(c: Clients): Flow {
           where: { id: LessThanOrEqual(NESTED_LIMIT) },
           order: { id: 'ASC' },
         }),
-      check: (r) => {
-        const cs = r as { users?: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `TypeORM nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => (x.users?.length ?? 0) > 0),
-          'TypeORM nested populated users',
-        );
-      },
     },
     delete: {
       run: () => repo.delete({ id: 1 }),
-      check: (r) => expect((r as { affected?: number }).affected === 1, 'TypeORM delete removed 1 row'),
+      rows: (r) => (r as { affected?: number }).affected ?? 0,
     },
     readEmpty: {
       run: () => repo.find({ select: { id: true }, where: { id: 1 } }),
-      check: (r) => expect(rowCount(r) === 0, 'TypeORM sees the row gone'),
     },
   };
 }
@@ -373,7 +343,7 @@ function mikroFlow(c: Clients): Flow {
   return {
     insert: {
       run: () => em.createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
-      check: () => undefined,
+      rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     read: {
       run: () =>
@@ -384,15 +354,13 @@ function mikroFlow(c: Clients): Flow {
           .orderBy({ id: 'ASC' })
           .limit(READ_LIMIT)
           .getResult(),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `MikroORM read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => em.createQueryBuilder(MikroUserSchema).update({ name: UPDATE_NAME }).where({ id: 1 }).execute(),
-      check: () => undefined,
+      rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     readAgain: {
       run: () => em.createQueryBuilder(MikroUserSchema).select(['id', 'name']).where({ id: 1 }).getResult(),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'MikroORM sees updated name'),
     },
     nested: {
       run: () =>
@@ -403,22 +371,13 @@ function mikroFlow(c: Clients): Flow {
             { id: { $lte: NESTED_LIMIT } },
             { fields: ['id', 'name', 'users.id', 'users.name'], populate: ['users'], orderBy: { id: 'ASC' } },
           ),
-      check: (r) => {
-        const cs = r as { users?: { length: number } }[];
-        expect(cs.length === NESTED_LIMIT, `MikroORM nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => (x.users?.length ?? 0) > 0),
-          'MikroORM nested populated users',
-        );
-      },
     },
     delete: {
       run: () => em.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).execute(),
-      check: () => undefined,
+      rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     readEmpty: {
       run: () => em.createQueryBuilder(MikroUserSchema).select(['id']).where({ id: 1 }).getResult(),
-      check: (r) => expect(rowCount(r) === 0, 'MikroORM sees the row gone'),
     },
   };
 }
@@ -427,7 +386,6 @@ function drizzleFlow(c: Clients, db: Clients['drizzleDb'] = c.drizzleDb): Flow {
   return {
     insert: {
       run: () => db.insert(drizzleUsers).values(NEW_USERS).returning({ id: drizzleUsers.id }),
-      check: (r) => expect(rowCount(r) === 10, 'Drizzle inserted 10'),
     },
     read: {
       run: () =>
@@ -443,7 +401,6 @@ function drizzleFlow(c: Clients, db: Clients['drizzleDb'] = c.drizzleDb): Flow {
           .where(gt(drizzleUsers.companyId, 0))
           .orderBy(asc(drizzleUsers.id))
           .limit(READ_LIMIT),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `Drizzle read returned ${READ_LIMIT}`),
     },
     update: {
       run: () =>
@@ -452,12 +409,10 @@ function drizzleFlow(c: Clients, db: Clients['drizzleDb'] = c.drizzleDb): Flow {
           .set({ name: UPDATE_NAME })
           .where(eq(drizzleUsers.id, 1))
           .returning({ id: drizzleUsers.id }),
-      check: (r) => expect(rowCount(r) === 1, 'Drizzle update touched 1 row'),
     },
     readAgain: {
       run: () =>
         db.select({ id: drizzleUsers.id, name: drizzleUsers.name }).from(drizzleUsers).where(eq(drizzleUsers.id, 1)),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'Drizzle sees updated name'),
     },
     nested: {
       run: () =>
@@ -467,22 +422,12 @@ function drizzleFlow(c: Clients, db: Clients['drizzleDb'] = c.drizzleDb): Flow {
           where: (t, { lte }) => lte(t.id, NESTED_LIMIT),
           orderBy: (t, { asc: a }) => a(t.id),
         }),
-      check: (r) => {
-        const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `Drizzle nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => x.users.length > 0),
-          'Drizzle nested populated users',
-        );
-      },
     },
     delete: {
       run: () => db.delete(drizzleUsers).where(eq(drizzleUsers.id, 1)).returning({ id: drizzleUsers.id }),
-      check: (r) => expect(rowCount(r) === 1, 'Drizzle delete removed 1 row'),
     },
     readEmpty: {
       run: () => db.select({ id: drizzleUsers.id }).from(drizzleUsers).where(eq(drizzleUsers.id, 1)),
-      check: (r) => expect(rowCount(r) === 0, 'Drizzle sees the row gone'),
     },
   };
 }
@@ -494,7 +439,6 @@ function prismaFlow(c: Clients): Flow {
       // `createManyAndReturn` is the one call that inserts a batch and hands back the ids, which is what
       // every other entry's insert step does.
       run: () => db.user.createManyAndReturn({ data: NEW_USERS, select: { id: true } }),
-      check: (r) => expect(rowCount(r) === 10, 'Prisma inserted 10'),
     },
     read: {
       run: () =>
@@ -504,15 +448,13 @@ function prismaFlow(c: Clients): Flow {
           orderBy: { id: 'asc' },
           take: READ_LIMIT,
         }),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `Prisma read returned ${READ_LIMIT}`),
     },
     update: {
       run: () => db.user.update({ where: { id: 1 }, data: { name: UPDATE_NAME }, select: { id: true } }),
-      check: (r) => expect(!!r, 'Prisma update touched 1 row'),
+      rows: (r) => (r ? 1 : 0),
     },
     readAgain: {
       run: () => db.user.findMany({ select: { id: true, name: true }, where: { id: 1 } }),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'Prisma sees the updated name'),
     },
     nested: {
       run: () =>
@@ -521,22 +463,13 @@ function prismaFlow(c: Clients): Flow {
           where: { id: { lte: NESTED_LIMIT } },
           orderBy: { id: 'asc' },
         }),
-      check: (r) => {
-        const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `Prisma nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => x.users.length > 0),
-          'Prisma nested populated users',
-        );
-      },
     },
     delete: {
       run: () => db.user.delete({ where: { id: 1 }, select: { id: true } }),
-      check: (r) => expect(!!r, 'Prisma delete removed 1 row'),
+      rows: (r) => (r ? 1 : 0),
     },
     readEmpty: {
       run: () => db.user.findMany({ select: { id: true }, where: { id: 1 } }),
-      check: (r) => expect(rowCount(r) === 0, 'Prisma sees the row gone'),
     },
   };
 }
@@ -555,10 +488,6 @@ const FLOWS: Record<Entry, (c: Clients) => Flow> = {
   'Drizzle (bunSql)': (c) => drizzleFlow(c, c.drizzleBunDb as unknown as Clients['drizzleDb']),
   Prisma: prismaFlow,
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Harness
-// ─────────────────────────────────────────────────────────────────────────────
 
 /** Median, not mean: one GC pause during a run would otherwise dominate the number. */
 function median(xs: number[]): number {
@@ -653,12 +582,12 @@ async function main() {
         // Resetting per step would erase the very state each read is there to verify.
         await resetFixture(admin);
         for (const step of STEPS) {
-          const { run, check } = flow[step];
+          const op = flow[step];
           const t0 = process.hrtime.bigint();
-          const returned = await run();
+          const returned = await op.run();
           const elapsed = Number(process.hrtime.bigint() - t0) / 1000;
           if (round === 0) {
-            check(returned);
+            checkStep(ENTRIES[i], step, op, returned);
           }
           if (round >= warmup) {
             samples[i][step].push(elapsed);

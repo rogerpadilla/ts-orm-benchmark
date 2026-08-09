@@ -19,7 +19,7 @@ import { Entity, Field, Id, ManyToOne, OneToMany } from 'uql-orm';
 export const USER_TABLE = 'User';
 export const COMPANY_TABLE = 'Company';
 
-// ── UQL ──────────────────────────────────────────────────────────────────────
+// UQL
 
 @Entity()
 export class Company {
@@ -38,7 +38,7 @@ export class User {
   @ManyToOne({ entity: () => Company }) company?: Company;
 }
 
-// ── TypeORM ──────────────────────────────────────────────────────────────────
+// TypeORM
 
 /** `EntitySchema` derives its allowed keys from this, so relations need it stated. */
 type TypeORMCompany = { id: number; name: string; users?: TypeORMUser[] };
@@ -78,7 +78,7 @@ export const TypeORMUserSchema = new EntitySchema<TypeORMUser>({
   },
 });
 
-// ── MikroORM ─────────────────────────────────────────────────────────────────
+// MikroORM
 
 export const MikroCompanySchema = defineEntity({
   name: 'Company',
@@ -113,7 +113,7 @@ MikroCompanySchema.setClass(MikroCompanyEntity);
 class MikroUserEntity extends MikroUserSchema.class {}
 MikroUserSchema.setClass(MikroUserEntity);
 
-// ── Drizzle ──────────────────────────────────────────────────────────────────
+// Drizzle
 
 const drizzleCompanies = pgTable(COMPANY_TABLE, {
   id: serial('id').primaryKey(),
@@ -144,7 +144,7 @@ export const drizzleSchema = {
   drizzleUsersRelations,
 };
 
-// ── Sequelize ────────────────────────────────────────────────────────────────
+// Sequelize
 
 /** Sequelize models bind to an instance, so this is a factory rather than a bare const. */
 export function defineSequelizeModels(sequelize: Sequelize) {
@@ -168,7 +168,7 @@ export function defineSequelizeModels(sequelize: Sequelize) {
   return { SqCompany, SqUser };
 }
 
-// ── Fixtures ─────────────────────────────────────────────────────────────────
+// Fixtures
 
 export type CompanyRow = { id: number; name: string };
 export type UserRow = { id: number; name: string; email: string; companyId: number; createdAt: number };
