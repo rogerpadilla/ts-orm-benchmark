@@ -147,15 +147,16 @@ function headline(results: Results): string {
   );
 }
 
-function versionsTable(): string {
-  const rows = Object.entries(TOOLS).flatMap(([entry, { pkg }]) => {
+/** Six versions are a sentence, not a table, and they belong next to the numbers they produced. */
+function versionsLine(): string {
+  const tools = Object.entries(TOOLS).flatMap(([entry, { pkg }]) => {
     if (!pkg) return [];
     const manifest = resolve(root, 'node_modules', pkg, 'package.json');
     const { version } = JSON.parse(readFileSync(manifest, 'utf8')) as { version: string };
-    return [`| ${linkEntry(entry)} | ${version} |`];
+    return [`${linkEntry(entry)} ${version}`];
   });
 
-  return ['| Entry | Version |', '| --- | --- |', ...rows].join('\n');
+  return `_Versions: ${tools.join(' · ')}._`;
 }
 
 /** Rewrites the region between `<!-- bench:key -->` and `<!-- /bench:key -->`. */
@@ -196,7 +197,7 @@ export function syncResults(results: Results): void {
   let out = replaceMarked(readme, 'ranking', rankingTable(results));
   out = replaceMarked(out, 'headline', headline(results));
   out = replaceMarked(out, 'steps', stepTable(results));
-  writeFileSync(readmePath, replaceMarked(out, 'versions', versionsTable()));
+  writeFileSync(readmePath, replaceMarked(out, 'versions', versionsLine()));
 }
 
 export function printSummary(results: Results): void {

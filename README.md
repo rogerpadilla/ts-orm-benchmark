@@ -10,6 +10,10 @@ Each entry runs the same lifecycle - insert, read, update, read, nested read, de
 
 > PostgreSQL 18.4, Node.js v24.18.1, Apple M4 Pro, August 2026. µs per operation, median of 250 interleaved iterations.
 
+<!-- bench:versions -->
+_Versions: [UQL](https://uql-orm.dev) 0.25.1 · [Prisma](https://www.prisma.io) 7.9.1 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.0 · [MikroORM](https://mikro-orm.io) 7.1.11 · [Drizzle](https://orm.drizzle.team) 0.45.2._
+<!-- /bench:versions -->
+
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
@@ -29,7 +33,7 @@ Each entry runs the same lifecycle - insert, read, update, read, nested read, de
 Totals span 2.2x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 7x: 278µs for UQL (bunSql) against 1889µs for MikroORM.
 <!-- /bench:headline -->
 
-A Bun SQL entry is measured against the `bun sql` floor, everything else against `raw pg`, so a faster driver is not counted as the ORM's doing. The same UQL code adds 333µs on `pg` and 278µs on Bun SQL, so the driver is worth 55µs here, against 310µs for the step from UQL to the next fastest ORM on the same driver.
+Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. The same UQL code adds 333µs on `pg` and 278µs on Bun SQL: the driver is worth 55µs, the ORM 310µs.
 
 ### Per step
 
@@ -71,19 +75,6 @@ It creates its own `ts_orm_bench` database, then rewrites `results.js` and the t
 - One connection each, no pooling.
 - Same `Company` and `User` shape for everyone, and each step uses the entry's own idiomatic API: `createManyAndReturn` for Prisma, `insertMany` for UQL, `.returning()` for Drizzle.
 - Prisma is the only entry needing codegen. `prisma generate` runs from `postinstall`, and it connects through the `pg` driver adapter.
-
-## Versions
-
-<!-- bench:versions -->
-| Entry | Version |
-| --- | --- |
-| [UQL](https://uql-orm.dev) | 0.25.1 |
-| [Prisma](https://www.prisma.io) | 7.9.1 |
-| [Sequelize](https://sequelize.org) | 6.37.8 |
-| [TypeORM](https://typeorm.io) | 1.1.0 |
-| [MikroORM](https://mikro-orm.io) | 7.1.11 |
-| [Drizzle](https://orm.drizzle.team) | 0.45.2 |
-<!-- /bench:versions -->
 
 ## Adding an ORM
 
