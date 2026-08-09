@@ -29,7 +29,7 @@ Each entry runs the same lifecycle - insert, read, update, read, nested read, de
 Totals span 2.2x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 7x: 278µs for UQL (bunSql) against 1889µs for MikroORM.
 <!-- /bench:headline -->
 
-A Bun SQL entry is measured against the `bun sql` floor, everything else against `raw pg`, so a faster driver is not counted as the ORM's doing. The same UQL code adds 333µs on `pg` and 278µs on Bun SQL, which is roughly the distance between first and second place.
+A Bun SQL entry is measured against the `bun sql` floor, everything else against `raw pg`, so a faster driver is not counted as the ORM's doing. The same UQL code adds 333µs on `pg` and 278µs on Bun SQL, so the driver is worth 55µs here, against 310µs for the step from UQL to the next fastest ORM on the same driver.
 
 ### Per step
 
@@ -46,7 +46,7 @@ A Bun SQL entry is measured against the `bun sql` floor, everything else against
 | **Total** | 1300 | 1205 | 1633 | **1483** 🥇 | 2386 | 2091 | 3189 | 1943 | 1826 | 2571 |
 <!-- /bench:steps -->
 
-The nested read is where the field separates: it is the only step exercising relation loading. UQL's weakest is `delete`, where `deleteMany` resolves the matching ids before deleting and nothing here needs them, so it spends two statements on one row. Prisma's `createManyAndReturn` wraps its insert in a transaction, which is most of its 1241µs.
+The nested read is where the field separates: it is the only step exercising relation loading. UQL's weakest is `delete`, where `deleteMany` resolves the matching ids before deleting and nothing here needs them, so it spends two statements on one row. Prisma's insert is the widest gap of any single step: 1241µs against 550-591µs for the other ORMs. It wraps the batch in an explicit transaction, but a BEGIN/COMMIT pair on this machine costs 88µs, so that accounts for about an eighth of the difference.
 
 ## Run it
 
