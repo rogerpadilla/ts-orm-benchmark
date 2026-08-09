@@ -224,7 +224,7 @@
         </span>
         <div class="bar-track">
           <div class="bar-fill" style="--c:${meta.color};width:${Math.max((best / value) * 100, 3)}%"></div>
-          <span class="bar-value" style="color:${meta.color}">${(value / 1000).toFixed(2)}ms</span>
+          <span class="bar-value" style="color:${meta.color}">${value}µs</span>
         </div>
       `;
       container.appendChild(row);
@@ -232,7 +232,7 @@
   }
 
   document.getElementById('subtitle').textContent =
-    'A full PostgreSQL lifecycle per request. ms · lower = better';
+    'A full PostgreSQL lifecycle per request. µs · lower = better';
 
   const root = document.getElementById('categories');
   for (const { key, label } of [...steps, { key: null, label: 'TOTAL, whole lifecycle' }]) {
@@ -253,9 +253,9 @@
   const leader = contenders[0];
   const slowest = contenders[contenders.length - 1];
   document.getElementById('score').innerHTML = `
-    <span style="color:${describeEntry(leader.entry).meta.color}">${leader.entry} +${(leader.adds / 1000).toFixed(2)}ms</span>
+    <span style="color:${describeEntry(leader.entry).meta.color}">${leader.entry} +${leader.adds}µs</span>
     <span class="sep">·</span>
-    added over its own driver, against +${(slowest.adds / 1000).toFixed(2)}ms for ${slowest.entry}
+    added over its own driver, against +${slowest.adds}µs for ${slowest.entry}
   `;
 
   document.getElementById('legend').innerHTML = entries.map((name) => {
