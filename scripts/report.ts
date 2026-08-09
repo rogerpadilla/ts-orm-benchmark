@@ -42,15 +42,20 @@ const STEP_LABELS: Record<Step, string> = {
   readEmpty: 'SELECT to verify the delete',
 };
 
-const ENTRY_URLS: Record<string, string> = {
-  UQL: 'https://uql-orm.dev',
-  Sequelize: 'https://sequelize.org',
-  TypeORM: 'https://typeorm.io',
-  MikroORM: 'https://mikro-orm.io',
-  Drizzle: 'https://orm.drizzle.team',
-  Prisma: 'https://www.prisma.io',
-  'raw pg': 'https://node-postgres.com',
-  'bun sql': 'https://bun.sh/docs/api/sql',
+/**
+ * Keyed by entry name without its driver suffix, so `UQL` and `UQL (bunSql)` resolve to the same row.
+ * `pkg` is where the version comes from, read from `node_modules` rather than hand-kept; the floors are
+ * hand-written driver code, so they have no package and no version to report.
+ */
+const TOOLS: Record<string, { url: string; pkg?: string }> = {
+  UQL: { url: 'https://uql-orm.dev', pkg: 'uql-orm' },
+  Prisma: { url: 'https://www.prisma.io', pkg: 'prisma' },
+  Sequelize: { url: 'https://sequelize.org', pkg: 'sequelize' },
+  TypeORM: { url: 'https://typeorm.io', pkg: 'typeorm' },
+  MikroORM: { url: 'https://mikro-orm.io', pkg: '@mikro-orm/postgresql' },
+  Drizzle: { url: 'https://orm.drizzle.team', pkg: 'drizzle-orm' },
+  'raw pg': { url: 'https://node-postgres.com' },
+  'bun sql': { url: 'https://bun.sh/docs/api/sql' },
 };
 
 /** Each entry is measured against its own driver, so a faster driver is not counted as the tool's doing. */
@@ -61,7 +66,7 @@ function floorFor(entry: string): Entry {
 const isBaseline = (entry: string) => (BASELINES as readonly string[]).includes(entry);
 
 function linkEntry(entry: string): string {
-  const url = ENTRY_URLS[entry.replace(/\s*\(.+\)$/, '')];
+  const url = TOOLS[entry.replace(/\s*\(.+\)$/, '')]?.url;
   return url ? `[${entry}](${url})` : entry;
 }
 
@@ -124,7 +129,7 @@ function rankingTable(results: Results): string {
     return `| ${position} | ${name} | ${r.isBaseline ? 'floor' : `+${r.adds}`} | ${r.total} |`;
   });
 
-  return ['| P | Entry | Adds µs | Total µs |', '| --- | --- | --- | --- |', ...rows].join('\n');
+  return ['| # | Entry | Adds µs | Total µs |', '| --- | --- | --- | --- |', ...rows].join('\n');
 }
 
 /** Generated, so the one sentence carrying numbers cannot drift from the tables. */
@@ -140,6 +145,17 @@ function headline(results: Results): string {
     `which is the ORM's own, spans ${(highest.adds / lowest.adds).toFixed(0)}x: ${lowest.adds}µs for ` +
     `${lowest.entry} against ${highest.adds}µs for ${highest.entry}.`
   );
+}
+
+function versionsTable(): string {
+  const rows = Object.entries(TOOLS).flatMap(([entry, { pkg }]) => {
+    if (!pkg) return [];
+    const manifest = resolve(root, 'node_modules', pkg, 'package.json');
+    const { version } = JSON.parse(readFileSync(manifest, 'utf8')) as { version: string };
+    return [`| ${linkEntry(entry)} | ${version} |`];
+  });
+
+  return ['| Entry | Version |', '| --- | --- |', ...rows].join('\n');
 }
 
 /** Rewrites the region between `<!-- bench:key -->` and `<!-- /bench:key -->`. */
@@ -179,7 +195,8 @@ export function syncResults(results: Results): void {
   const readme = readFileSync(readmePath, 'utf8');
   let out = replaceMarked(readme, 'ranking', rankingTable(results));
   out = replaceMarked(out, 'headline', headline(results));
-  writeFileSync(readmePath, replaceMarked(out, 'steps', stepTable(results)));
+  out = replaceMarked(out, 'steps', stepTable(results));
+  writeFileSync(readmePath, replaceMarked(out, 'versions', versionsTable()));
 }
 
 export function printSummary(results: Results): void {
