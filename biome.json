@@ -13,7 +13,8 @@
       "!bench*.json",
       "!bench*.txt",
       "!.bench-snapshots",
-      "!results.js"
+      "!results.js",
+      "!src/generated"
     ]
   },
   "javascript": {

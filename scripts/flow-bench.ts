@@ -34,21 +34,13 @@ import {
   USER_TABLE,
   User,
 } from '../src/schema';
-import {
-  FLOW_ENTRIES,
-  FLOW_STEPS,
-  type FlowEntry,
-  type FlowStep,
-  flowDataset,
-  mergeDataset,
-  type Series,
-  syncResultsArtifacts,
-} from './bench-common.js';
+import { ENTRIES, type Entry, printSummary, type Results, STEPS, type Step, syncResults } from './report.js';
 
 const BENCH_DB = 'ts_orm_bench';
 
-type Step = { run: () => Promise<unknown>; check: (returned: unknown) => void };
-type Flow = Record<FlowStep, Step>;
+/** One step of the lifecycle: the call being timed, and what must be true of what it returned. */
+type Operation = { run: () => Promise<unknown>; check: (returned: unknown) => void };
+type Flow = Record<Step, Operation>;
 
 /** The 10 rows every entry inserts. Ids are left to the sequence so the insert is a real insert. */
 const NEW_USERS = Array.from({ length: 10 }, (_, i) => ({
@@ -77,7 +69,7 @@ function rowCount(returned: unknown): number {
 // Per-entry flows
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Knex and Kysely have no relation loading, so the nested step is the grouping a user would write. */
+/** The floors map rows by hand, which is the point of them: no ORM assembles this. */
 function nestFlatRows(rows: { cId: number; cName: string; uId: number | null; uName: string | null }[]) {
   const byId = new Map<number, { id: number; name: string; users: { id: number; name: string }[] }>();
   for (const row of rows) {
@@ -95,9 +87,7 @@ function nestFlatRows(rows: { cId: number; cName: string; uId: number | null; uN
 
 function rawPgFlow(c: Clients): Flow {
   const db = c.rawPg;
-  // Hoisted: the statement is constant, so a hand-written implementation would build it once. Leaving the
-  // template concatenation inside the timer made the baseline slower than Kysely, which would have made
-  // every "overhead over raw pg" figure understate the real gap.
+  // Hoisted: the statement is constant, so a hand-written implementation would build it once.
   const insertSql = `INSERT INTO "${USER_TABLE}" (name,email,"companyId","createdAt") VALUES ${NEW_USERS.map(
     (_, i) => `($${i * 4 + 1},$${i * 4 + 2},$${i * 4 + 3},$${i * 4 + 4})`,
   ).join(',')} RETURNING id`;
@@ -139,18 +129,7 @@ function rawPgFlow(c: Clients): Flow {
             [NESTED_LIMIT],
           )
         ).rows as { cId: number; cName: string; uId: number | null; uName: string | null }[];
-        const byId = new Map<number, { id: number; name: string; users: { id: number; name: string }[] }>();
-        for (const row of rows) {
-          let parent = byId.get(row.cId);
-          if (!parent) {
-            parent = { id: row.cId, name: row.cName, users: [] };
-            byId.set(row.cId, parent);
-          }
-          if (row.uId !== null) {
-            parent.users.push({ id: row.uId, name: row.uName as string });
-          }
-        }
-        return [...byId.values()];
+        return nestFlatRows(rows);
       },
       check: (r) => {
         const cs = r as { users: unknown[] }[];
@@ -508,122 +487,61 @@ function drizzleFlow(c: Clients, db: Clients['drizzleDb'] = c.drizzleDb): Flow {
   };
 }
 
-function knexFlow(c: Clients): Flow {
-  const db = c.knexDb;
+function prismaFlow(c: Clients): Flow {
+  const db = c.prisma;
   return {
     insert: {
-      run: () => db(USER_TABLE).insert(NEW_USERS).returning('id'),
-      check: (r) => expect(rowCount(r) === 10, 'Knex inserted 10'),
+      // `createManyAndReturn` is the one call that inserts a batch and hands back the ids, which is what
+      // every other entry's insert step does.
+      run: () => db.user.createManyAndReturn({ data: NEW_USERS, select: { id: true } }),
+      check: (r) => expect(rowCount(r) === 10, 'Prisma inserted 10'),
     },
     read: {
       run: () =>
-        db(USER_TABLE)
-          .select('id', 'name', 'email', 'companyId', 'createdAt')
-          .where('companyId', '>', 0)
-          .orderBy('id', 'asc')
-          .limit(READ_LIMIT),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `Knex read returned ${READ_LIMIT}`),
+        db.user.findMany({
+          select: { id: true, name: true, email: true, companyId: true, createdAt: true },
+          where: { companyId: { gt: 0 } },
+          orderBy: { id: 'asc' },
+          take: READ_LIMIT,
+        }),
+      check: (r) => expect(rowCount(r) === READ_LIMIT, `Prisma read returned ${READ_LIMIT}`),
     },
     update: {
-      run: () => db(USER_TABLE).where({ id: 1 }).update({ name: UPDATE_NAME }).returning('id'),
-      check: (r) => expect(rowCount(r) === 1, 'Knex update touched 1 row'),
+      run: () => db.user.update({ where: { id: 1 }, data: { name: UPDATE_NAME }, select: { id: true } }),
+      check: (r) => expect(!!r, 'Prisma update touched 1 row'),
     },
     readAgain: {
-      run: () => db(USER_TABLE).select('id', 'name').where({ id: 1 }),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'Knex sees updated name'),
+      run: () => db.user.findMany({ select: { id: true, name: true }, where: { id: 1 } }),
+      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'Prisma sees the updated name'),
     },
     nested: {
-      run: async () => {
-        const rows = (await db(COMPANY_TABLE)
-          .leftJoin(USER_TABLE, `${USER_TABLE}.companyId`, `${COMPANY_TABLE}.id`)
-          .where(`${COMPANY_TABLE}.id`, '<=', NESTED_LIMIT)
-          .orderBy(`${COMPANY_TABLE}.id`, 'asc')
-          .select(
-            `${COMPANY_TABLE}.id as cId`,
-            `${COMPANY_TABLE}.name as cName`,
-            `${USER_TABLE}.id as uId`,
-            `${USER_TABLE}.name as uName`,
-          )) as { cId: number; cName: string; uId: number | null; uName: string | null }[];
-        return nestFlatRows(rows);
-      },
+      run: () =>
+        db.company.findMany({
+          select: { id: true, name: true, users: { select: { id: true, name: true } } },
+          where: { id: { lte: NESTED_LIMIT } },
+          orderBy: { id: 'asc' },
+        }),
       check: (r) => {
         const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `Knex nested returned ${NESTED_LIMIT} companies`);
+        expect(cs.length === NESTED_LIMIT, `Prisma nested returned ${NESTED_LIMIT} companies`);
         expect(
           cs.every((x) => x.users.length > 0),
-          'Knex nested populated users',
+          'Prisma nested populated users',
         );
       },
     },
     delete: {
-      run: () => db(USER_TABLE).where({ id: 1 }).delete().returning('id'),
-      check: (r) => expect(rowCount(r) === 1, 'Knex delete removed 1 row'),
+      run: () => db.user.delete({ where: { id: 1 }, select: { id: true } }),
+      check: (r) => expect(!!r, 'Prisma delete removed 1 row'),
     },
     readEmpty: {
-      run: () => db(USER_TABLE).select('id').where({ id: 1 }),
-      check: (r) => expect(rowCount(r) === 0, 'Knex sees the row gone'),
+      run: () => db.user.findMany({ select: { id: true }, where: { id: 1 } }),
+      check: (r) => expect(rowCount(r) === 0, 'Prisma sees the row gone'),
     },
   };
 }
 
-function kyselyFlow(c: Clients): Flow {
-  const db = c.kyselyDb;
-  return {
-    insert: {
-      run: () => db.insertInto('User').values(NEW_USERS).returning('id').execute(),
-      check: (r) => expect(rowCount(r) === 10, 'Kysely inserted 10'),
-    },
-    read: {
-      run: () =>
-        db
-          .selectFrom('User')
-          .select(['id', 'name', 'email', 'companyId', 'createdAt'])
-          .where('companyId', '>', 0)
-          .orderBy('id', 'asc')
-          .limit(READ_LIMIT)
-          .execute(),
-      check: (r) => expect(rowCount(r) === READ_LIMIT, `Kysely read returned ${READ_LIMIT}`),
-    },
-    update: {
-      run: () => db.updateTable('User').set({ name: UPDATE_NAME }).where('id', '=', 1).returning('id').execute(),
-      check: (r) => expect(rowCount(r) === 1, 'Kysely update touched 1 row'),
-    },
-    readAgain: {
-      run: () => db.selectFrom('User').select(['id', 'name']).where('id', '=', 1).execute(),
-      check: (r) => expect((r as { name: string }[])[0]?.name === UPDATE_NAME, 'Kysely sees updated name'),
-    },
-    nested: {
-      run: async () => {
-        const rows = (await db
-          .selectFrom('Company')
-          .leftJoin('User', 'User.companyId', 'Company.id')
-          .where('Company.id', '<=', NESTED_LIMIT)
-          .orderBy('Company.id', 'asc')
-          .select(['Company.id as cId', 'Company.name as cName', 'User.id as uId', 'User.name as uName'])
-          .execute()) as unknown as { cId: number; cName: string; uId: number | null; uName: string | null }[];
-        return nestFlatRows(rows);
-      },
-      check: (r) => {
-        const cs = r as { users: unknown[] }[];
-        expect(cs.length === NESTED_LIMIT, `Kysely nested returned ${NESTED_LIMIT} companies`);
-        expect(
-          cs.every((x) => x.users.length > 0),
-          'Kysely nested populated users',
-        );
-      },
-    },
-    delete: {
-      run: () => db.deleteFrom('User').where('id', '=', 1).returning('id').execute(),
-      check: (r) => expect(rowCount(r) === 1, 'Kysely delete removed 1 row'),
-    },
-    readEmpty: {
-      run: () => db.selectFrom('User').select('id').where('id', '=', 1).execute(),
-      check: (r) => expect(rowCount(r) === 0, 'Kysely sees the row gone'),
-    },
-  };
-}
-
-const FLOWS: Record<FlowEntry, (c: Clients) => Flow> = {
+const FLOWS: Record<Entry, (c: Clients) => Flow> = {
   'raw pg': rawPgFlow,
   'bun sql': bunSqlFlow,
   UQL: uqlFlow,
@@ -635,8 +553,7 @@ const FLOWS: Record<FlowEntry, (c: Clients) => Flow> = {
   // Same query-building API, different driver; the two db types are structurally distinct only in their
   // driver internals, which the flow never touches.
   'Drizzle (bunSql)': (c) => drizzleFlow(c, c.drizzleBunDb as unknown as Clients['drizzleDb']),
-  Knex: knexFlow,
-  Kysely: kyselyFlow,
+  Prisma: prismaFlow,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -705,8 +622,7 @@ async function main() {
   // CI runs a handful of iterations purely to exercise every step's assertions, where the timings are
   // meaningless and must not reach the published artifacts.
   const verifyOnly = process.argv.includes('--verify');
-  // Generous warmup even though the entries are interleaved: an earlier 12-iteration warmup left Knex's
-  // overhead swinging between +156µs and +886µs across runs.
+  // Half the run again as warmup: below that, per-entry figures swing by hundreds of µs between runs.
   const warmup = Math.max(40, Math.round(iterations / 2));
 
   console.log(`flow benchmark: ${iterations} iterations/step, ${warmup} warmup`);
@@ -718,21 +634,16 @@ async function main() {
   const clients = await createClients(benchUrl);
   // Built once. Some flows hoist a constant statement out of the timed section, which only holds if the
   // flow itself is not rebuilt per iteration.
-  const flows = FLOW_ENTRIES.map((entry) => FLOWS[entry](clients));
-  const samples = FLOW_ENTRIES.map(
-    () => Object.fromEntries(FLOW_STEPS.map((s) => [s, [] as number[]])) as Record<FlowStep, number[]>,
+  const flows = ENTRIES.map((entry) => FLOWS[entry](clients));
+  const samples = ENTRIES.map(
+    () => Object.fromEntries(STEPS.map((s) => [s, [] as number[]])) as Record<Step, number[]>,
   );
   const rounds = warmup + iterations;
 
   try {
     for (let round = 0; round < rounds; round++) {
-      // Entries are interleaved one pass at a time, and rotated so each spends an equal share of its
-      // samples in every position. Running each entry to completion instead made the result depend on
-      // declaration order: the first absorbed process-wide JIT warmup, and later ones ran against a
-      // bigger heap. That is what made `UQL (bunSql)` look slower than `UQL` when measuring it on its own
-      // shows it 1.20x faster. Spreading each entry's samples across the whole session is also why this
-      // needs no averaging over repeated runs, which the generation bench does only because tinybench
-      // keeps its state per process.
+      // One pass per entry per round, rotated so each spends an equal share of its samples in every
+      // position. Running each entry to completion made the result depend on declaration order.
       for (let k = 0; k < flows.length; k++) {
         const i = (k + round) % flows.length;
         const flow = flows[i];
@@ -741,7 +652,7 @@ async function main() {
         // `readAgain` only means anything after `update` ran, and `readEmpty` only after `delete`.
         // Resetting per step would erase the very state each read is there to verify.
         await resetFixture(admin);
-        for (const step of FLOW_STEPS) {
+        for (const step of STEPS) {
           const { run, check } = flow[step];
           const t0 = process.hrtime.bigint();
           const returned = await run();
@@ -766,28 +677,19 @@ async function main() {
     await admin.end();
   }
 
-  const data: Record<string, Series> = Object.fromEntries(FLOW_STEPS.map((s) => [s, [] as Series]));
+  const results = Object.fromEntries(
+    STEPS.map((step) => [step, ENTRIES.map((_, i) => Math.round(median(samples[i][step])))]),
+  ) as Results;
 
   console.log();
-  for (const [i, entry] of FLOW_ENTRIES.entries()) {
-    const perStep = new Map(FLOW_STEPS.map((step) => [step, Math.round(median(samples[i][step]))]));
-    for (const [step, value] of perStep) {
-      data[step].push(value);
-    }
-    const total = [...perStep.values()].reduce((sum, v) => sum + v, 0);
-    const steps = [...perStep].map(([step, value]) => `${step}=${value}`).join(' ');
-    console.log(entry.padEnd(17), steps, `| total=${total}µs`);
-  }
+  printSummary(results);
 
-  // Written straight into the shared artifacts rather than to a JSON file for another script to read.
-  // `mergeDataset` keeps whatever generation results are already there, so either bench can be re-run
-  // on its own without erasing the other.
   if (verifyOnly) {
-    console.log('\n--verify: every step asserted, artifacts left alone');
+    console.log('\n--verify: every step asserted, nothing written');
     return;
   }
 
-  syncResultsArtifacts(mergeDataset(flowDataset(data)));
+  syncResults(results);
   console.log('\nresults.js + README.md updated');
 }
 

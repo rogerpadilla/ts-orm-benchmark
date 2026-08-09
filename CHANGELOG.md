@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 - 2026-08-09
+
+Now a single benchmark: what each ORM costs on a real PostgreSQL round trip.
+
+- Removed the SQL-generation benchmark. We found it practically only accounted for under 0.5% of real requests when measured well.
+- Removed Knex and Kysely: a query builder with no entities and no relation loading is not an ORM, and its nested step was hand-written grouping rather than a feature.
+- Added Prisma, through the `pg` driver adapter on the same single connection as everything else.
+- The headline is now the time an ORM adds over its own driver, not its total: totals span 2.2x because every entry pays the same database cost.
+- Numbers that change per run are generated, and the prose around them stays qualitative, so a re-run cannot leave stale figures behind.
+
 ## 0.7.0 - 2026-08-08
 
 - **New benchmark: a real database round trip.** `scripts/flow-bench.ts` runs a full lifecycle against PostgreSQL 18.4 (insert, read, update, read, nested read, delete, read) and reports µs per step. Generation only measures building the statement; this measures the rest of what a request costs, including decoding rows and assembling relations. Each step asserts on the rows it gets back, so a step that silently does nothing fails instead of scoring well.

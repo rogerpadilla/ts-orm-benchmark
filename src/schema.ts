@@ -12,7 +12,6 @@
 import { defineEntity, p as mikroP } from '@mikro-orm/core';
 import { relations } from 'drizzle-orm';
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
-import type { Generated } from 'kysely';
 import { DataTypes, type Sequelize } from 'sequelize';
 import { EntitySchema } from 'typeorm';
 import { Entity, Field, Id, ManyToOne, OneToMany } from 'uql-orm';
@@ -109,14 +108,14 @@ export const MikroUserSchema = defineEntity({
   },
 });
 
-export class MikroCompanyEntity extends MikroCompanySchema.class {}
+class MikroCompanyEntity extends MikroCompanySchema.class {}
 MikroCompanySchema.setClass(MikroCompanyEntity);
-export class MikroUserEntity extends MikroUserSchema.class {}
+class MikroUserEntity extends MikroUserSchema.class {}
 MikroUserSchema.setClass(MikroUserEntity);
 
 // ── Drizzle ──────────────────────────────────────────────────────────────────
 
-export const drizzleCompanies = pgTable(COMPANY_TABLE, {
+const drizzleCompanies = pgTable(COMPANY_TABLE, {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
 });
@@ -130,11 +129,11 @@ export const drizzleUsers = pgTable(USER_TABLE, {
 });
 
 /** Drizzle's `db.query.*.findMany({ with })` only exists when these are passed to `drizzle()`. */
-export const drizzleCompaniesRelations = relations(drizzleCompanies, ({ many }) => ({
+const drizzleCompaniesRelations = relations(drizzleCompanies, ({ many }) => ({
   users: many(drizzleUsers),
 }));
 
-export const drizzleUsersRelations = relations(drizzleUsers, ({ one }) => ({
+const drizzleUsersRelations = relations(drizzleUsers, ({ one }) => ({
   company: one(drizzleCompanies, { fields: [drizzleUsers.companyId], references: [drizzleCompanies.id] }),
 }));
 
@@ -144,22 +143,6 @@ export const drizzleSchema = {
   drizzleCompaniesRelations,
   drizzleUsersRelations,
 };
-
-// ── Kysely ───────────────────────────────────────────────────────────────────
-
-export interface KyselyDb {
-  User: {
-    id: Generated<number>;
-    name: string;
-    email: string;
-    companyId: number;
-    createdAt: number;
-  };
-  Company: {
-    id: Generated<number>;
-    name: string;
-  };
-}
 
 // ── Sequelize ────────────────────────────────────────────────────────────────
 
@@ -190,8 +173,8 @@ export function defineSequelizeModels(sequelize: Sequelize) {
 export type CompanyRow = { id: number; name: string };
 export type UserRow = { id: number; name: string; email: string; companyId: number; createdAt: number };
 
-export const COMPANY_COUNT = 50;
-export const USERS_PER_COMPANY = 4;
+const COMPANY_COUNT = 50;
+const USERS_PER_COMPANY = 4;
 
 export const SEED_COMPANIES: readonly CompanyRow[] = Array.from({ length: COMPANY_COUNT }, (_, i) => ({
   id: i + 1,

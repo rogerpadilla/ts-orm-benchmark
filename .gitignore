@@ -1,4 +1,6 @@
 node_modules/
+# Generated from prisma/schema.prisma by `postinstall`.
+src/generated/
 dist/
 target/
 _site/

@@ -10,20 +10,19 @@
 
 import { EntityCaseNamingStrategy, MikroORM } from '@mikro-orm/core';
 import { defineConfig, type SqlEntityManager } from '@mikro-orm/postgresql';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { SQL } from 'bun';
 import { drizzle as drizzleBunSql } from 'drizzle-orm/bun-sql';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import knexLib, { type Knex } from 'knex';
-import { Kysely, PostgresDialect } from 'kysely';
 import pg from 'pg';
 import { Sequelize } from 'sequelize';
 import { DataSource } from 'typeorm';
 import { BunSqlQuerierPool } from 'uql-orm/bunSql';
 import { PgQuerierPool } from 'uql-orm/postgres';
+import { PrismaClient } from './generated/prisma/client';
 import {
   defineSequelizeModels,
   drizzleSchema,
-  type KyselyDb,
   MikroCompanySchema,
   MikroUserSchema,
   TypeORMCompanySchema,
@@ -71,10 +70,10 @@ export async function createClients(connectionString: string) {
   const drizzlePool = new pg.Pool(poolOpts);
   const drizzleDb: NodePgDatabase<typeof drizzleSchema> = drizzle(drizzlePool, { schema: drizzleSchema });
 
-  const knexDb: Knex = knexLib({ client: 'pg', connection: connectionString, pool: { min: 0, max: 1 } });
-
-  const kyselyPool = new pg.Pool(poolOpts);
-  const kyselyDb = new Kysely<KyselyDb>({ dialect: new PostgresDialect({ pool: kyselyPool }) });
+  // Through the `pg` driver adapter, so Prisma runs on the same single connection as everything else
+  // rather than its own pool. Prisma appears only here: the generation benchmark needs a way to compile a
+  // statement without executing it, and Prisma exposes none, which is not a limitation for a round trip.
+  const prisma = new PrismaClient({ adapter: new PrismaPg(poolOpts) });
 
   // Bun's native SQL client, ~2.4x faster than `pg` on a trivial query and ~1.6x on a 200-row read. It is
   // a second reference floor: it shows how much of every entry's cost is really the driver rather than the
@@ -86,11 +85,10 @@ export async function createClients(connectionString: string) {
   const drizzleBunDb = drizzleBunSql(drizzleBunClient, { schema: drizzleSchema });
 
   async function destroyAll() {
+    await prisma.$disconnect();
     await drizzleBunClient.end();
     await uqlBunSql.end();
     await bunSql.end();
-    await kyselyDb.destroy();
-    await knexDb.destroy();
     await drizzlePool.end();
     await mikroOrm.close(true);
     if (typeorm.isInitialized) {
@@ -110,8 +108,7 @@ export async function createClients(connectionString: string) {
     typeorm,
     mikroEm,
     drizzleDb,
-    knexDb,
-    kyselyDb,
+    prisma,
     bunSql,
     uqlBunSql,
     drizzleBunDb,
