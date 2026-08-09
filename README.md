@@ -4,14 +4,14 @@ What a TypeScript ORM costs per request against a real PostgreSQL.
 
 Each entry runs the same lifecycle - insert, read, update, read, nested read, delete, read - timed per step. `raw pg` and `bun sql` are hand-written SQL with manual row mapping: the floor each ORM is measured against.
 
-**[Interactive charts](https://rogerpadilla.github.io/ts-orm-benchmark/chart.html)** 📊
+**[Interactive charts](https://rogerpadilla.github.io/ts-orm-benchmark/chart.html)** 📊 · **[Write-up](https://uql-orm.dev/blog/what-orms-really-cost)**
 
 ## Results
 
-> PostgreSQL 18.4, Node.js v24.18.1, Apple Silicon M-series, August 2026. µs per operation, median of 250 interleaved iterations.
+> PostgreSQL 18.4, Node.js v24.18.1, Apple M4 Pro, August 2026. µs per operation, median of 250 interleaved iterations.
 
 <!-- bench:ranking -->
-| P | Entry | Adds µs | Total µs |
+| # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
 | ref | _bun sql_ | floor | 1205 |
 | ref | _raw pg_ | floor | 1300 |
@@ -46,7 +46,11 @@ A Bun SQL entry is measured against the `bun sql` floor, everything else against
 | **Total** | 1300 | 1205 | 1633 | **1483** 🥇 | 2386 | 2091 | 3189 | 1943 | 1826 | 2571 |
 <!-- /bench:steps -->
 
-The nested read is where the field separates: it is the only step exercising relation loading. UQL's weakest is `delete`, where `deleteMany` resolves the matching ids before deleting and nothing here needs them, so it spends two statements on one row. Prisma's insert is the widest gap of any single step: 1241µs against 550-591µs for the other ORMs. It wraps the batch in an explicit transaction, but a BEGIN/COMMIT pair on this machine costs 88µs, so that accounts for about an eighth of the difference.
+The nested read separates the field most, being the only step that loads a relation.
+
+UQL is last on `delete`: `deleteMany` resolves the matching ids before deleting, and nothing here needs them, so it spends two statements on one row.
+
+Prisma's insert is the widest single-step gap in the set, 1241µs against 550-591µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
 
 ## Run it
 
@@ -70,6 +74,7 @@ It creates its own `ts_orm_bench` database, then rewrites `results.js` and the t
 
 ## Versions
 
+<!-- bench:versions -->
 | Entry | Version |
 | --- | --- |
 | [UQL](https://uql-orm.dev) | 0.25.1 |
@@ -78,6 +83,7 @@ It creates its own `ts_orm_bench` database, then rewrites `results.js` and the t
 | [TypeORM](https://typeorm.io) | 1.1.0 |
 | [MikroORM](https://mikro-orm.io) | 7.1.11 |
 | [Drizzle](https://orm.drizzle.team) | 0.45.2 |
+<!-- /bench:versions -->
 
 ## Adding an ORM
 
