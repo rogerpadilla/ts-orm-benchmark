@@ -42,37 +42,6 @@
 
     .header p { color: #6e7681; font-size: 14px; font-weight: 500; }
 
-    .tabs {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      margin-bottom: 28px;
-      padding: 4px;
-      background: rgba(255,255,255,0.02);
-      border-radius: 12px;
-    }
-
-    .tab {
-      appearance: none;
-      border: 0;
-      cursor: pointer;
-      font: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      color: #6e7681;
-      background: transparent;
-      padding: 8px 18px;
-      border-radius: 9px;
-      transition: color .15s, background .15s;
-    }
-
-    .tab:hover { color: #b1bac4; }
-
-    .tab[aria-selected="true"] {
-      color: #e6edf3;
-      background: rgba(255,255,255,0.06);
-    }
-
     .category { margin-bottom: 20px; }
     .category:last-child { margin-bottom: 0; }
 
@@ -197,8 +166,6 @@
     <p id="subtitle"></p>
   </div>
 
-  <div class="tabs" id="tabs" role="tablist"></div>
-
   <div id="categories"></div>
 
   <div class="score">
@@ -213,12 +180,11 @@
 
 <script src="results.js"></script>
 <script>
-  const { datasets } = window.BENCH;
+  const { entries, baselines, steps, data, totals, adds } = window.BENCH;
 
   /**
-   * Keyed by base name. A driver variant like `UQL (bunSql)` resolves to the same entry, because it is
-   * the same query builder reached through a different driver: giving it its own colour would read as a
-   * separate contender.
+   * Keyed by base name, so a driver variant like `UQL (bunSql)` shares its colour: it is the same query
+   * builder reached through a different driver, not a separate contender.
    */
   const ENTRY_META = {
     UQL:         { color: '#5b6abf', logo: 'assets/uql-icon.svg',                                    url: 'https://uql-orm.dev' },
@@ -226,173 +192,76 @@
     TypeORM:     { color: '#ff7733', logo: 'https://avatars.githubusercontent.com/u/20165699?s=32',  url: 'https://typeorm.io' },
     MikroORM:    { color: '#1abc9c', logo: 'https://mikro-orm.io/img/logo.svg',                      url: 'https://mikro-orm.io' },
     Drizzle:     { color: '#7ab82d', logo: 'https://avatars.githubusercontent.com/u/108468352?s=32', url: 'https://orm.drizzle.team' },
-    Knex:        { color: '#e24a33', logo: 'https://avatars.githubusercontent.com/u/3137232?s=32',   url: 'https://knexjs.org' },
-    Kysely:      { color: '#c084fc', logo: 'https://avatars.githubusercontent.com/u/123764858?s=32', url: 'https://kysely.dev' },
+    Prisma:      { color: '#5a67d8', logo: 'https://avatars.githubusercontent.com/u/17219288?s=32',  url: 'https://www.prisma.io' },
     'raw pg':    { color: '#8b949e', logo: 'https://avatars.githubusercontent.com/u/2947298?s=32',   url: 'https://node-postgres.com' },
     'bun sql':   { color: '#a1a1aa', logo: 'https://avatars.githubusercontent.com/u/71667065?s=32',  url: 'https://bun.sh/docs/api/sql' },
   };
-
-  const FALLBACK = { color: '#6e7681', logo: '', url: '#' };
 
   /** Splits `Drizzle (bunSql)` into the entry it styles as and the marker shown beside the name. */
   function describeEntry(name) {
     const match = /^(.*?)\s*\((.+)\)$/.exec(name);
     const base = match ? match[1] : name;
-    return { base, variant: match ? match[2] : '', meta: ENTRY_META[base] ?? FALLBACK };
+    return { base, variant: match ? match[2] : '', meta: ENTRY_META[base] };
   }
 
-  function present(values) {
-    return values.filter((v) => v !== null);
-  }
+  const isBaseline = (name) => baselines.includes(name);
 
-  function bestOf(values, lowerIsBetter) {
-    const real = present(values);
-    if (!real.length) return null;
-    return lowerIsBetter ? Math.min(...real) : Math.max(...real);
-  }
+  /** Bar length means "faster", so the quickest fills the track and everything else is scaled to it. */
+  function render(container, values) {
+    const best = Math.min(...values);
 
-  function formatValue(value, dataset) {
-    if (value === null) return 'n/a';
-    if (dataset.lowerIsBetter) return `${value}µs`;
-    return value >= 1000 ? `${(value / 1000).toFixed(1)}M` : `${value}K`;
-  }
-
-  /** Values with the reference floors blanked out, so "who won" only ever considers real contenders. */
-  function contestedValues(dataset, values) {
-    return values.map((v, i) => (dataset.baselines.includes(dataset.entries[i]) ? null : v));
-  }
-
-  /**
-   * Bar length always means "better", in both directions: throughput scales by `value / best`, latency by
-   * `best / value`. Keeping the longest bar the winner in both datasets avoids a chart where the reader
-   * has to remember which way round this one is.
-   */
-  function fraction(value, best, lowerIsBetter) {
-    if (value === null || best === null) return 0;
-    return lowerIsBetter ? best / value : value / best;
-  }
-
-  function renderBars(container, dataset, values) {
-    const best = bestOf(values, dataset.lowerIsBetter);
-
-    const ordered = values
-      .map((value, i) => ({ value, i }))
-      .sort((a, b) => {
-        if (a.value === null) return 1;
-        if (b.value === null) return -1;
-        return dataset.lowerIsBetter ? a.value - b.value : b.value - a.value;
-      });
-
-    for (const { value, i } of ordered) {
-      const name = dataset.entries[i];
-      const { variant, meta } = describeEntry(name);
-      const isBaseline = dataset.baselines.includes(name);
-      const pct = Math.max(fraction(value, best, dataset.lowerIsBetter) * 100, 3);
-
+    for (const { value, i } of values.map((value, i) => ({ value, i })).sort((a, b) => a.value - b.value)) {
+      const name = entries[i];
+      const { base, variant, meta } = describeEntry(name);
       const row = document.createElement('div');
-      row.className = [
-        'bar-row',
-        value !== null && value === best && !isBaseline ? 'is-winner' : '',
-        isBaseline ? 'is-baseline' : '',
-        value === null ? 'is-absent' : '',
-      ].filter(Boolean).join(' ');
-
+      row.className = ['bar-row', value === best ? 'is-winner' : '', isBaseline(name) ? 'is-baseline' : '']
+        .filter(Boolean).join(' ');
       row.innerHTML = `
         <span class="bar-name" style="color:${meta.color}">
-          ${meta.logo ? `<img src="${meta.logo}" alt="">` : ''}
-          <a href="${meta.url}" target="_blank" rel="noopener">${describeEntry(name).base}</a>
+          <img src="${meta.logo}" alt="">
+          <a href="${meta.url}" target="_blank" rel="noopener">${base}</a>
           ${variant ? `<span class="variant">${variant}</span>` : ''}
         </span>
         <div class="bar-track">
-          ${value === null ? '' : `<div class="bar-fill" style="--c:${meta.color};width:${pct}%"></div>`}
-          <span class="bar-value" style="color:${meta.color}">${formatValue(value, dataset)}</span>
+          <div class="bar-fill" style="--c:${meta.color};width:${Math.max((best / value) * 100, 3)}%"></div>
+          <span class="bar-value" style="color:${meta.color}">${(value / 1000).toFixed(2)}ms</span>
         </div>
       `;
       container.appendChild(row);
     }
   }
 
-  function renderDataset(dataset) {
-    document.getElementById('subtitle').textContent =
-      `${dataset.blurb} ${dataset.unit} · ${dataset.lowerIsBetter ? 'lower' : 'higher'} = better`;
+  document.getElementById('subtitle').textContent =
+    'A full PostgreSQL lifecycle per request. ms · lower = better';
 
-    const root = document.getElementById('categories');
-    root.innerHTML = '';
-
-    for (const { key, label } of dataset.categories) {
-      const values = dataset.data[key];
-
-      // The gap to the runner-up, so the badge says how decisive the win was rather than just who won.
-      const contenders = contestedValues(dataset, values)
-        .map((value, i) => ({ value, i }))
-        .filter(({ value }) => value !== null)
-        .sort((a, b) => (dataset.lowerIsBetter ? a.value - b.value : b.value - a.value));
-
-      const winner = contenders[0];
-      const runnerUp = contenders[1];
-      const badge = winner && runnerUp
-        ? `${describeEntry(dataset.entries[winner.i]).base} ${(dataset.lowerIsBetter
-            ? runnerUp.value / winner.value
-            : winner.value / runnerUp.value).toFixed(2)}x`
-        : '';
-      const badgeColor = winner ? describeEntry(dataset.entries[winner.i]).meta.color : FALLBACK.color;
-
-      const category = document.createElement('div');
-      category.className = 'category';
-      category.innerHTML = `
-        <div class="category-label">${label}
-          ${badge ? `<span class="winner-badge" style="background:${badgeColor}26;color:${badgeColor}">${badge}</span>` : ''}
-        </div>
-        <div class="bars"></div>
-      `;
-      root.appendChild(category);
-      renderBars(category.querySelector('.bars'), dataset, values);
-    }
-
-    const wins = dataset.entries.map(() => 0);
-    for (const { key } of dataset.categories) {
-      // Baselines are dropped *before* the best is picked, matching the README. Picking the best across
-      // everything and then looking for a competitor that ties it left every entry on zero, since
-      // hand-written driver code wins nearly every round-trip step.
-      const contested = contestedValues(dataset, dataset.data[key]);
-      const best = bestOf(contested, dataset.lowerIsBetter);
-      if (best === null) continue;
-      wins[contested.indexOf(best)]++;
-    }
-
-    const topIdx = wins.indexOf(Math.max(...wins));
-    const topMeta = describeEntry(dataset.entries[topIdx]).meta;
-    document.getElementById('score').innerHTML = `
-      <span style="color:${topMeta.color}">${dataset.entries[topIdx]} ${wins[topIdx]}/${dataset.categories.length}</span>
-      <span class="sep">·</span>
-      ${dataset.label}
-    `;
-
-    document.getElementById('legend').innerHTML = dataset.entries.map((name) => {
-      const { meta } = describeEntry(name);
-      return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
-    }).join('');
+  const root = document.getElementById('categories');
+  for (const { key, label } of [...steps, { key: null, label: 'TOTAL, whole lifecycle' }]) {
+    const values = key ? data[key] : totals;
+    const category = document.createElement('div');
+    category.className = 'category';
+    category.innerHTML = `<div class="category-label">${label}</div><div class="bars"></div>`;
+    root.appendChild(category);
+    render(category.querySelector('.bars'), values);
   }
 
-  const tabs = document.getElementById('tabs');
-  datasets.forEach((dataset, i) => {
-    const tab = document.createElement('button');
-    tab.className = 'tab';
-    tab.type = 'button';
-    tab.role = 'tab';
-    tab.textContent = dataset.label;
-    tab.setAttribute('aria-selected', String(i === 0));
-    tab.addEventListener('click', () => {
-      for (const other of tabs.children) other.setAttribute('aria-selected', 'false');
-      tab.setAttribute('aria-selected', 'true');
-      renderDataset(dataset);
-    });
-    tabs.appendChild(tab);
-  });
+  // The headline is what each entry adds over its own driver, since totals hide it: every entry pays the
+  // same database cost.
+  const contenders = entries
+    .map((entry, i) => ({ entry, adds: adds[i] }))
+    .filter(({ entry }) => !isBaseline(entry))
+    .sort((a, b) => a.adds - b.adds);
+  const leader = contenders[0];
+  const slowest = contenders[contenders.length - 1];
+  document.getElementById('score').innerHTML = `
+    <span style="color:${describeEntry(leader.entry).meta.color}">${leader.entry} +${(leader.adds / 1000).toFixed(2)}ms</span>
+    <span class="sep">·</span>
+    added over its own driver, against +${(slowest.adds / 1000).toFixed(2)}ms for ${slowest.entry}
+  `;
 
-  // A single dataset needs no switcher.
-  tabs.hidden = datasets.length < 2;
-  renderDataset(datasets[0]);
+  document.getElementById('legend').innerHTML = entries.map((name) => {
+    const { meta } = describeEntry(name);
+    return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
+  }).join('');
 </script>
 
 </body>

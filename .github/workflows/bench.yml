@@ -11,11 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Published numbers are produced locally on Apple Silicon, so that consistent hardware rather than a
-  # shared runner decides them. This job only proves both benchmarks still run and still agree with the
-  # database: `--verify` runs the full lifecycle with every step's assertions on, and writes nothing,
-  # since three iterations on a CI runner say nothing about speed.
-  # To update the reports: `npm run bench` and `npm run bench.flow`, locally.
+  # Published numbers are produced locally on Apple Silicon, so consistent hardware rather than a shared
+  # runner decides them. This job proves the lifecycle still runs and still agrees with the database:
+  # `--verify` keeps every step's assertions on and writes nothing, since three iterations on a CI runner
+  # say nothing about speed. To update the report: `npm run bench`, locally.
   check:
     runs-on: ubuntu-latest
 
@@ -38,7 +37,6 @@ jobs:
       - run: bun install
       - run: bunx tsc --noEmit
       - run: bunx biome check
-      - run: bunx vitest bench --run
       - run: bun scripts/flow-bench.ts --iterations 3 --verify
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres

@@ -1,0 +1,35 @@
+// The same two tables `src/schema.ts` declares for every other entry, described the way Prisma wants
+// them. Nothing here creates anything: `scripts/flow-bench.ts` owns the DDL, so this only has to line up
+// with it. Prisma uses the model name as the table name, which is why the models are `Company` and `User`
+// rather than snake_case, and its default column names already match (`companyId`, `createdAt`).
+//
+// Prisma is absent from the SQL-generation benchmark, not from this one: it exposes no public API to
+// compile a statement without executing it, but executing one is exactly what the round trip measures.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Prisma 7 no longer accepts `url` here: the connection reaches the client through a driver adapter, which
+// is also what lets Prisma share the same `pg` setup as every other entry instead of its own pool.
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id    Int    @id @default(autoincrement())
+  name  String
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  companyId Int?
+  createdAt Int?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  @@index([companyId], map: "User_companyId_idx")
+}
