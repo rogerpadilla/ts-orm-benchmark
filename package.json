@@ -1,6 +1,6 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "\u26a1 TypeScript ORM benchmark: what each one costs on a full PostgreSQL round trip. UQL vs Prisma vs Sequelize vs TypeORM vs MikroORM vs Drizzle",
   "type": "module",
   "scripts": {

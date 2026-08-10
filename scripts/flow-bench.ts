@@ -14,6 +14,7 @@
  *   bun scripts/flow-bench.ts --iterations 3 --verify   # assert every step, write nothing
  */
 
+import type { SqlEntityManager } from '@mikro-orm/postgresql';
 import { asc, eq, gt } from 'drizzle-orm';
 import pg from 'pg';
 import { Op } from 'sequelize';
@@ -333,7 +334,10 @@ function typeormFlow(c: Clients): Flow {
 }
 
 function mikroFlow(c: Clients): Flow {
-  const em = c.mikroEm;
+  // A fresh EntityManager per operation, the same request-scoped fork MikroORM's own docs call for
+  // (https://mikro-orm.io/docs/identity-map), instead of one shared em accumulating Unit-of-Work state
+  // across the whole run.
+  const fork = () => c.mikroOrm.em.fork() as SqlEntityManager;
   const mikroNew = NEW_USERS.map((u) => ({
     name: u.name,
     email: u.email,
@@ -342,12 +346,12 @@ function mikroFlow(c: Clients): Flow {
   }));
   return {
     insert: {
-      run: () => em.createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
+      run: () => fork().createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
       rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     read: {
       run: () =>
-        em
+        fork()
           .createQueryBuilder(MikroUserSchema)
           .select(['id', 'name', 'email', 'company', 'createdAt'])
           .where({ company: { $gt: 0 } })
@@ -356,28 +360,26 @@ function mikroFlow(c: Clients): Flow {
           .getResult(),
     },
     update: {
-      run: () => em.createQueryBuilder(MikroUserSchema).update({ name: UPDATE_NAME }).where({ id: 1 }).execute(),
+      run: () => fork().createQueryBuilder(MikroUserSchema).update({ name: UPDATE_NAME }).where({ id: 1 }).execute(),
       rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     readAgain: {
-      run: () => em.createQueryBuilder(MikroUserSchema).select(['id', 'name']).where({ id: 1 }).getResult(),
+      run: () => fork().createQueryBuilder(MikroUserSchema).select(['id', 'name']).where({ id: 1 }).getResult(),
     },
     nested: {
       run: () =>
-        em
-          .fork()
-          .find(
-            MikroCompanySchema,
-            { id: { $lte: NESTED_LIMIT } },
-            { fields: ['id', 'name', 'users.id', 'users.name'], populate: ['users'], orderBy: { id: 'ASC' } },
-          ),
+        fork().find(
+          MikroCompanySchema,
+          { id: { $lte: NESTED_LIMIT } },
+          { fields: ['id', 'name', 'users.id', 'users.name'], populate: ['users'], orderBy: { id: 'ASC' } },
+        ),
     },
     delete: {
-      run: () => em.createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).execute(),
+      run: () => fork().createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).execute(),
       rows: (r) => (r as { affectedRows?: number }).affectedRows ?? 0,
     },
     readEmpty: {
-      run: () => em.createQueryBuilder(MikroUserSchema).select(['id']).where({ id: 1 }).getResult(),
+      run: () => fork().createQueryBuilder(MikroUserSchema).select(['id']).where({ id: 1 }).getResult(),
     },
   };
 }

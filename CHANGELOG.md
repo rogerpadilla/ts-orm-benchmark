@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.2 - 2026-08-10
+
+- Fixed MikroORM: fork a fresh `EntityManager` per operation instead of sharing one across the whole run, same pattern the nested step already used.
+- Results: re-ran several times before and after the fix on the same machine. No measurable change either way, this was a correctness fix, not a performance one.
+
 ## 0.8.1 - 2026-08-10
 
 - Dependencies: uql-orm 0.25.1 → 0.26.0.
