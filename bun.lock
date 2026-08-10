@@ -17,7 +17,7 @@
         "sequelize": "^6.37.8",
         "typeorm": "^1.1.0",
         "typescript": "^7.0.2",
-        "uql-orm": "0.26.2",
+        "uql-orm": "0.26.3",
       },
     },
   },
@@ -496,7 +496,7 @@
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 
-    "uql-orm": ["uql-orm@0.26.2", "", { "peerDependencies": { "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.0.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-mRJOmFEq9PuFw/9ihB+K2Z0LtwkvMX3GEK/6rxMQbaeFPpz0pD5+lhFuUG71rJhbQu8xBMCA0NQOHgBnR4lgtQ=="],
+    "uql-orm": ["uql-orm@0.26.3", "", { "peerDependencies": { "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.0.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-xjDASPM1nLL4B77Rj9a3McVDrYDZDp5M74NWXaRWIrew5cXkkiN++q+APesapCsdM/uG18MClnURK7M+4F4Vxw=="],
 
     "uuid": ["uuid@8.3.2", "", { "bin": "dist/bin/uuid" }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 
