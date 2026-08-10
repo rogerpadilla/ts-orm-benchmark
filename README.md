@@ -33,7 +33,7 @@ _Versions: [UQL](https://uql-orm.dev) 0.26.3 · [Prisma](https://www.prisma.io) 
 Totals span 2.4x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 11x: 206µs for UQL (bunSql) against 2236µs for MikroORM.
 <!-- /bench:headline -->
 
-Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. The same UQL code adds 269µs on `pg` and 239µs on Bun SQL: the driver is worth 30µs, the ORM 563µs.
+Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. The same UQL code adds 232µs on `pg` and 206µs on Bun SQL: the driver is worth 26µs, the ORM 453µs.
 
 ### Per step
 
@@ -52,7 +52,7 @@ Each entry is measured against its own driver's floor, so a faster driver is not
 
 The nested read separates the field most, being the only step that loads a relation.
 
-Prisma's insert is the widest single-step gap in the set, 1529µs against 690-763µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
+Prisma's insert is the widest single-step gap in the set, 1366µs against 625-668µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
 
 ## Run it
 
