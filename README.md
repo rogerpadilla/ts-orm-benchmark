@@ -11,50 +11,50 @@ Each entry runs the same lifecycle - insert, read, update, read, nested read, de
 > PostgreSQL 18.4, Node.js v24.18.1, Apple M4 Pro, August 2026. µs per operation, median of 250 interleaved iterations.
 
 <!-- bench:versions -->
-_Versions: [UQL](https://uql-orm.dev) 0.25.1 · [Prisma](https://www.prisma.io) 7.9.1 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.0 · [MikroORM](https://mikro-orm.io) 7.1.11 · [Drizzle](https://orm.drizzle.team) 0.45.2._
+_Versions: [UQL](https://uql-orm.dev) 0.26.0 · [Prisma](https://www.prisma.io) 7.9.1 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.0 · [MikroORM](https://mikro-orm.io) 7.1.11 · [Drizzle](https://orm.drizzle.team) 0.45.2._
 <!-- /bench:versions -->
 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1205 |
-| ref | _raw pg_ | floor | 1300 |
-| 🥇 1 | **UQL (bunSql)** | +278 | 1483 |
-| 🥈 2 | UQL | +333 | 1633 |
-| 🥉 3 | Drizzle (bunSql) | +621 | 1826 |
-| 4 | Drizzle | +643 | 1943 |
-| 5 | TypeORM | +791 | 2091 |
-| 6 | Sequelize | +1086 | 2386 |
-| 7 | Prisma | +1271 | 2571 |
-| 8 | MikroORM | +1889 | 3189 |
+| ref | _bun sql_ | floor | 1208 |
+| ref | _raw pg_ | floor | 1298 |
+| 🥇 1 | **UQL (bunSql)** | +273 | 1481 |
+| 🥈 2 | UQL | +334 | 1632 |
+| 🥉 3 | Drizzle (bunSql) | +650 | 1858 |
+| 4 | Drizzle | +679 | 1977 |
+| 5 | TypeORM | +752 | 2050 |
+| 6 | Sequelize | +1102 | 2400 |
+| 7 | Prisma | +1279 | 2577 |
+| 8 | MikroORM | +1942 | 3240 |
 <!-- /bench:ranking -->
 
 <!-- bench:headline -->
-Totals span 2.2x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 7x: 278µs for UQL (bunSql) against 1889µs for MikroORM.
+Totals span 2.2x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 7x: 273µs for UQL (bunSql) against 1942µs for MikroORM.
 <!-- /bench:headline -->
 
-Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. The same UQL code adds 333µs on `pg` and 278µs on Bun SQL: the driver is worth 55µs, the ORM 310µs.
+Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. The same UQL code adds 334µs on `pg` and 273µs on Bun SQL: the driver is worth 61µs, the ORM 345µs.
 
 ### Per step
 
 <!-- bench:steps -->
-| Operation (µs) | [raw pg](https://node-postgres.com) | [bun sql](https://bun.sh/docs/api/sql) | [UQL](https://uql-orm.dev) | [UQL (bunSql)](https://uql-orm.dev) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [MikroORM](https://mikro-orm.io) | [Drizzle](https://orm.drizzle.team) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Prisma](https://www.prisma.io) |
+| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 404 | 426 | 445 | **437** 🥇 | 571 | 591 | 550 | 577 | 567 | 1241 |
-| SELECT with WHERE, SORT, LIMIT 200 | 241 | 184 | 297 | **232** 🥇 | 470 | 411 | 839 | 322 | 275 | 323 |
-| UPDATE by id | 137 | 136 | **153** 🥇 | **153** 🥇 | 302 | 203 | 230 | 182 | 176 | 203 |
-| SELECT to verify the update | 78 | 72 | 93 | **91** 🥇 | 123 | 124 | 124 | 109 | 107 | 109 |
-| SELECT 50 parents with their children | 242 | 193 | 343 | **283** 🥇 | 651 | 489 | 1149 | 503 | 453 | 435 |
-| DELETE by id | 125 | 125 | 221 | 218 | 163 | 163 | 192 | **148** 🥇 | 150 | 160 |
-| SELECT to verify the delete | 73 | 69 | 81 | **69** 🥇 | 106 | 110 | 105 | 102 | 98 | 100 |
-| **Total** | 1300 | 1205 | 1633 | **1483** 🥇 | 2386 | 2091 | 3189 | 1943 | 1826 | 2571 |
+| INSERT 10 rows, returning ids | 423 | 403 | **437** 🥇 | 449 | 593 | 603 | 575 | 588 | 1257 | 546 |
+| SELECT with WHERE, SORT, LIMIT 200 | 186 | 238 | **235** 🥇 | 296 | 275 | 323 | 403 | 473 | 327 | 854 |
+| UPDATE by id | 134 | 136 | **151** 🥇 | 152 | 175 | 181 | 200 | 302 | 197 | 254 |
+| SELECT to verify the update | 73 | 78 | **91** 🥇 | 93 | 107 | 110 | 123 | 124 | 108 | 124 |
+| SELECT 50 parents with their children | 197 | 244 | **283** 🥇 | 340 | 461 | 510 | 479 | 648 | 433 | 1155 |
+| DELETE by id | 125 | 125 | 216 | 220 | 149 | **148** 🥇 | 160 | 159 | 156 | 202 |
+| SELECT to verify the delete | 70 | 74 | **68** 🥇 | 82 | 98 | 102 | 110 | 106 | 99 | 105 |
+| **Total** | 1208 | 1298 | **1481** 🥇 | 1632 | 1858 | 1977 | 2050 | 2400 | 2577 | 3240 |
 <!-- /bench:steps -->
 
 The nested read separates the field most, being the only step that loads a relation.
 
 UQL is last on `delete`: `deleteMany` resolves the matching ids before deleting, and nothing here needs them, so it spends two statements on one row.
 
-Prisma's insert is the widest single-step gap in the set, 1241µs against 550-591µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
+Prisma's insert is the widest single-step gap in the set, 1257µs against 546-603µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
 
 ## Run it
 

@@ -83,7 +83,7 @@ export function overheadUs(results: Results, entryIndex: number): number {
   return totalOf(results, entryIndex) - floor;
 }
 
-export type Ranking = { entry: string; isBaseline: boolean; total: number; adds: number };
+export type Ranking = { entry: Entry; isBaseline: boolean; total: number; adds: number; steps: number[] };
 
 /** Floors first as the reference, then competitors by what they add. */
 export function rank(results: Results): Ranking[] {
@@ -92,6 +92,7 @@ export function rank(results: Results): Ranking[] {
     isBaseline: isBaseline(entry),
     total: totalOf(results, i),
     adds: overheadUs(results, i),
+    steps: STEPS.map((step) => results[step][i]),
   }));
 
   return [
@@ -100,20 +101,24 @@ export function rank(results: Results): Ranking[] {
   ];
 }
 
+/** Same order as the ranking table, so the two agree on who's winning. */
 function stepTable(results: Results): string {
+  const rankings = rank(results);
+
   const cells = (values: number[]) => {
-    const best = Math.min(...values.filter((_, i) => !isBaseline(ENTRIES[i])));
-    return values.map((v, i) => (v === best && !isBaseline(ENTRIES[i]) ? `**${v}** 🥇` : `${v}`));
+    const best = Math.min(...values.filter((_, i) => !rankings[i].isBaseline));
+    return values.map((v, i) => (v === best && !rankings[i].isBaseline ? `**${v}** 🥇` : `${v}`));
   };
 
-  const rows = STEPS.map((step) => `| ${STEP_LABELS[step]} | ${cells(results[step]).join(' | ')} |`);
-  const totals = ENTRIES.map((_, i) => totalOf(results, i));
+  const rows = STEPS.map(
+    (step, s) => `| ${STEP_LABELS[step]} | ${cells(rankings.map((r) => r.steps[s])).join(' | ')} |`,
+  );
 
   return [
-    `| Operation (µs) | ${ENTRIES.map(linkEntry).join(' | ')} |`,
-    `| --- | ${ENTRIES.map(() => '---').join(' | ')} |`,
+    `| Operation (µs) | ${rankings.map((r) => linkEntry(r.entry)).join(' | ')} |`,
+    `| --- | ${rankings.map(() => '---').join(' | ')} |`,
     ...rows,
-    `| **Total** | ${cells(totals).join(' | ')} |`,
+    `| **Total** | ${cells(rankings.map((r) => r.total)).join(' | ')} |`,
   ].join('\n');
 }
 
