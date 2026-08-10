@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1 - 2026-08-10
+
+- Dependencies: uql-orm 0.25.1 → 0.26.0.
+- Results: re-ran on Node.js v24.18.1 (3 runs averaged). UQL (bunSql) remains fastest at +273µs over the floor, UQL close behind at +334µs.
+
 ## 0.8.0 - 2026-08-09
 
 Now a single benchmark: what each ORM costs on a real PostgreSQL round trip.
