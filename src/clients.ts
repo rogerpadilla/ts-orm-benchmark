@@ -9,7 +9,7 @@
  */
 
 import { EntityCaseNamingStrategy, MikroORM } from '@mikro-orm/core';
-import { defineConfig, type SqlEntityManager } from '@mikro-orm/postgresql';
+import { defineConfig } from '@mikro-orm/postgresql';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { SQL } from 'bun';
 import { drizzle as drizzleBunSql } from 'drizzle-orm/bun-sql';
@@ -65,7 +65,6 @@ export async function createClients(connectionString: string) {
       pool: { min: 0, max: 1 },
     }),
   );
-  const mikroEm = mikroOrm.em.fork() as SqlEntityManager;
 
   const drizzlePool = new pg.Pool(poolOpts);
   const drizzleDb: NodePgDatabase<typeof drizzleSchema> = drizzle(drizzlePool, { schema: drizzleSchema });
@@ -106,7 +105,7 @@ export async function createClients(connectionString: string) {
     SqCompany,
     SqUser,
     typeorm,
-    mikroEm,
+    mikroOrm,
     drizzleDb,
     prisma,
     bunSql,
