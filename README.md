@@ -52,8 +52,6 @@ Each entry is measured against its own driver's floor, so a faster driver is not
 
 The nested read separates the field most, being the only step that loads a relation.
 
-UQL is fastest on `delete`: `deleteMany`/`deleteOneById` skip the id lookup and issue a single statement whenever there's no cascade and no pagination to settle on first.
-
 Prisma's insert is the widest single-step gap in the set, 1529µs against 690-763µs for the other ORMs. It wraps the batch in an explicit transaction, worth 88µs of that.
 
 ## Run it
