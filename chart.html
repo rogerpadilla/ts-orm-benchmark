@@ -174,13 +174,13 @@
 
   <div class="footer">
     <div class="footer-left" id="legend"></div>
-    <div class="footer-right">Node.js v24 · Apple Silicon · github.com/rogerpadilla/ts-orm-benchmark</div>
+    <div class="footer-right" id="footer-env"></div>
   </div>
 </div>
 
 <script src="results.js"></script>
 <script>
-  const { entries, baselines, steps, data, totals, adds } = window.BENCH;
+  const { entries, baselines, steps, data, totals, adds, env } = window.BENCH;
 
   /**
    * Keyed by base name, so a driver variant like `UQL (bunSql)` shares its colour: it is the same query
@@ -231,8 +231,12 @@
     }
   }
 
+  // Both lines come from the run itself: a hand-kept caption here once named the wrong runtime.
   document.getElementById('subtitle').textContent =
-    'A full PostgreSQL lifecycle per request. µs · lower = better';
+    `A full PostgreSQL lifecycle per request. µs · lower = better · medians ±${(env.interval * 100).toFixed(1)}% (95% CI)`;
+
+  document.getElementById('footer-env').textContent =
+    `${env.runtime} · ${env.machine} · github.com/rogerpadilla/ts-orm-benchmark`;
 
   const root = document.getElementById('categories');
   for (const { key, label } of [...steps, { key: null, label: 'TOTAL, whole lifecycle' }]) {
