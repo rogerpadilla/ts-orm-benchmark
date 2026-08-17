@@ -21,30 +21,30 @@ _Versions: [UQL](https://uql-orm.dev) 0.28.1 · [Prisma](https://www.prisma.io) 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1163 |
-| ref | _raw pg_ | floor | 1250 |
-| 🥇 1 | **UQL (bunSql)** | +199 | 1362 |
-| 🥈 2 | UQL | +246 | 1496 |
-| 🥉 3 | Drizzle (bunSql) | +598 | 1761 |
-| 4 | Drizzle | +635 | 1885 |
-| 5 | TypeORM | +675 | 1925 |
-| 6 | Sequelize | +1021 | 2271 |
-| 7 | Prisma | +1218 | 2468 |
-| 8 | MikroORM | +1968 | 3218 |
+| ref | _bun sql_ | floor | 1228 |
+| ref | _raw pg_ | floor | 1309 |
+| 🥇 1 | **UQL (bunSql)** | +198 | 1426 |
+| 🥈 2 | UQL | +244 | 1553 |
+| 🥉 3 | Drizzle (bunSql) | +643 | 1871 |
+| 4 | Drizzle | +694 | 2003 |
+| 5 | TypeORM | +757 | 2066 |
+| 6 | Sequelize | +1045 | 2354 |
+| 7 | Prisma | +1275 | 2584 |
+| 8 | MikroORM | +2075 | 3384 |
 <!-- /bench:ranking -->
 
 Rank is by what an entry adds over its own floor, not by its total, so an entry with a lower total can sit further down when the two floors differ.
 
 <!-- bench:headline -->
-Totals span 2.4x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 10x: 199µs for UQL (bunSql) against 1968µs for MikroORM.
+Totals span 2.4x because every entry pays the same database cost. The part above the floor, which is the ORM's own, spans 10x: 198µs for UQL (bunSql) against 2075µs for MikroORM.
 <!-- /bench:headline -->
 
 <!-- bench:spread -->
-Each median above carries a 95% confidence interval of ±1.9% or tighter (widest: Sequelize), so the gaps in the ranking are far larger than the measurement.
+Each median above carries a 95% confidence interval of ±2.8% or tighter (widest: raw pg), so the gaps in the ranking are far larger than the measurement.
 <!-- /bench:spread -->
 
 <!-- bench:driver -->
-Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. Moving the same UQL code from `pg` to Bun SQL saves 134µs in total, but only 47µs of that is UQL: the other 87µs is the gap between the two floors, which every entry on that driver gets for free.
+Each entry is measured against its own driver's floor, so a faster driver is not counted as the ORM's doing. Moving the same UQL code from `pg` to Bun SQL saves 127µs in total, but only 46µs of that is UQL: the other 81µs is the gap between the two floors, which every entry on that driver gets for free.
 <!-- /bench:driver -->
 
 ### Per step
@@ -52,20 +52,20 @@ Each entry is measured against its own driver's floor, so a faster driver is not
 <!-- bench:steps -->
 | Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 398 | 378 | **409** 🥇 | 423 | 558 | 572 | 535 | 534 | 1202 | 508 |
-| SELECT with WHERE, SORT, LIMIT 200 | 179 | 225 | **218** 🥇 | 281 | 261 | 302 | 379 | 446 | 300 | 946 |
-| UPDATE by id | 133 | 134 | 150 | **148** 🥇 | 171 | 174 | 190 | 286 | 189 | 252 |
-| SELECT to verify the update | 71 | 77 | **88** 🥇 | 90 | 106 | 107 | 116 | 122 | 105 | 120 |
-| SELECT 50 parents with their children | 189 | 240 | **277** 🥇 | 336 | 423 | 486 | 456 | 623 | 420 | 1086 |
-| DELETE by id | 125 | 124 | 136 | **134** 🥇 | 146 | 146 | 150 | 155 | 153 | 203 |
-| SELECT to verify the delete | 68 | 72 | **84** 🥇 | **84** 🥇 | 96 | 98 | 99 | 105 | 99 | 103 |
-| **Total** | 1163 | 1250 | **1362** 🥇 | 1496 | 1761 | 1885 | 1925 | 2271 | 2468 | 3218 |
+| INSERT 10 rows, returning ids | 441 | 412 | **448** 🥇 | 453 | 608 | 619 | 589 | 570 | 1258 | 551 |
+| SELECT with WHERE, SORT, LIMIT 200 | 185 | 237 | **235** 🥇 | 295 | 270 | 322 | 402 | 460 | 322 | 1002 |
+| UPDATE by id | 136 | 139 | **152** 🥇 | 155 | 178 | 183 | 202 | 305 | 199 | 242 |
+| SELECT to verify the update | 74 | 79 | **90** 🥇 | 94 | 107 | 109 | 128 | 124 | 112 | 131 |
+| SELECT 50 parents with their children | 197 | 242 | **282** 🥇 | 334 | 459 | 515 | 474 | 632 | 436 | 1145 |
+| DELETE by id | 126 | 125 | **136** 🥇 | 137 | 150 | 151 | 162 | 159 | 158 | 203 |
+| SELECT to verify the delete | 69 | 75 | **83** 🥇 | 85 | 99 | 104 | 109 | 104 | 99 | 110 |
+| **Total** | 1228 | 1309 | **1426** 🥇 | 1553 | 1871 | 2003 | 2066 | 2354 | 2584 | 3384 |
 <!-- /bench:steps -->
 
 The nested read separates the field most, being the only step that loads a relation.
 
 <!-- bench:widest -->
-Prisma's insert is the widest single-step gap in the set, 1202µs against 409-572µs for every other entry.
+Prisma's insert is the widest single-step gap in the set, 1258µs against 448-619µs for every other entry.
 <!-- /bench:widest -->
 
 Prisma is the only entry that wraps its insert in an explicit transaction, worth 88µs when measured on its own. That figure is a one-off, not regenerated with the tables.
