@@ -1,15 +1,9 @@
 /**
- * What an ORM costs on a real PostgreSQL round trip: the trip itself, turning driver rows back into
- * objects, and assembling nested relations. The steps are a lifecycle (insert, read, update, read,
- * nested read, delete, read) so each read verifies the write before it, which means a step that
- * silently does nothing fails instead of scoring well.
- *
- * Reported in µs per operation, lower is better, against the hand-written `raw pg` and `bun sql`
- * floors. Those floors are the point: absolute latency swings with how you reach Postgres, but the gap
- * above the floor is the ORM's own overhead and is comparable across setups.
+ * Times each entry's lifecycle against the hand-written `raw pg` and `bun sql` floors, then rewrites
+ * every generated block in README.md. That file is where the method and its limits are stated.
  *
  * Usage:
- *   DATABASE_URL=postgres:///postgres bun scripts/flow-bench.ts
+ *   DATABASE_URL=postgres://localhost:5432/postgres bun scripts/flow-bench.ts
  *   bun scripts/flow-bench.ts --iterations 400
  *   bun scripts/flow-bench.ts --iterations 3 --verify   # assert every step, write nothing
  */
@@ -498,6 +492,22 @@ function median(xs: number[]): number {
   return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 }
 
+/**
+ * Half-width of the distribution-free 95% confidence interval for an entry's median round total,
+ * relative to that median. A percentile of the rounds would describe the slow tail instead, which says
+ * nothing about whether two entries' medians can be told apart.
+ */
+function spreadOf(sample: Record<Step, number[]>): number {
+  const totals = sample[STEPS[0]]
+    .map((_, round) => STEPS.reduce((sum, step) => sum + sample[step][round], 0))
+    .sort((a, b) => a - b);
+  const mid = totals.length >> 1;
+  const half = Math.ceil((1.96 * Math.sqrt(totals.length)) / 2);
+  const lo = totals[Math.max(0, mid - half)];
+  const hi = totals[Math.min(totals.length - 1, mid + half)];
+  return (hi - lo) / 2 / median(totals);
+}
+
 async function resetFixture(admin: pg.Pool) {
   await admin.query(`TRUNCATE "${USER_TABLE}", "${COMPANY_TABLE}" RESTART IDENTITY CASCADE`);
   await admin.query(`INSERT INTO "${COMPANY_TABLE}" (id, name) SELECT * FROM UNNEST($1::int[], $2::text[])`, [
@@ -559,8 +569,8 @@ async function main() {
   console.log(`flow benchmark: ${iterations} iterations/step, ${warmup} warmup`);
   const benchUrl = await ensureDatabase(baseUrl);
   const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
-  const version = (await admin.query('SELECT version()')).rows[0].version as string;
-  console.log(version.split(' on ')[0], '\n');
+  const postgres = ((await admin.query('SELECT version()')).rows[0].version as string).split(' on ')[0];
+  console.log(postgres, '\n');
 
   const clients = await createClients(benchUrl);
   // Built once. Some flows hoist a constant statement out of the timed section, which only holds if the
@@ -620,7 +630,7 @@ async function main() {
     return;
   }
 
-  syncResults(results);
+  syncResults(results, { postgres, iterations, warmup, spreads: samples.map(spreadOf) });
   console.log('\nresults.js + README.md updated');
 }
 
