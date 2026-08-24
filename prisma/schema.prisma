@@ -2,9 +2,6 @@
 // them. Nothing here creates anything: `scripts/flow-bench.ts` owns the DDL, so this only has to line up
 // with it. Prisma uses the model name as the table name, which is why the models are `Company` and `User`
 // rather than snake_case, and its default column names already match (`companyId`, `createdAt`).
-//
-// Prisma is absent from the SQL-generation benchmark, not from this one: it exposes no public API to
-// compile a statement without executing it, but executing one is exactly what the round trip measures.
 
 generator client {
   provider = "prisma-client"

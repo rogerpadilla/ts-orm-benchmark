@@ -18,6 +18,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
     services:
       postgres:
         image: postgres:18
@@ -38,8 +41,10 @@ jobs:
       - run: bunx tsc --noEmit
       - run: bunx biome check
       - run: bun scripts/flow-bench.ts --iterations 3 --verify
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      # The runtime comparison only holds if the benchmark still loads without Bun's SQL client, which a
+      # static `from 'bun'` anywhere would quietly break.
+      - run: bun build scripts/flow-bench.ts --target=node --packages=external --outdir=.bench-build
+      - run: node .bench-build/flow-bench.js --iterations 3 --verify
 
   deploy:
     if: github.event_name == 'push'

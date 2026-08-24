@@ -9,3 +9,4 @@ bench-latest.json
 bench-*.json
 bench-*.txt
 .bench-snapshots/
+.bench-build/

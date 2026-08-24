@@ -1,46 +1,26 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+/**
+ * Renders the generated blocks of README.md and `results.js` from one {@link Run}. Every figure the prose
+ * carries is computed here rather than typed, so a re-run cannot leave a stale number behind.
+ */
+
+import { writeFileSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-export const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-
-/**
- * `raw pg` and `bun sql` are hand-written driver code with manual row mapping: reference floors, not
- * competitors. The `(bunSql)` rows are the same query builder on a different driver, which only UQL and
- * Drizzle ship an adapter for.
- */
-export const ENTRIES = [
-  'raw pg',
-  'bun sql',
-  'UQL',
-  'UQL (bunSql)',
-  'Sequelize',
-  'TypeORM',
-  'MikroORM',
-  'Drizzle',
-  'Drizzle (bunSql)',
-  'Prisma',
-] as const;
-
-export const BASELINES = ['raw pg', 'bun sql'] as const;
-
-export const STEPS = ['insert', 'read', 'update', 'readAgain', 'nested', 'delete', 'readEmpty'] as const;
-
-export type Entry = (typeof ENTRIES)[number];
-export type Step = (typeof STEPS)[number];
-
-/** Median µs per step, index-aligned with {@link ENTRIES}. */
-export type Results = Record<Step, number[]>;
-
-/** Everything the report states about the run itself, measured rather than hand-kept. */
-export type Env = {
-  postgres: string;
-  iterations: number;
-  warmup: number;
-  /** p95 round total over median round total, index-aligned with {@link ENTRIES}. */
-  spreads: number[];
-};
+import {
+  ASSERTED_ONLY_STEPS,
+  BASELINES,
+  competitorsOf,
+  ENTRIES,
+  PUBLISHED_STEPS,
+  parseEntry,
+  type Row,
+  type Run,
+  rank,
+  rowFor,
+  STEPS,
+  type Step,
+} from './model';
+import { installedVersion, root, writeReadme } from './project';
 
 const STEP_LABELS: Record<Step, string> = {
   insert: 'INSERT 10 rows, returning ids',
@@ -68,76 +48,72 @@ const TOOLS: Record<string, { url: string; pkg?: string }> = {
   'bun sql': { url: 'https://bun.sh/docs/api/sql' },
 };
 
-/** Each entry is measured against its own driver, so a faster driver is not counted as the tool's doing. */
-function floorFor(entry: string): Entry {
-  return entry.includes('(bunSql)') ? 'bun sql' : 'raw pg';
-}
-
-const isBaseline = (entry: string) => (BASELINES as readonly string[]).includes(entry);
-
-function linkEntry(entry: string): string {
-  const url = TOOLS[entry.replace(/\s*\(.+\)$/, '')]?.url;
+export function linkEntry(entry: string): string {
+  const url = TOOLS[parseEntry(entry).base]?.url;
   return url ? `[${entry}](${url})` : entry;
 }
 
-export function totalOf(results: Results, entryIndex: number): number {
-  return STEPS.reduce((sum, step) => sum + results[step][entryIndex], 0);
-}
+const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => r.steps[STEPS.indexOf(step)]);
 
 /**
- * What the tool itself costs. Absolute, not a percentage of the floor: the floors differ, so the same work
- * against a faster floor reads as a larger percentage.
+ * The published steps only, same entry order as the ranking table so the two agree on who is winning.
+ * Total stays the whole lifecycle, which is what the ranking and the floors are built on.
  */
-export function overheadUs(results: Results, entryIndex: number): number {
-  const floor = totalOf(results, ENTRIES.indexOf(floorFor(ENTRIES[entryIndex])));
-  return totalOf(results, entryIndex) - floor;
-}
-
-export type Ranking = { entry: Entry; isBaseline: boolean; total: number; adds: number; steps: number[] };
-
-/** Floors first as the reference, then competitors by what they add. */
-export function rank(results: Results): Ranking[] {
-  const rankings: Ranking[] = ENTRIES.map((entry, i) => ({
-    entry,
-    isBaseline: isBaseline(entry),
-    total: totalOf(results, i),
-    adds: overheadUs(results, i),
-    steps: STEPS.map((step) => results[step][i]),
-  }));
-
-  return [
-    ...rankings.filter((r) => r.isBaseline).sort((a, b) => a.total - b.total),
-    ...rankings.filter((r) => !r.isBaseline).sort((a, b) => a.adds - b.adds),
-  ];
-}
-
-/** Same order as the ranking table, so the two agree on who's winning. */
-function stepTable(results: Results): string {
-  const rankings = rank(results);
-
+function stepTable(ranked: Row[]): string {
   const cells = (values: number[]) => {
-    const best = Math.min(...values.filter((_, i) => !rankings[i].isBaseline));
-    return values.map((v, i) => (v === best && !rankings[i].isBaseline ? `**${v}** 🥇` : `${v}`));
+    const best = Math.min(...values.filter((_, i) => !ranked[i].isBaseline));
+    return values.map((v, i) => (v === best && !ranked[i].isBaseline ? `**${v}** 🥇` : `${v}`));
   };
 
-  const rows = STEPS.map(
-    (step, s) => `| ${STEP_LABELS[step]} | ${cells(rankings.map((r) => r.steps[s])).join(' | ')} |`,
+  const rows = PUBLISHED_STEPS.map(
+    (step) => `| ${STEP_LABELS[step]} | ${cells(stepValues(ranked, step)).join(' | ')} |`,
   );
 
   return [
-    `| Operation (µs) | ${rankings.map((r) => linkEntry(r.entry)).join(' | ')} |`,
-    `| --- | ${rankings.map(() => '---').join(' | ')} |`,
+    `| Operation (µs) | ${ranked.map((r) => linkEntry(r.entry)).join(' | ')} |`,
+    `| --- | ${ranked.map(() => '---').join(' | ')} |`,
     ...rows,
-    `| **Total** | ${cells(rankings.map((r) => r.total)).join(' | ')} |`,
+    `| **Total**, all ${STEPS.length} steps | ${cells(ranked.map((r) => r.total)).join(' | ')} |`,
   ].join('\n');
 }
 
-function rankingTable(results: Results): string {
-  const medals = ['🥇', '🥈', '🥉'];
-  const rankings = rank(results);
-  const competitors = rankings.filter((r) => !r.isBaseline);
+/**
+ * The two things to say about the table above: which step spreads the field most, and what the steps it
+ * leaves out actually cost, so the omission is a figure rather than a claim.
+ */
+function stepsNote(ranked: Row[]): string {
+  const competitors = competitorsOf(ranked);
+  const worst = competitors
+    .flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: r.steps[STEPS.indexOf(step)] })))
+    .reduce((a, b) => (b.value > a.value ? b : a));
+  const others = stepValues(
+    competitors.filter((r) => r.entry !== worst.entry),
+    worst.step,
+  );
 
-  const rows = rankings.map((r) => {
+  const indexes = ASSERTED_ONLY_STEPS.map((step) => STEPS.indexOf(step));
+  const sums = competitors.map((r) => indexes.reduce((sum, s) => sum + r.steps[s], 0));
+  const tightest = Math.max(
+    ...ASSERTED_ONLY_STEPS.map((step) => {
+      const values = stepValues(competitors, step);
+      return Math.max(...values) - Math.min(...values);
+    }),
+  );
+
+  return (
+    `The biggest gap is ${worst.entry}'s ${worst.step}: ${worst.value}µs against ` +
+    `${Math.min(...others)}-${Math.max(...others)}µs for everyone else. The other ` +
+    `${ASSERTED_ONLY_STEPS.length} steps are asserted every round but not published: they are round trips ` +
+    `with almost nothing in them, worth ${Math.min(...sums)}-${Math.max(...sums)}µs of each total and ` +
+    `separating the field by at most ${tightest}µs.`
+  );
+}
+
+function rankingTable(ranked: Row[]): string {
+  const medals = ['🥇', '🥈', '🥉'];
+  const competitors = competitorsOf(ranked);
+
+  const rows = ranked.map((r) => {
     const place = competitors.indexOf(r) + 1;
     const position = r.isBaseline ? 'ref' : `${medals[place - 1] ?? ''} ${place}`.trim();
     const name = r.isBaseline ? `_${r.entry}_` : place === 1 ? `**${r.entry}**` : r.entry;
@@ -147,18 +123,28 @@ function rankingTable(results: Results): string {
   return ['| # | Entry | Adds µs | Total µs |', '| --- | --- | --- | --- |', ...rows].join('\n');
 }
 
-/** Generated, so the one sentence carrying numbers cannot drift from the tables. */
-function headline(results: Results): string {
-  const competitors = rank(results).filter((r) => !r.isBaseline);
+/**
+ * Generated, so the paragraph carrying the numbers cannot drift from the table. Second half is the only
+ * way to price a driver apart from the ORM: the same query builder on both.
+ */
+function headline(ranked: Row[]): string {
+  const competitors = competitorsOf(ranked);
   const lowest = competitors[0];
   const highest = competitors[competitors.length - 1];
   const totals = competitors.map((r) => r.total);
   const spread = (Math.max(...totals) / Math.min(...totals)).toFixed(1);
+  const floors = rowFor(ranked, 'raw pg').total - rowFor(ranked, 'bun sql').total;
+  const pg = rowFor(ranked, 'UQL');
+  const bun = rowFor(ranked, 'UQL (bunSql)');
 
   return (
-    `Totals span ${spread}x because every entry pays the same database cost. The part above the floor, ` +
-    `which is the ORM's own, spans ${(highest.adds / lowest.adds).toFixed(0)}x: ${lowest.adds}µs for ` +
-    `${lowest.entry} against ${highest.adds}µs for ${highest.entry}.`
+    `Totals only span ${spread}x, because every entry pays the same database cost. What the ORM itself ` +
+    `adds spans ${(highest.adds / lowest.adds).toFixed(0)}x: ${lowest.adds}µs for ${lowest.entry}, ` +
+    `${highest.adds}µs for ${highest.entry}.\n\n` +
+    `Each entry is measured against its own driver's floor, so a faster driver is never counted as the ` +
+    `ORM's win. Running the same UQL code on Bun SQL instead of \`pg\` saves ${pg.total - bun.total}µs, ` +
+    `but only ${pg.adds - bun.adds}µs of that is UQL: the other ${floors}µs is the gap between the two ` +
+    `floors, free to anything on that driver.`
   );
 }
 
@@ -166,101 +152,53 @@ function headline(results: Results): string {
  * Generated with the numbers, so the line describing the run cannot drift from the run that produced
  * it. Naming the wrong runtime here once misattributed every figure below.
  */
-function envFacts(env: Env) {
+export function envFacts(run: Run) {
   return {
-    postgres: env.postgres,
-    runtime: `Bun ${Bun.version}`,
+    postgres: run.postgres,
+    runtime: run.runtime.label,
     machine: cpus()[0]?.model ?? 'unknown CPU',
     when: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
     /** Widest relative half-width across entries, so one figure can stand for the whole table. */
-    interval: Math.max(...env.spreads),
+    interval: Math.max(...run.spreads),
   };
 }
 
-function envLine(env: Env): string {
-  const { postgres, runtime, machine, when } = envFacts(env);
+/** The run and its confidence in one caption, so a table of medians never stands without its error bar. */
+function envLine(run: Run, ranked: Row[]): string {
+  const { postgres, runtime, machine, when } = envFacts(run);
+  const worst = ranked.reduce((a, b) => (b.spread > a.spread ? b : a));
   return (
-    `> ${postgres}, ${runtime}, ${machine}, ${when}. µs per operation, median of ` +
-    `${env.iterations} rounds after ${env.warmup} warmup rounds, interleaved and rotated.`
-  );
-}
-
-/** Answers the one question a table of medians leaves open: whether the gaps are bigger than the noise. */
-function spreadLine(env: Env): string {
-  const worst = Math.max(...env.spreads);
-  return (
-    `Each median above carries a 95% confidence interval of ±${(worst * 100).toFixed(1)}% or tighter ` +
-    `(widest: ${ENTRIES[env.spreads.indexOf(worst)]}), so the gaps in the ranking are far larger than ` +
-    `the measurement.`
-  );
-}
-
-/** The same query builder on two drivers, which is the only way to price the driver apart from the ORM. */
-function driverLine(results: Results): string {
-  const floors = totalOf(results, ENTRIES.indexOf('raw pg')) - totalOf(results, ENTRIES.indexOf('bun sql'));
-  const total = totalOf(results, ENTRIES.indexOf('UQL')) - totalOf(results, ENTRIES.indexOf('UQL (bunSql)'));
-  const own = overheadUs(results, ENTRIES.indexOf('UQL')) - overheadUs(results, ENTRIES.indexOf('UQL (bunSql)'));
-
-  return (
-    `Each entry is measured against its own driver's floor, so a faster driver is not counted as the ` +
-    `ORM's doing. Moving the same UQL code from \`pg\` to Bun SQL saves ${total}µs in total, but only ` +
-    `${own}µs of that is UQL: the other ${floors}µs is the gap between the two floors, which every ` +
-    `entry on that driver gets for free.`
-  );
-}
-
-/** Which entry and step this is changes between runs, so naming either by hand goes stale. */
-function widestStepLine(results: Results): string {
-  const competitors = rank(results).filter((r) => !r.isBaseline);
-  const worst = competitors
-    .flatMap((r) => r.steps.map((value, step) => ({ entry: r.entry, step, value })))
-    .reduce((a, b) => (b.value > a.value ? b : a));
-  const others = competitors.filter((r) => r.entry !== worst.entry).map((r) => r.steps[worst.step]);
-
-  return (
-    `${worst.entry}'s ${STEPS[worst.step]} is the widest single-step gap in the set, ${worst.value}µs ` +
-    `against ${Math.min(...others)}-${Math.max(...others)}µs for every other entry.`
+    `> ${postgres}, ${runtime}, ${machine}, ${when}. Median µs per operation over ${run.iterations} ` +
+    `rounds, after ${run.warmup} warmup rounds, interleaved and rotated. Every median is ` +
+    `±${(worst.spread * 100).toFixed(1)}% or tighter at 95% confidence (widest: ${worst.entry}).`
   );
 }
 
 /** Six versions are a sentence, not a table, and they belong next to the numbers they produced. */
 function versionsLine(): string {
-  const tools = Object.entries(TOOLS).flatMap(([entry, { pkg }]) => {
-    if (!pkg) return [];
-    const manifest = resolve(root, 'node_modules', pkg, 'package.json');
-    const { version } = JSON.parse(readFileSync(manifest, 'utf8')) as { version: string };
-    return [`${linkEntry(entry)} ${version}`];
-  });
+  const tools = Object.entries(TOOLS).flatMap(([entry, { pkg }]) =>
+    pkg ? [`${linkEntry(entry)} ${installedVersion(pkg)}`] : [],
+  );
 
   return `_Versions: ${tools.join(' · ')}._`;
 }
 
-/** Rewrites the region between `<!-- bench:key -->` and `<!-- /bench:key -->`. */
-function replaceMarked(markdown: string, key: string, body: string): string {
-  const open = `<!-- bench:${key} -->`;
-  const close = `<!-- /bench:${key} -->`;
-  const start = markdown.indexOf(open);
-  const end = markdown.indexOf(close);
-  if (start < 0 || end < 0) {
-    throw new TypeError(`README is missing the ${open} ... ${close} markers`);
-  }
-  return `${markdown.slice(0, start + open.length)}\n${body}\n${markdown.slice(end)}`;
-}
-
 /** `adds` is precomputed so the chart never has to know which floor belongs to which entry. */
-function resultsJs(results: Results, env: Env): string {
+function resultsJs(run: Run, ranked: Row[]): string {
+  const inRunOrder = run.entries.map((entry) => rowFor(ranked, entry));
   const payload = {
     unit: 'µs/op',
-    entries: ENTRIES,
+    entries: run.entries,
     baselines: BASELINES,
-    steps: STEPS.map((key) => ({ key, label: STEP_LABELS[key] })),
-    data: results,
-    totals: ENTRIES.map((_, i) => totalOf(results, i)),
-    adds: ENTRIES.map((_, i) => overheadUs(results, i)),
+    steps: PUBLISHED_STEPS.map((key) => ({ key, label: STEP_LABELS[key] })),
+    /** All seven, not only the published ones: the chart draws `steps`, this is the whole run. */
+    data: run.results,
+    totals: inRunOrder.map((r) => r.total),
+    adds: inRunOrder.map((r) => r.adds),
     /** Relative half-width of each median's 95% interval, index-aligned with `entries`. */
-    intervals: env.spreads,
+    intervals: run.spreads,
     /** So the chart states the same run the tables do, instead of a hand-kept caption. */
-    env: envFacts(env),
+    env: envFacts(run),
   };
   return [
     '// Auto-generated by scripts/flow-bench.ts: do not edit manually',
@@ -269,30 +207,27 @@ function resultsJs(results: Results, env: Env): string {
   ].join('\n');
 }
 
-export function syncResults(results: Results, env: Env): void {
-  writeFileSync(resolve(root, 'results.js'), resultsJs(results, env));
+export function syncResults(run: Run): void {
+  if (run.entries.length !== ENTRIES.length) {
+    throw new TypeError(`only a full run publishes results; this one measured ${run.entries.length} entries`);
+  }
 
-  const readmePath = resolve(root, 'README.md');
-  const blocks: Record<string, string> = {
-    env: envLine(env),
+  const ranked = rank(run);
+  writeFileSync(resolve(root, 'results.js'), resultsJs(run, ranked));
+  writeReadme({
+    env: envLine(run, ranked),
     versions: versionsLine(),
-    ranking: rankingTable(results),
-    headline: headline(results),
-    spread: spreadLine(env),
-    driver: driverLine(results),
-    steps: stepTable(results),
-    widest: widestStepLine(results),
-  };
-
-  const out = Object.entries(blocks).reduce(
-    (markdown, [key, body]) => replaceMarked(markdown, key, body),
-    readFileSync(readmePath, 'utf8'),
-  );
-  writeFileSync(readmePath, out);
+    ranking: rankingTable(ranked),
+    headline: headline(ranked),
+    steps: stepTable(ranked),
+    'steps-note': stepsNote(ranked),
+  });
 }
 
-export function printSummary(results: Results): void {
-  for (const r of rank(results)) {
-    console.log(r.entry.padEnd(18), `${r.total}µs`.padStart(8), r.isBaseline ? 'floor' : `+${r.adds}µs`);
+export function printSummary(run: Run): void {
+  for (const r of rank(run)) {
+    const cost = r.isBaseline ? 'floor' : `+${r.adds}µs`;
+    const total = `${r.total}µs`.padStart(8);
+    console.log(`${r.entry.padEnd(18)} ${total} ${cost.padEnd(9)} p50 ${r.tail.p50} p99 ${r.tail.p99}`);
   }
 }

@@ -1,12 +1,8 @@
 /**
- * The one Company/User model, defined once per ORM, shared by both benchmarks.
+ * The one Company/User model, defined once per ORM, plus the fixtures every entry is seeded with. Same
+ * shape for everyone is what makes the entries comparable at all.
  *
- * `compiler.bench.ts` compiles queries against these offline; `scripts/flow-bench.ts` executes them
- * against a real PostgreSQL. Sharing the definitions is what makes the two comparable: the flow
- * numbers describe the same entities the generation numbers were measured on.
- *
- * Definitions and fixtures only. Client construction lives in `src/clients.ts` (live connections) and
- * inline in `compiler.bench.ts` (offline stubs), because those two have nothing in common.
+ * Definitions only: the live connections are `src/clients.ts` and the lifecycle is `scripts/flow-bench.ts`.
  */
 
 import { defineEntity, p as mikroP } from '@mikro-orm/core';
@@ -92,10 +88,8 @@ export const MikroCompanySchema = defineEntity({
 /**
  * No scalar `companyId` here, unlike the other six: MikroORM refuses two persisted properties on one
  * column, and the `company` relation owns it. So MikroORM queries say `company` where the others say
- * `companyId`, which compiles to the identical `"u0"."companyId"` either way (verified against the
- * 0.6.1 SQL, byte for byte). `persist(false)` was tried first and rejected: it makes
- * `select(['companyId'])` silently omit the column, so the AGGREGATE case would have compiled one
- * fewer column than every other entry.
+ * `companyId`, which compiles to the identical `"u0"."companyId"` either way. `persist(false)` was tried
+ * first and rejected: it makes `select(['companyId'])` silently omit the column.
  */
 export const MikroUserSchema = defineEntity({
   name: 'User',

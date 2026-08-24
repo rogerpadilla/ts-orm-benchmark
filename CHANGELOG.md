@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.0 - 2026-08-23
+
+**New: the same lifecycle on Bun, Node and Deno.** `bun run bench.runtimes` builds one bundle with Bun, runs it on each runtime so none is charged for its own TypeScript loader, and reports p50/p90/p99 over 2000 rounds. All three measure the same seven entries; the `bunSql` ones are Bun-only, and letting Bun carry those three extra made its p99 look ~2x worse than it really is.
+
+- Bun's SQL client now loads through a dynamic import, so the suite runs off Bun at all. CI exercises the non-Bun bundle to keep it that way.
+- Dependencies: uql-orm 0.28.1 → 0.30.0, MikroORM 7.1.12 → 7.1.13, Biome 2.5.8 → 2.5.10, @types/bun 1.3.14 → 1.4.0.
+- Scripts split by job, leaving `flow-bench.ts` as just the timing loop. Same output, byte for byte.
+- Results: the runtimes land within 52µs of each other at p50 on identical `raw pg` code, then separate in the tail, where p99 is 256% above its own p50 on Bun, 94% on Node, 80% on Deno. Picking the ORM still matters more than picking the runtime: 1791-2752µs against 798µs.
+
 ## 0.8.2 - 2026-08-10
 
 - Fixed MikroORM: fork a fresh `EntityManager` per operation instead of sharing one across the whole run, same pattern the nested step already used.
