@@ -26,6 +26,30 @@ export const ENTRIES = [
 
 export const BASELINES = ['raw pg', 'bun sql'] as const;
 
+/**
+ * Every tool the report names, in one place. `pkg` is where its version is read from and `probe` is its
+ * file in `type-safety/`; the two floors are hand-written driver code, so they have neither.
+ *
+ * One registry rather than three. `TOOLS`, the probe-file map and the version line used to be separate
+ * lists that had to agree by convention: a probe file whose name did not match a key here still scored,
+ * it just lost its link in the table, silently. Derived, that cannot happen.
+ */
+export const TOOLS: Record<string, { url: string; pkg?: string; probe?: string }> = {
+  UQL: { url: 'https://uql-orm.dev', pkg: 'uql-orm', probe: 'uql' },
+  Prisma: { url: 'https://www.prisma.io', pkg: 'prisma', probe: 'prisma' },
+  Sequelize: { url: 'https://sequelize.org', pkg: 'sequelize', probe: 'sequelize' },
+  TypeORM: { url: 'https://typeorm.io', pkg: 'typeorm', probe: 'typeorm' },
+  MikroORM: { url: 'https://mikro-orm.io', pkg: '@mikro-orm/postgresql', probe: 'mikro-orm' },
+  Drizzle: { url: 'https://orm.drizzle.team', pkg: 'drizzle-orm', probe: 'drizzle' },
+  'raw pg': { url: 'https://node-postgres.com' },
+  'bun sql': { url: 'https://bun.sh/docs/api/sql' },
+};
+
+/** Probe file stem to the name the timing tables use, so both halves call a tool the same thing. */
+export const PROBE_FILES: Record<string, string> = Object.fromEntries(
+  Object.entries(TOOLS).flatMap(([entry, { probe }]) => (probe ? [[probe, entry]] : [])),
+);
+
 export const STEPS = ['insert', 'read', 'update', 'readAgain', 'nested', 'delete', 'readEmpty'] as const;
 
 export type Entry = (typeof ENTRIES)[number];

@@ -6,6 +6,12 @@
  * counts when the corrected copy is clean. That control is the whole difference between measuring a
  * tool's types and measuring whether a file happens to be broken.
  *
+ * uql-orm.dev has a second harness of the same shape, `scripts/check-type-safety.ts`, and it is not a
+ * copy of this one. This compiles the probes against `node_modules`; that one compiles them against the
+ * virtual file system Monaco resolves, where a package it cannot reach becomes `any` rather than an
+ * error. Only that one can catch a payload gap, and only this one scores. Change the probes and both
+ * need re-running.
+ *
  * Usage:
  *   bun scripts/type-check.ts
  *   bun scripts/type-check.ts --verify   # fail on a probe that stopped erroring, write nothing
@@ -14,7 +20,8 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { COMPILER, PROBE_FILES, PROBE_MARKER, PROBES, type ProbeId } from './probes';
+import { PROBE_FILES } from './model';
+import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
 import { flag, installedVersion, root, writeReadme } from './project';
 import { linkEntry, mdTable } from './report';
 

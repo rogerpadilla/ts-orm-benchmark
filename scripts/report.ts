@@ -21,6 +21,7 @@ import {
   STEPS,
   type Step,
   stepOf,
+  TOOLS,
 } from './model';
 import { installedVersion, root, writeReadme } from './project';
 import { flowOf, sampleOf } from './samples';
@@ -33,22 +34,6 @@ const STEP_LABELS: Record<Step, string> = {
   nested: 'SELECT 50 parents with their children',
   delete: 'DELETE by id',
   readEmpty: 'SELECT to verify the delete',
-};
-
-/**
- * Keyed by entry name without its driver suffix, so `UQL` and `UQL (bunSql)` resolve to the same row.
- * `pkg` is where the version comes from, read from `node_modules` rather than hand-kept; the floors are
- * hand-written driver code, so they have no package and no version to report.
- */
-const TOOLS: Record<string, { url: string; pkg?: string }> = {
-  UQL: { url: 'https://uql-orm.dev', pkg: 'uql-orm' },
-  Prisma: { url: 'https://www.prisma.io', pkg: 'prisma' },
-  Sequelize: { url: 'https://sequelize.org', pkg: 'sequelize' },
-  TypeORM: { url: 'https://typeorm.io', pkg: 'typeorm' },
-  MikroORM: { url: 'https://mikro-orm.io', pkg: '@mikro-orm/postgresql' },
-  Drizzle: { url: 'https://orm.drizzle.team', pkg: 'drizzle-orm' },
-  'raw pg': { url: 'https://node-postgres.com' },
-  'bun sql': { url: 'https://bun.sh/docs/api/sql' },
 };
 
 export function linkEntry(entry: string): string {

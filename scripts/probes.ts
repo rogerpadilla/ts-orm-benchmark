@@ -35,16 +35,6 @@ export const PROBES = [
 
 export type ProbeId = (typeof PROBES)[number]['id'];
 
-/** Probe file stem to the name the timing tables use, so both tables call the same tool the same thing. */
-export const PROBE_FILES: Record<string, string> = {
-  uql: 'UQL',
-  prisma: 'Prisma',
-  drizzle: 'Drizzle',
-  typeorm: 'TypeORM',
-  'mikro-orm': 'MikroORM',
-  sequelize: 'Sequelize',
-};
-
 /**
  * Checked by the compiler this repo already builds with, and only that one, so a mark is what a reader's
  * own editor would say rather than what some pinned older toolchain would.
