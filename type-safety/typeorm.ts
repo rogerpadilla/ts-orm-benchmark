@@ -5,52 +5,52 @@ import { clients } from './clients';
 const users = clients.typeorm.getRepository(TypeORMUserSchema);
 const companies = clients.typeorm.getRepository(TypeORMCompanySchema);
 
-// probe: select-key | emial -> email
+// Misspelled column in the projection | emial -> email
 await users.find({
   select: { id: true, emial: true },
 });
 
-// probe: where-key | companyid -> companyId
+// Misspelled column in the filter | companyid -> companyId
 await users.find({
   select: { id: true },
   where: { companyid: MoreThan(0) },
 });
 
-// probe: where-value | 'one' -> 1
+// String value against a numeric column | 'one' -> 1
 await users.find({
   select: { id: true },
   where: { companyId: 'one' },
 });
 
-// probe: where-operator | Like('abc') -> MoreThan(1)
+// Text operator against a numeric column | Like('abc') -> MoreThan(1)
 await users.find({
   select: { id: true },
   where: { companyId: Like('abc') },
 });
 
-// probe: sort-key | idd -> id
+// Misspelled column in the sort | idd -> id
 await users.find({
   select: { id: true },
   order: { idd: 'ASC' },
 });
 
-// probe: nested-select-key | nmae -> name
+// Misspelled column inside a loaded relation | nmae -> name
 await companies.find({
   select: { id: true, users: { nmae: true } },
   relations: { users: true },
 });
 
-// probe: insert-key | emails -> email
+// Misspelled column in inserted data | emails -> email
 await users.insert({ name: 'New User', emails: 'new@example.com' });
 
-// probe: update-value | 42 -> 'Updated Name'
+// Number written into a text column | 42 -> 'Updated Name'
 await users.update({ id: 1 }, { name: 42 });
 
-// probe: result-unselected | user.email -> user.name
+// Reading a column the projection left out | user.email -> user.name
 const [user] = await users.find({ select: { id: true, name: true } });
 export const unselected = user.email;
 
-// probe: result-nested | .nmae -> .name
+// Reading a misspelled column off a loaded relation | .nmae -> .name
 const [company] = await companies.find({
   select: { id: true, users: { id: true, name: true } },
   relations: { users: true },

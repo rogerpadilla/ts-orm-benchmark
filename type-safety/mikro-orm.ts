@@ -9,38 +9,38 @@ import { clients } from './clients';
 
 const em = clients.mikroOrm.em;
 
-// probe: select-key | emial -> email
+// Misspelled column in the projection | emial -> email
 await em.find(MikroUserSchema, {}, { fields: ['id', 'emial'] });
 
-// probe: where-key | createdat -> createdAt
+// Misspelled column in the filter | createdat -> createdAt
 await em.find(MikroUserSchema, { createdat: { $gt: 0 } }, { fields: ['id'] });
 
-// probe: where-value | 'one' -> 1
+// String value against a numeric column | 'one' -> 1
 await em.find(MikroUserSchema, { createdAt: 'one' }, { fields: ['id'] });
 
-// probe: where-operator | $like: 'abc' -> $gte: 1
+// Text operator against a numeric column | $like: 'abc' -> $gte: 1
 await em.find(MikroUserSchema, { createdAt: { $like: 'abc' } }, { fields: ['id'] });
 
-// probe: sort-key | idd -> id
+// Misspelled column in the sort | idd -> id
 await em.find(MikroUserSchema, {}, { fields: ['id'], orderBy: { idd: 'ASC' } });
 
-// probe: nested-select-key | users.nmae -> users.name
+// Misspelled column inside a loaded relation | users.nmae -> users.name
 await em.find(MikroCompanySchema, {}, { fields: ['id', 'users.nmae'], populate: ['users'] });
 
-// probe: insert-key | emails -> email
+// Misspelled column in inserted data | emails -> email
 await em
   .createQueryBuilder(MikroUserSchema)
   .insert([{ name: 'New User', emails: 'new@example.com', createdAt: 1, company: 1 }])
   .execute();
 
-// probe: update-value | 42 -> 'Updated Name'
+// Number written into a text column | 42 -> 'Updated Name'
 await em.nativeUpdate(MikroUserSchema, { id: 1 }, { name: 42 });
 
-// probe: result-unselected | user.email -> user.name
+// Reading a column the projection left out | user.email -> user.name
 const [user] = await em.find(MikroUserSchema, {}, { fields: ['id', 'name'] });
 export const unselected = user.email;
 
-// probe: result-nested | .nmae -> .name
+// Reading a misspelled column off a loaded relation | .nmae -> .name
 const [company] = await em.find(
   MikroCompanySchema,
   {},

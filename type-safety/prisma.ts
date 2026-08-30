@@ -2,54 +2,54 @@ import { clients } from './clients';
 
 const { prisma } = clients;
 
-// probe: select-key | emial -> email
+// Misspelled column in the projection | emial -> email
 await prisma.user.findMany({
   select: { id: true, emial: true },
 });
 
-// probe: where-key | companyid -> companyId
+// Misspelled column in the filter | companyid -> companyId
 await prisma.user.findMany({
   select: { id: true },
   where: { companyid: { gt: 0 } },
 });
 
-// probe: where-value | 'one' -> 1
+// String value against a numeric column | 'one' -> 1
 await prisma.user.findMany({
   select: { id: true },
   where: { companyId: 'one' },
 });
 
-// probe: where-operator | contains: 'abc' -> gte: 1
+// Text operator against a numeric column | contains: 'abc' -> gte: 1
 await prisma.user.findMany({
   select: { id: true },
   where: { companyId: { contains: 'abc' } },
 });
 
-// probe: sort-key | idd -> id
+// Misspelled column in the sort | idd -> id
 await prisma.user.findMany({
   select: { id: true },
   orderBy: { idd: 'asc' },
 });
 
-// probe: nested-select-key | nmae -> name
+// Misspelled column inside a loaded relation | nmae -> name
 await prisma.company.findMany({
   select: { id: true, users: { select: { nmae: true } } },
 });
 
-// probe: insert-key | emails -> email
+// Misspelled column in inserted data | emails -> email
 await prisma.user.createManyAndReturn({
   data: [{ name: 'New User', emails: 'new@example.com' }],
   select: { id: true },
 });
 
-// probe: update-value | 42 -> 'Updated Name'
+// Number written into a text column | 42 -> 'Updated Name'
 await prisma.user.update({ where: { id: 1 }, data: { name: 42 } });
 
-// probe: result-unselected | user.email -> user.name
+// Reading a column the projection left out | user.email -> user.name
 const [user] = await prisma.user.findMany({ select: { id: true, name: true } });
 export const unselected = user.email;
 
-// probe: result-nested | .nmae -> .name
+// Reading a misspelled column off a loaded relation | .nmae -> .name
 const [company] = await prisma.company.findMany({
   select: { id: true, users: { select: { id: true, name: true } } },
 });
