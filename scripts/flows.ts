@@ -99,6 +99,7 @@ export function checkStep(entry: Entry, step: Step, op: Operation, returned: unk
 
 /** Both driver-level counts an ORM can hand back instead of rows. */
 const affectedRows = (returned: unknown) => (returned as { affectedRows?: number }).affectedRows ?? 0;
+const affected = (returned: unknown) => (returned as { affected?: number }).affected ?? 0;
 const oneIfReturned = (returned: unknown) => (returned ? 1 : 0);
 
 /** The floors map rows by hand, which is the point of them: no ORM assembles this. */
@@ -300,7 +301,7 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
     },
     update: {
       run: () => repo.update({ id: 1 }, { name: UPDATE_NAME }),
-      rows: (r) => (r as { affected?: number }).affected ?? 0,
+      rows: affected,
     },
     readAgain: {
       run: () => repo.find({ select: { id: true, name: true }, where: { id: 1 } }),
@@ -316,7 +317,7 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
     },
     delete: {
       run: () => repo.delete({ id: 1 }),
-      rows: (r) => (r as { affected?: number }).affected ?? 0,
+      rows: affected,
     },
     readEmpty: {
       run: () => repo.find({ select: { id: true }, where: { id: 1 } }),

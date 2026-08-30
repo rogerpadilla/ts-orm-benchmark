@@ -11,7 +11,7 @@ I wrote UQL, so read the tables rather than my summary of them. Clone it and che
 ## Results
 
 <!-- bench:env -->
-> PostgreSQL 18.6 (Homebrew), Bun 1.3.14, Apple M4 Pro, August 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±6.9% or tighter at 95% confidence (widest: MikroORM).
+> PostgreSQL 18.6 (Homebrew), Bun 1.3.14, Apple M4 Pro, August 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±4.1% or tighter at 95% confidence (widest: MikroORM).
 <!-- /bench:env -->
 
 <!-- bench:versions -->
@@ -21,24 +21,24 @@ _Versions: [UQL](https://uql-orm.dev) 0.32.1 · [Prisma](https://www.prisma.io) 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1299 |
-| ref | _raw pg_ | floor | 1413 |
-| 🥇 1 | **UQL (bunSql)** | +222 | 1521 |
-| 🥈 2 | UQL | +257 | 1670 |
-| 🥉 3 | Drizzle (bunSql) | +684 | 1983 |
-| 4 | Drizzle | +704 | 2117 |
-| 5 | TypeORM | +717 | 2130 |
-| 6 | Prisma | +1167 | 2580 |
-| 7 | Sequelize | +1174 | 2587 |
-| 8 | MikroORM | +2138 | 3551 |
+| ref | _bun sql_ | floor | 1210 |
+| ref | _raw pg_ | floor | 1292 |
+| 🥇 1 | **UQL (bunSql)** | +221 | 1431 |
+| 🥈 2 | UQL | +253 | 1545 |
+| 🥉 3 | Drizzle (bunSql) | +620 | 1830 |
+| 4 | Drizzle | +671 | 1963 |
+| 5 | TypeORM | +706 | 1998 |
+| 6 | Prisma | +1108 | 2400 |
+| 7 | Sequelize | +1121 | 2413 |
+| 8 | MikroORM | +1999 | 3291 |
 <!-- /bench:ranking -->
 
 Rank is by `Adds`, not by total, so a lower total can sit further down when the two floors differ.
 
 <!-- bench:headline -->
-Totals only span 2.3x, because every entry pays the same database cost. What the ORM itself adds spans 10x: 222µs for UQL (bunSql), 2138µs for MikroORM.
+Totals only span 2.3x, because every entry pays the same database cost. What the ORM itself adds spans 9x: 221µs for UQL (bunSql), 1999µs for MikroORM.
 
-Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 149µs, but only 35µs of that is UQL: the other 114µs is the gap between the two floors, free to anything on that driver.
+Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 114µs, but only 32µs of that is UQL: the other 82µs is the gap between the two floors, free to anything on that driver.
 <!-- /bench:headline -->
 
 ### Per step
@@ -48,14 +48,14 @@ The three steps where the amount of data bound and hydrated decides the number.
 <!-- bench:steps -->
 | Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Prisma](https://www.prisma.io) | [Sequelize](https://sequelize.org) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 470 | 461 | **497** 🥇 | 500 | 652 | 653 | 655 | 1166 | 638 | 627 |
-| SELECT with WHERE, SORT, LIMIT 200 | 194 | 250 | **253** 🥇 | 316 | 285 | 341 | 424 | 347 | 502 | 986 |
-| SELECT 50 parents with their children | 210 | 261 | **293** 🥇 | 356 | 485 | 543 | 430 | 463 | 690 | 1104 |
-| **Total**, all 7 steps | 1299 | 1413 | **1521** 🥇 | 1670 | 1983 | 2117 | 2130 | 2580 | 2587 | 3551 |
+| INSERT 10 rows, returning ids | 424 | 410 | **446** 🥇 | 455 | 601 | 606 | 606 | 1095 | 599 | 554 |
+| SELECT with WHERE, SORT, LIMIT 200 | 185 | 234 | **236** 🥇 | 293 | 268 | 316 | 397 | 318 | 474 | 901 |
+| SELECT 50 parents with their children | 196 | 236 | **282** 🥇 | 327 | 438 | 500 | 406 | 425 | 636 | 1022 |
+| **Total**, all 7 steps | 1210 | 1292 | **1431** 🥇 | 1545 | 1830 | 1963 | 1998 | 2400 | 2413 | 3291 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is Prisma's insert: 1166µs against 497-655µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 478-834µs of each total and separating the field by at most 178µs.
+The biggest gap is Prisma's insert: 1095µs against 446-606µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 467-814µs of each total and separating the field by at most 161µs.
 <!-- /bench:steps-note -->
 
 ### The queries behind those numbers
