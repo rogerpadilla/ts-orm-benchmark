@@ -21,7 +21,7 @@
 - Pinned every dependency that can move a published number, `typescript` included: it scores the type-safety table.
 - Dependencies: uql-orm 0.30.0 to 0.32.1, Prisma 7.9.1 to 7.10.0, MikroORM 7.1.13 to 7.1.14, Biome 2.5.10 to 2.5.11. uql-orm 0.32.0 narrows `findMany` to the selected fields, which is what takes it to 10 of 10 and what let the explicit `insertMany<User>` type argument go.
 - Dropped the hand-kept claim that Prisma wraps its insert in a transaction, worth 88µs: its query log on 7.10.0 shows no `BEGIN`.
-- Results: UQL still adds the least, +204µs on Bun SQL and +237µs on `pg`. Prisma's insert falls 1257µs to 1103µs. The three runtimes sit 47µs apart at p50 on `raw pg`, and 893µs apart at p99.
+- Results: UQL still adds the least, +221µs on Bun SQL and +253µs on `pg`. Prisma's insert falls 1257µs to 1095µs on 7.10.0. The three runtimes sit 113µs apart at p50 on `raw pg`, and 558µs apart at p99.
 
 ## 0.9.0 - 2026-08-23
 
