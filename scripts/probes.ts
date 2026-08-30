@@ -4,8 +4,13 @@
  *
  * A probe is a comment and the statement under it:
  *
- *     // probe: select-key | emial -> email
+ *     // Misspelled column in the projection | emial -> email
  *     await uql.findMany(User, { $select: { id: true, emial: true } });
+ *
+ * The sentence comes first because these files are read as much as they are compiled - on uql-orm.dev
+ * they are the page - and what a reader wants from the line above a mistake is what should be caught,
+ * not which spelling to swap in. It is `what` from {@link PROBES}, checked against it in order, so the
+ * ten are the same ten everywhere and no file can quietly describe its own.
  *
  * The region runs to the next marker. `emial -> email` is the correction, and it is what makes the result
  * mean anything: `scripts/type-check.ts` compiles the file twice, once as written and once with every
@@ -13,8 +18,8 @@
  * the corrected copy produces none, so a tool cannot score by being broken in some unrelated way.
  */
 
-/** `// probe: <id> | <mistake> -> <correction>`, which is how a probe file marks one out. */
-export const PROBE_MARKER = /^\/\/ probe: ([\w-]+) \| (.+?) -> (.+)$/;
+/** `// <what> | <mistake> -> <correction>`, which is how a probe file marks one out. */
+export const PROBE_MARKER = /^\/\/ (.+?) \| (.+?) -> (.+)$/;
 
 export const PROBES = [
   { id: 'select-key', what: 'Misspelled column in the projection' },

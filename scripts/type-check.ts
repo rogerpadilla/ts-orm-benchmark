@@ -37,22 +37,24 @@ function readProbeFile(stem: string): ProbeFile {
   const lines = readFileSync(resolve(DIR, `${stem}.ts`), 'utf8').split('\n');
   const marked = lines.flatMap((line, i) => {
     const match = PROBE_MARKER.exec(line.trim());
-    if (!match) {
-      return [];
-    }
-    const [, id, mistake, correction] = match;
-    if (!KNOWN.has(id)) {
-      throw new TypeError(`${stem}.ts line ${i + 1}: '${id}' is not a probe in scripts/probes.ts`);
-    }
-    return [{ id: id as ProbeId, from: i + 1, to: lines.length, fix: { mistake, correction } }];
+    const [, what, mistake, correction] = match ?? [];
+    return what && mistake && correction ? [{ what, from: i + 1, fix: { mistake, correction } }] : [];
   });
 
-  const regions = marked.map((region, i) => ({ ...region, to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length }));
-  const declared = regions.map((r) => r.id).join(',');
-  const expected = PROBES.map((p) => p.id).join(',');
+  // Matched against the catalogue by what each one says, in order: that is both the check that a file
+  // declares all ten and the reason a marker needs no id of its own to be identified by.
+  const declared = marked.map(({ what }) => what).join('\n');
+  const expected = PROBES.map(({ what }) => what).join('\n');
   if (declared !== expected) {
-    throw new TypeError(`${stem}.ts declares [${declared}]; every probe file must declare [${expected}] in order`);
+    throw new TypeError(`${stem}.ts does not mark the ten probes of scripts/probes.ts, in their order`);
   }
+
+  const regions = marked.map(({ from, fix }, i): Region => ({
+    id: PROBES[i].id,
+    from,
+    to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length,
+    fix,
+  }));
 
   return { stem, entry: PROBE_FILES[stem], lines, regions };
 }
