@@ -7,10 +7,9 @@
  *     // Misspelled column in the projection | emial -> email
  *     await uql.findMany(User, { $select: { id: true, emial: true } });
  *
- * The sentence comes first because these files are read as much as they are compiled - on uql-orm.dev
- * they are the page - and what a reader wants from the line above a mistake is what should be caught,
- * not which spelling to swap in. It is `what` from {@link PROBES}, checked against it in order, so the
- * ten are the same ten everywhere and no file can quietly describe its own.
+ * The sentence comes first because these files are read as much as compiled - on uql-orm.dev they are
+ * the page - and a reader wants to know what should be caught, not which spelling to swap in. It is
+ * `what` from {@link PROBES}, checked in order, so no file describes its own probes.
  *
  * The region runs to the next marker. `emial -> email` is the correction, and it is what makes the result
  * mean anything: `scripts/type-check.ts` compiles the file twice, once as written and once with every
