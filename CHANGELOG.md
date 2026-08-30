@@ -4,7 +4,7 @@
 
 **New: a type-safety half.** `bun run bench.types` writes ten ordinary mistakes - a misspelled column in a projection, a filter on a column that is not there, a text operator on a number, a read of a column the projection left out - in each ORM's own API, and reports which the compiler refuses. Each file is compiled twice, once as written and once corrected, so a mark is green only when the mistake errors and the correction is clean.
 
-- Four entries tie at 9 of 10 (Prisma, MikroORM, UQL, TypeORM), Drizzle takes 8, Sequelize 5. Scored on TypeScript 7.0.2; two red marks are checks TypeScript 6.0 stopped making, which the README explains.
+- UQL catches all 10, the only one that does; MikroORM, Prisma and TypeORM take 9, Drizzle 8, Sequelize 5. Scored on TypeScript 7.0.2; two red marks are checks TypeScript 6.0 stopped making, which the README explains. Ties break alphabetically, not by who wrote the benchmark.
 
 **Fairness audit.** Every entry is now timed and scored through the same API, and fetches the same columns. Neither gap was costing us:
 
@@ -19,7 +19,7 @@
 - `flow-bench.ts` asserted each step on the first round only, while the README claimed every round. It now does; the check runs after the timer stops, so the gate bought nothing.
 - Deno gets `--min-dep-age=0`, which refuses npm versions published in the last 24 hours and cost the whole runtime table on the day an ORM shipped.
 - Pinned every dependency that can move a published number, `typescript` included: it scores the type-safety table.
-- Dependencies: uql-orm 0.30.0 to 0.31.4, Prisma 7.9.1 to 7.10.0, MikroORM 7.1.13 to 7.1.14, Biome 2.5.10 to 2.5.11.
+- Dependencies: uql-orm 0.30.0 to 0.32.1, Prisma 7.9.1 to 7.10.0, MikroORM 7.1.13 to 7.1.14, Biome 2.5.10 to 2.5.11. uql-orm 0.32.0 narrows `findMany` to the selected fields, which is what takes it to 10 of 10 and what let the explicit `insertMany<User>` type argument go.
 - Dropped the hand-kept claim that Prisma wraps its insert in a transaction, worth 88µs: its query log on 7.10.0 shows no `BEGIN`.
 - Results: UQL still adds the least, +204µs on Bun SQL and +237µs on `pg`. Prisma's insert falls 1257µs to 1103µs. The three runtimes sit 47µs apart at p50 on `raw pg`, and 893µs apart at p99.
 
