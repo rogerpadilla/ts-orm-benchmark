@@ -53,4 +53,4 @@ const [company] = await uql.findMany(Company, {
   $select: { id: true },
   $populate: { users: { $select: { id: true, name: true } } },
 });
-export const nested = company.users![0].nmae;
+export const nested = company.users[0].nmae;

@@ -203,7 +203,7 @@ function bunSqlFlow(sql: BunSqlClients['bunSql']): Flow {
 function uqlFlow(q: Clients['uql'] | BunSqlClients['uqlBunSql']): Flow {
   return {
     insert: {
-      run: () => q.insertMany<User>(User, NEW_USERS),
+      run: () => q.insertMany(User, NEW_USERS),
     },
     read: {
       run: () =>
