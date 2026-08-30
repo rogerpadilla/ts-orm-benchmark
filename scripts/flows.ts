@@ -7,20 +7,24 @@
 
 import type { SqlEntityManager } from '@mikro-orm/postgresql';
 import { asc, eq, gt } from 'drizzle-orm';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import { Op } from 'sequelize';
 import { LessThanOrEqual, MoreThan } from 'typeorm';
 import type { BunSqlClients, Clients } from '../src/clients';
 import {
   COMPANY_TABLE,
   Company,
+  type drizzleSchema,
   drizzleUsers,
   MikroCompanySchema,
   MikroUserSchema,
-  SEED_COMPANIES,
+  type SqCompany as SqCompanyModel,
+  TypeORMCompanySchema,
   TypeORMUserSchema,
   USER_TABLE,
   User,
 } from '../src/schema';
+import { SEED_COMPANIES } from './fixture';
 import type { Entry, Step } from './model';
 
 /**
@@ -239,7 +243,7 @@ function uqlFlow(q: Clients['uql'] | BunSqlClients['uqlBunSql']): Flow {
 function sequelizeFlow({ SqUser, SqCompany }: Pick<Clients, 'SqUser' | 'SqCompany'>): Flow {
   return {
     insert: {
-      run: () => SqUser.bulkCreate(NEW_USERS as never[]),
+      run: () => SqUser.bulkCreate(NEW_USERS),
     },
     read: {
       run: () =>
@@ -265,7 +269,7 @@ function sequelizeFlow({ SqUser, SqCompany }: Pick<Clients, 'SqUser' | 'SqCompan
           where: { id: { [Op.lte]: NESTED_LIMIT } },
           order: [['id', 'ASC']],
         }),
-      children: (parent) => (parent as { get: (key: string) => unknown[] }).get('users'),
+      children: (parent) => (parent as SqCompanyModel).users,
     },
     delete: {
       run: () => SqUser.destroy({ where: { id: 1 } }),
@@ -279,10 +283,10 @@ function sequelizeFlow({ SqUser, SqCompany }: Pick<Clients, 'SqUser' | 'SqCompan
 
 function typeormFlow(ds: Clients['typeorm']): Flow {
   const repo = ds.getRepository(TypeORMUserSchema);
-  const companies = ds.getRepository('Company');
+  const companies = ds.getRepository(TypeORMCompanySchema);
   return {
     insert: {
-      run: () => repo.insert(NEW_USERS as never),
+      run: () => repo.insert(NEW_USERS),
       rows: (r) => (r as { identifiers: unknown[] }).identifiers.length,
     },
     read: {
@@ -304,7 +308,7 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
     nested: {
       run: () =>
         companies.find({
-          select: { id: true, name: true },
+          select: { id: true, name: true, users: { id: true, name: true } },
           relations: { users: true },
           where: { id: LessThanOrEqual(NESTED_LIMIT) },
           order: { id: 'ASC' },
@@ -324,6 +328,12 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
   // A fresh EntityManager per operation, the same request-scoped fork MikroORM's own docs call for
   // (https://mikro-orm.io/docs/identity-map), instead of one shared em accumulating Unit-of-Work state
   // across the whole run.
+  //
+  // Through the EntityManager rather than `createQueryBuilder`, which is what this used to time. The
+  // builder is the escape hatch; `em.find` is the API MikroORM's docs lead with, it is the one the
+  // type-safety probes are scored on, and timing one while scoring the other made the two halves of the
+  // report about two different MikroORMs. It is not a handicap either: measured over 160 rounds of the
+  // 200-row read, `em.find` came in at 1253µs against the builder's 1294µs.
   const fork = () => orm.em.fork() as SqlEntityManager;
   const mikroNew = NEW_USERS.map((u) => ({
     name: u.name,
@@ -333,25 +343,27 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
   }));
   return {
     insert: {
+      // The one step still on the builder, and the probes match it. `em.insertMany` emits the identical
+      // single `INSERT ... RETURNING "id"`, but hands back only the first id rather than all ten, so the
+      // step could not be asserted through it - and an insert nobody can count is how MikroORM's used to
+      // score well while doing nothing.
       run: () => fork().createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
       rows: affectedRows,
     },
     read: {
       run: () =>
-        fork()
-          .createQueryBuilder(MikroUserSchema)
-          .select(['id', 'name', 'email', 'company', 'createdAt'])
-          .where({ company: { $gt: 0 } })
-          .orderBy({ id: 'ASC' })
-          .limit(READ_LIMIT)
-          .getResult(),
+        fork().find(
+          MikroUserSchema,
+          { company: { $gt: 0 } },
+          { fields: ['id', 'name', 'email', 'company', 'createdAt'], orderBy: { id: 'ASC' }, limit: READ_LIMIT },
+        ),
     },
     update: {
-      run: () => fork().createQueryBuilder(MikroUserSchema).update({ name: UPDATE_NAME }).where({ id: 1 }).execute(),
-      rows: affectedRows,
+      run: () => fork().nativeUpdate(MikroUserSchema, { id: 1 }, { name: UPDATE_NAME }),
+      rows: Number,
     },
     readAgain: {
-      run: () => fork().createQueryBuilder(MikroUserSchema).select(['id', 'name']).where({ id: 1 }).getResult(),
+      run: () => fork().find(MikroUserSchema, { id: 1 }, { fields: ['id', 'name'] }),
     },
     nested: {
       run: () =>
@@ -362,16 +374,16 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
         ),
     },
     delete: {
-      run: () => fork().createQueryBuilder(MikroUserSchema).delete().where({ id: 1 }).execute(),
-      rows: affectedRows,
+      run: () => fork().nativeDelete(MikroUserSchema, { id: 1 }),
+      rows: Number,
     },
     readEmpty: {
-      run: () => fork().createQueryBuilder(MikroUserSchema).select(['id']).where({ id: 1 }).getResult(),
+      run: () => fork().find(MikroUserSchema, { id: 1 }, { fields: ['id'] }),
     },
   };
 }
 
-function drizzleFlow(db: Clients['drizzleDb']): Flow {
+function drizzleFlow(db: PgDatabase<PgQueryResultHKT, typeof drizzleSchema>): Flow {
   return {
     insert: {
       run: () => db.insert(drizzleUsers).values(NEW_USERS).returning({ id: drizzleUsers.id }),
@@ -479,9 +491,8 @@ export const FLOWS: Record<Entry, (c: Clients) => Flow> = {
   TypeORM: (c) => typeormFlow(c.typeorm),
   MikroORM: (c) => mikroFlow(c.mikroOrm),
   Drizzle: (c) => drizzleFlow(c.drizzleDb),
-  // Same query-building API, different driver; the two db types are structurally distinct only in their
-  // driver internals, which the flow never touches. A union parameter was tried and does not work: it
-  // collapses Drizzle's overloads, so `insert(table)` stops accepting an argument at all.
-  'Drizzle (bunSql)': (c) => drizzleFlow(bunSqlOf(c).drizzleDb as unknown as Clients['drizzleDb']),
+  // Same query-building API, different driver: both db types extend the `PgDatabase` the flow is written
+  // against, and differ only in the driver internals it never touches.
+  'Drizzle (bunSql)': (c) => drizzleFlow(bunSqlOf(c).drizzleDb),
   Prisma: (c) => prismaFlow(c.prisma),
 };

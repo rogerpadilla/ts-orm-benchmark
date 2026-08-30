@@ -91,9 +91,7 @@ async function main() {
           const t0 = process.hrtime.bigint();
           const returned = await op.run();
           const elapsed = Number(process.hrtime.bigint() - t0) / 1000;
-          if (round === 0) {
-            checkStep(entries[i], step, op, returned);
-          }
+          checkStep(entries[i], step, op, returned);
           if (round >= warmup) {
             samples[i][step].push(elapsed);
           }

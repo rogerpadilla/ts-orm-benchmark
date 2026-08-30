@@ -44,7 +44,7 @@ export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STE
 export type Results = Record<Step, number[]>;
 
 /** Round-total µs: what one caller waits for a whole lifecycle, at the median and out in the tail. */
-export type Tail = { p50: number; p90: number; p99: number };
+export type Tail = { p50: number; p99: number };
 
 /**
  * One runtime's run and everything the report states about it, measured rather than hand-kept. Carried as
@@ -85,13 +85,13 @@ export function parseEntry(entry: string): { base: string; variant?: string } {
 }
 
 /** Bun's SQL client is a Bun API, so these have nothing to run on Node or Deno. */
-export const isBunOnly = (entry: string) => entry === 'bun sql' || parseEntry(entry).variant === 'bunSql';
+const isBunOnly = (entry: string) => entry === 'bun sql' || parseEntry(entry).variant === 'bunSql';
 
 /** What every runtime can load, and so the only set a cross-runtime comparison can be made of. */
 export const PORTABLE_ENTRIES: Entry[] = ENTRIES.filter((entry) => !isBunOnly(entry));
 
 /** Each entry is measured against its own driver, so a faster driver is not counted as the tool's doing. */
-export const floorFor = (entry: string): Entry => (isBunOnly(entry) ? 'bun sql' : 'raw pg');
+const floorFor = (entry: string): Entry => (isBunOnly(entry) ? 'bun sql' : 'raw pg');
 
 export const isBaseline = (entry: string) => (BASELINES as readonly string[]).includes(entry);
 
@@ -127,6 +127,9 @@ export function rank(run: Run): Row[] {
   ];
 }
 
+/** {@link Row.steps} is aligned with {@link STEPS}; this is the only place that has to know it. */
+export const stepOf = (row: Row, step: Step) => row.steps[STEPS.indexOf(step)];
+
 export const competitorsOf = (ranked: Row[]) => ranked.filter((r) => !r.isBaseline);
 
 export function rowFor(ranked: Row[], entry: Entry): Row {
@@ -160,7 +163,6 @@ export function sortedRoundTotals(sample: Record<Step, number[]>): number[] {
 export function tailFrom(totals: number[]): Tail {
   return {
     p50: Math.round(percentile(totals, 50)),
-    p90: Math.round(percentile(totals, 90)),
     p99: Math.round(percentile(totals, 99)),
   };
 }

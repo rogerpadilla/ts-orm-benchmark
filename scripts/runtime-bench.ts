@@ -32,7 +32,19 @@ const RUNTIMES: Record<RuntimeName, Runner> = {
     command: 'deno',
     // `--node-modules-dir=none`: Deno's own layout relinks the installed `node_modules` underneath itself,
     // which leaves Bun, Node and every editor resolving a different tree. It reads the import map instead.
-    args: (bundle) => ['run', '--allow-all', '--node-modules-dir=none', '--no-lock', denoImportMap(), bundle],
+    //
+    // `--min-dep-age=0`: Deno refuses an npm version published in the last 24 hours. That is a sensible
+    // default and the wrong one here - the import map pins the versions Bun and Node just measured, so
+    // the alternative is not an older release but no Deno column at all on the day an ORM ships.
+    args: (bundle) => [
+      'run',
+      '--allow-all',
+      '--node-modules-dir=none',
+      '--no-lock',
+      '--min-dep-age=0',
+      denoImportMap(),
+      bundle,
+    ],
   },
 };
 

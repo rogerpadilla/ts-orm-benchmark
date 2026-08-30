@@ -1,0 +1,119 @@
+{
+  "typescript": "7.0.2",
+  "probes": [
+    {
+      "id": "select-key",
+      "what": "Misspelled column in the projection"
+    },
+    {
+      "id": "where-key",
+      "what": "Misspelled column in the filter"
+    },
+    {
+      "id": "where-value",
+      "what": "String value against a numeric column"
+    },
+    {
+      "id": "where-operator",
+      "what": "Text operator against a numeric column"
+    },
+    {
+      "id": "sort-key",
+      "what": "Misspelled column in the sort"
+    },
+    {
+      "id": "nested-select-key",
+      "what": "Misspelled column inside a loaded relation"
+    },
+    {
+      "id": "insert-key",
+      "what": "Misspelled column in inserted data"
+    },
+    {
+      "id": "update-value",
+      "what": "Number written into a text column"
+    },
+    {
+      "id": "result-unselected",
+      "what": "Reading a column the projection left out"
+    },
+    {
+      "id": "result-nested",
+      "what": "Reading a misspelled column off a loaded relation"
+    }
+  ],
+  "entries": {
+    "Drizzle": [
+      "missed",
+      "caught",
+      "caught",
+      "missed",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ],
+    "MikroORM": [
+      "caught",
+      "caught",
+      "caught",
+      "missed",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ],
+    "Prisma": [
+      "missed",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ],
+    "Sequelize": [
+      "missed",
+      "caught",
+      "missed",
+      "caught",
+      "missed",
+      "missed",
+      "caught",
+      "caught",
+      "missed",
+      "caught"
+    ],
+    "TypeORM": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "missed",
+      "caught"
+    ],
+    "UQL": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ]
+  }
+}

@@ -6,9 +6,9 @@
 import { RUNTIME_LABELS } from '../src/runtime';
 import { competitorsOf, type Entry, percentileIndex, type Row, type Run, rank, type Tail } from './model';
 import { writeReadme } from './project';
-import { envFacts, linkEntry } from './report';
+import { envFacts, linkEntry, mdTable } from './report';
 
-/** p50 and the tail. p90 is measured and kept in the run, but a median and a p99 tell the whole story. */
+/** A median and a p99 tell the whole story: one is the common case, the other is the worst you ship. */
 const PERCENTILES = ['p50', 'p99'] as const;
 
 type Percentile = (typeof PERCENTILES)[number];
@@ -64,12 +64,10 @@ function runtimeTable(measured: Measured[]): string {
         return us === best[i] ? `**${us}**` : `${us}`;
       }),
     );
-    return `| ${linkEntry(entry)} | ${cells.join(' | ')} |`;
+    return [linkEntry(entry), ...cells];
   });
 
-  return [`| Entry (µs) | ${header.join(' | ')} |`, `| --- | ${header.map(() => '---').join(' | ')} |`, ...rows].join(
-    '\n',
-  );
+  return mdTable(['Entry (µs)', ...header], rows);
 }
 
 function envLine(measured: Measured[]): string {
@@ -97,10 +95,15 @@ function floorSentence(measured: Measured[]): string {
   };
   const inflation = floors.map((f) => `${Math.round((f.tail.p99 / f.tail.p50 - 1) * 100)}% on ${f.label}`).join(', ');
 
+  // One runtime often leads both, and "Bun leads the median, Bun the tail" reads like a typo.
+  const lead =
+    fastest('p50') === fastest('p99')
+      ? `${fastest('p50')} leads both`
+      : `${fastest('p50')} leads the median, ${fastest('p99')} the tail`;
+
   return (
     `On \`raw pg\`, the same code on all of them, the runtimes are ${spread('p50')}µs apart at p50 but ` +
-    `${spread('p99')}µs apart at p99: ${fastest('p50')} leads the median, ${fastest('p99')} the tail, and ` +
-    `each p99 is ${inflation} above its own p50.`
+    `${spread('p99')}µs apart at p99: ${lead}, and each p99 is ${inflation} above its own p50.`
   );
 }
 

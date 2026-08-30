@@ -1,12 +1,13 @@
 {
   "name": "ts-orm-benchmark",
-  "version": "0.9.0",
-  "description": "⚡ TypeScript ORM benchmark: what each one costs on a full PostgreSQL round trip. UQL vs Prisma vs Sequelize vs TypeORM vs MikroORM vs Drizzle",
+  "version": "0.10.0",
+  "description": "⚡ TypeScript ORM benchmark: what each one costs on a full PostgreSQL round trip, and which mistakes its types catch. UQL vs Prisma vs Sequelize vs TypeORM vs MikroORM vs Drizzle",
   "type": "module",
   "scripts": {
     "postinstall": "prisma generate",
     "bench": "bun scripts/flow-bench.ts",
     "bench.runtimes": "bun scripts/runtime-bench.ts",
+    "bench.types": "bun scripts/type-check.ts",
     "ts": "tsc --noEmit",
     "lint": "biome check",
     "lint.fix": "biome check --write --unsafe"
@@ -27,23 +28,24 @@
     "mikro-orm",
     "sequelize",
     "uql",
-    "performance"
+    "performance",
+    "type-safety"
   ],
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.5.10",
-    "@mikro-orm/core": "^7.1.13",
-    "@mikro-orm/postgresql": "^7.1.13",
-    "@prisma/adapter-pg": "7.9.1",
-    "@prisma/client": "7.9.1",
+    "@biomejs/biome": "2.5.11",
+    "@mikro-orm/core": "7.1.14",
+    "@mikro-orm/postgresql": "7.1.14",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
     "@types/bun": "^1.4.0",
-    "drizzle-orm": "^0.45.2",
-    "pg": "^8.23.0",
-    "prisma": "7.9.1",
-    "sequelize": "^6.37.8",
-    "typeorm": "^1.1.0",
-    "typescript": "^7.0.2",
-    "uql-orm": "0.30.0"
+    "drizzle-orm": "0.45.2",
+    "pg": "8.23.0",
+    "prisma": "7.10.0",
+    "sequelize": "6.37.8",
+    "typeorm": "1.1.0",
+    "typescript": "7.0.2",
+    "uql-orm": "0.32.0"
   }
 }

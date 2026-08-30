@@ -11,6 +11,7 @@ import {
   BASELINES,
   competitorsOf,
   ENTRIES,
+  type Entry,
   PUBLISHED_STEPS,
   parseEntry,
   type Row,
@@ -19,8 +20,10 @@ import {
   rowFor,
   STEPS,
   type Step,
+  stepOf,
 } from './model';
 import { installedVersion, root, writeReadme } from './project';
+import { flowOf, sampleOf } from './samples';
 
 const STEP_LABELS: Record<Step, string> = {
   insert: 'INSERT 10 rows, returning ids',
@@ -53,7 +56,13 @@ export function linkEntry(entry: string): string {
   return url ? `[${entry}](${url})` : entry;
 }
 
-const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => r.steps[STEPS.indexOf(step)]);
+/** Every generated table goes through here, so a separator row can never drift from its header. */
+export function mdTable(header: string[], rows: string[][]): string {
+  const line = (cells: string[]) => `| ${cells.join(' | ')} |`;
+  return [line(header), line(header.map(() => '---')), ...rows.map(line)].join('\n');
+}
+
+const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => stepOf(r, step));
 
 /**
  * The published steps only, same entry order as the ranking table so the two agree on who is winning.
@@ -65,16 +74,13 @@ function stepTable(ranked: Row[]): string {
     return values.map((v, i) => (v === best && !ranked[i].isBaseline ? `**${v}** 🥇` : `${v}`));
   };
 
-  const rows = PUBLISHED_STEPS.map(
-    (step) => `| ${STEP_LABELS[step]} | ${cells(stepValues(ranked, step)).join(' | ')} |`,
+  return mdTable(
+    ['Operation (µs)', ...ranked.map((r) => linkEntry(r.entry))],
+    [
+      ...PUBLISHED_STEPS.map((step) => [STEP_LABELS[step], ...cells(stepValues(ranked, step))]),
+      [`**Total**, all ${STEPS.length} steps`, ...cells(ranked.map((r) => r.total))],
+    ],
   );
-
-  return [
-    `| Operation (µs) | ${ranked.map((r) => linkEntry(r.entry)).join(' | ')} |`,
-    `| --- | ${ranked.map(() => '---').join(' | ')} |`,
-    ...rows,
-    `| **Total**, all ${STEPS.length} steps | ${cells(ranked.map((r) => r.total)).join(' | ')} |`,
-  ].join('\n');
 }
 
 /**
@@ -84,15 +90,14 @@ function stepTable(ranked: Row[]): string {
 function stepsNote(ranked: Row[]): string {
   const competitors = competitorsOf(ranked);
   const worst = competitors
-    .flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: r.steps[STEPS.indexOf(step)] })))
+    .flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: stepOf(r, step) })))
     .reduce((a, b) => (b.value > a.value ? b : a));
   const others = stepValues(
     competitors.filter((r) => r.entry !== worst.entry),
     worst.step,
   );
 
-  const indexes = ASSERTED_ONLY_STEPS.map((step) => STEPS.indexOf(step));
-  const sums = competitors.map((r) => indexes.reduce((sum, s) => sum + r.steps[s], 0));
+  const sums = competitors.map((r) => ASSERTED_ONLY_STEPS.reduce((sum, step) => sum + stepOf(r, step), 0));
   const tightest = Math.max(
     ...ASSERTED_ONLY_STEPS.map((step) => {
       const values = stepValues(competitors, step);
@@ -117,10 +122,10 @@ function rankingTable(ranked: Row[]): string {
     const place = competitors.indexOf(r) + 1;
     const position = r.isBaseline ? 'ref' : `${medals[place - 1] ?? ''} ${place}`.trim();
     const name = r.isBaseline ? `_${r.entry}_` : place === 1 ? `**${r.entry}**` : r.entry;
-    return `| ${position} | ${name} | ${r.isBaseline ? 'floor' : `+${r.adds}`} | ${r.total} |`;
+    return [position, name, r.isBaseline ? 'floor' : `+${r.adds}`, `${r.total}`];
   });
 
-  return ['| # | Entry | Adds µs | Total µs |', '| --- | --- | --- | --- |', ...rows].join('\n');
+  return mdTable(['#', 'Entry', 'Adds µs', 'Total µs'], rows);
 }
 
 /**
@@ -174,6 +179,33 @@ function envLine(run: Run, ranked: Row[]): string {
   );
 }
 
+/**
+ * The published steps as they are actually written, one fence per step, lifted out of `scripts/flows.ts`.
+ * Entries wired to the same builder share a snippet, because they are the same code: `UQL (bunSql)` is
+ * UQL reached through a second driver, not a second way of writing the query.
+ */
+function samples(ranked: Row[]): string {
+  const flows = flowOf();
+  // Ranked order, so a reader scrolling down from the per-step table meets the entries in the order it
+  // just showed them. `ENTRIES` is run order, which is rotation bookkeeping and matches nothing on screen.
+  const order = ranked.map((r) => r.entry);
+  const flowFor = (entry: Entry) => {
+    const flow = flows.get(entry);
+    if (!flow) {
+      throw new TypeError(`${entry} is ranked but not wired into FLOWS`);
+    }
+    return flow;
+  };
+
+  return PUBLISHED_STEPS.map((step) => {
+    const shown = [...new Set(order.map(flowFor))].map((flow) => {
+      const entries = order.filter((entry) => flowFor(entry) === flow);
+      return `// ${entries.join(', ')}\n${sampleOf(flow, step)}`;
+    });
+    return `**${STEP_LABELS[step]}**\n\n\`\`\`ts\n${shown.join('\n\n')}\n\`\`\``;
+  }).join('\n\n');
+}
+
 /** Six versions are a sentence, not a table, and they belong next to the numbers they produced. */
 function versionsLine(): string {
   const tools = Object.entries(TOOLS).flatMap(([entry, { pkg }]) =>
@@ -187,7 +219,6 @@ function versionsLine(): string {
 function resultsJs(run: Run, ranked: Row[]): string {
   const inRunOrder = run.entries.map((entry) => rowFor(ranked, entry));
   const payload = {
-    unit: 'µs/op',
     entries: run.entries,
     baselines: BASELINES,
     steps: PUBLISHED_STEPS.map((key) => ({ key, label: STEP_LABELS[key] })),
@@ -195,8 +226,6 @@ function resultsJs(run: Run, ranked: Row[]): string {
     data: run.results,
     totals: inRunOrder.map((r) => r.total),
     adds: inRunOrder.map((r) => r.adds),
-    /** Relative half-width of each median's 95% interval, index-aligned with `entries`. */
-    intervals: run.spreads,
     /** So the chart states the same run the tables do, instead of a hand-kept caption. */
     env: envFacts(run),
   };
@@ -221,6 +250,7 @@ export function syncResults(run: Run): void {
     headline: headline(ranked),
     steps: stepTable(ranked),
     'steps-note': stepsNote(ranked),
+    samples: samples(ranked),
   });
 }
 

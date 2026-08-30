@@ -1,12 +1,8 @@
 node_modules/
 # Generated from prisma/schema.prisma by `postinstall`.
 src/generated/
-dist/
-target/
-_site/
-*.node
-bench-latest.json
-bench-*.json
-bench-*.txt
-.bench-snapshots/
+# Written by `scripts/type-check.ts` while it compiles the corrected probes, deleted after.
+type-safety/*.control.ts
+# The bundle `bench.runtimes` builds, and the GitHub Pages payload.
 .bench-build/
+_site/

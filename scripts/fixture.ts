@@ -1,12 +1,53 @@
 /**
- * The database the benchmark runs against: created once, then reset to the same 50 companies and 200 users
- * before every entry's pass, so no entry ever sees another's leftovers.
+ * The database the benchmark runs against: the rows every entry is seeded with, the tables they live in,
+ * and the reset that puts both back before every entry's pass, so no entry ever sees another's leftovers.
+ *
+ * The models these rows are read through are `src/schema.ts`, one definition per ORM.
  */
 
 import pg from 'pg';
-import { COMPANY_TABLE, SEED_COMPANIES, SEED_USERS, TABLE_DDL, USER_TABLE } from '../src/schema';
+import { COMPANY_TABLE, USER_TABLE } from '../src/schema';
 
 const BENCH_DB = 'ts_orm_bench';
+
+type CompanyRow = { id: number; name: string };
+type UserRow = { id: number; name: string; email: string; companyId: number; createdAt: number };
+
+const COMPANY_COUNT = 50;
+const USERS_PER_COMPANY = 4;
+
+export const SEED_COMPANIES: readonly CompanyRow[] = Array.from({ length: COMPANY_COUNT }, (_, i) => ({
+  id: i + 1,
+  name: `Company ${i + 1}`,
+}));
+
+/**
+ * 200 users across 50 companies. Sized so the flat read returns 200 rows and the nested read assembles
+ * 50 parents with 4 children each: enough that hydration dominates the ~96µs the driver alone costs for
+ * 200 rows, which is what makes the ORM differences visible rather than buried in round-trip time.
+ */
+const SEED_USERS: readonly UserRow[] = Array.from({ length: COMPANY_COUNT * USERS_PER_COMPANY }, (_, i) => ({
+  id: i + 1,
+  name: `User ${i + 1}`,
+  email: `user${i + 1}@example.com`,
+  companyId: (i % COMPANY_COUNT) + 1,
+  createdAt: 1_000_000 + i,
+}));
+
+const TABLE_DDL = [
+  /*sql*/ `CREATE TABLE "${COMPANY_TABLE}" (
+    id serial PRIMARY KEY,
+    name text NOT NULL
+  )`,
+  /*sql*/ `CREATE TABLE "${USER_TABLE}" (
+    id serial PRIMARY KEY,
+    name text NOT NULL,
+    email text NOT NULL,
+    "companyId" int REFERENCES "${COMPANY_TABLE}"(id),
+    "createdAt" int
+  )`,
+  /*sql*/ `CREATE INDEX "User_companyId_idx" ON "${USER_TABLE}" ("companyId")`,
+];
 
 /** Its own database, never the one `DATABASE_URL` points at: the reset truncates tables. */
 export async function ensureDatabase(baseUrl: string): Promise<string> {

@@ -1,0 +1,7 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["*.ts"],
+  // Compiled by `tsconfig.control.json` instead: in here they would be a second, unattributable copy of
+  // every diagnostic the probes are scored on.
+  "exclude": ["*.control.ts"]
+}

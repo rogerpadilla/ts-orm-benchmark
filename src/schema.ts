@@ -1,14 +1,23 @@
 /**
- * The one Company/User model, defined once per ORM, plus the fixtures every entry is seeded with. Same
- * shape for everyone is what makes the entries comparable at all.
+ * The one Company/User model, defined once per ORM. Same shape for everyone is what makes the entries
+ * comparable at all.
  *
- * Definitions only: the live connections are `src/clients.ts` and the lifecycle is `scripts/flow-bench.ts`.
+ * Definitions only: the live connections are `src/clients.ts`, the rows every entry is seeded with are
+ * `scripts/fixture.ts`, and the lifecycle is `scripts/flow-bench.ts`.
  */
 
 import { defineEntity, p as mikroP } from '@mikro-orm/core';
 import { relations } from 'drizzle-orm';
 import { integer, pgTable, serial, text } from 'drizzle-orm/pg-core';
-import { DataTypes, type Sequelize } from 'sequelize';
+import {
+  type CreationOptional,
+  DataTypes,
+  type InferAttributes,
+  type InferCreationAttributes,
+  Model,
+  type NonAttribute,
+  type Sequelize,
+} from 'sequelize';
 import { EntitySchema } from 'typeorm';
 import { Entity, Field, Id, ManyToOne, OneToMany } from 'uql-orm';
 
@@ -35,6 +44,15 @@ export class User {
 }
 
 // TypeORM
+
+/**
+ * `EntitySchema` rather than the decorators TypeORM's docs lead with, and not as a preference: at 1.1.0
+ * those decorators are still the legacy kind, so they need `experimentalDecorators` - which this project
+ * does not set, because the standard TC39 decorators are what UQL's entry compiles with and one project
+ * has one setting. Measured before settling for it: compiled with the flag on, the decorator entities
+ * score the same nine of ten and miss the same probe (`result-unselected`), so nothing about the table
+ * turns on this.
+ */
 
 /** `EntitySchema` derives its allowed keys from this, so relations need it stated. */
 type TypeORMCompany = { id: number; name: string; users?: TypeORMUser[] };
@@ -75,6 +93,11 @@ export const TypeORMUserSchema = new EntitySchema<TypeORMUser>({
 });
 
 // MikroORM
+
+/**
+ * `defineEntity` is not one of two options here: 7.x exports no `@Entity`, `@PrimaryKey`, `@Property`,
+ * `@ManyToOne` or `@OneToMany` at all, so this is MikroORM's API rather than a style chosen for it.
+ */
 
 export const MikroCompanySchema = defineEntity({
   name: 'Company',
@@ -140,65 +163,37 @@ export const drizzleSchema = {
 
 // Sequelize
 
-/** Sequelize models bind to an instance, so this is a factory rather than a bare const. */
+export class SqCompany extends Model<InferAttributes<SqCompany>, InferCreationAttributes<SqCompany>> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+  declare users?: NonAttribute<SqUser[]>;
+}
+
+export class SqUser extends Model<InferAttributes<SqUser>, InferCreationAttributes<SqUser>> {
+  declare id: CreationOptional<number>;
+  declare name: string;
+  declare email: string;
+  declare companyId: number;
+  declare createdAt: number;
+}
+
+/** `init` binds a class to one connection, so the two above are singletons bound by whoever calls this. */
 export function defineSequelizeModels(sequelize: Sequelize) {
-  const SqCompany = sequelize.define(
-    'Company',
-    { name: DataTypes.STRING },
-    { timestamps: false, tableName: COMPANY_TABLE, freezeTableName: true },
+  SqCompany.init(
+    { id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true }, name: DataTypes.STRING },
+    { sequelize, timestamps: false, tableName: COMPANY_TABLE, freezeTableName: true },
   );
-  const SqUser = sequelize.define(
-    'User',
+  SqUser.init(
     {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       name: DataTypes.STRING,
       email: DataTypes.STRING,
       companyId: DataTypes.INTEGER,
       createdAt: DataTypes.INTEGER,
     },
-    { timestamps: false, tableName: USER_TABLE, freezeTableName: true },
+    { sequelize, timestamps: false, tableName: USER_TABLE, freezeTableName: true },
   );
   SqUser.belongsTo(SqCompany, { foreignKey: 'companyId', as: 'company' });
   SqCompany.hasMany(SqUser, { foreignKey: 'companyId', as: 'users' });
   return { SqCompany, SqUser };
 }
-
-// Fixtures
-
-export type CompanyRow = { id: number; name: string };
-export type UserRow = { id: number; name: string; email: string; companyId: number; createdAt: number };
-
-const COMPANY_COUNT = 50;
-const USERS_PER_COMPANY = 4;
-
-export const SEED_COMPANIES: readonly CompanyRow[] = Array.from({ length: COMPANY_COUNT }, (_, i) => ({
-  id: i + 1,
-  name: `Company ${i + 1}`,
-}));
-
-/**
- * 200 users across 50 companies. Sized so the flat read returns 200 rows and the nested read assembles
- * 50 parents with 4 children each: enough that hydration dominates the ~96µs the driver alone costs for
- * 200 rows, which is what makes the ORM differences visible rather than buried in round-trip time.
- */
-export const SEED_USERS: readonly UserRow[] = Array.from({ length: COMPANY_COUNT * USERS_PER_COMPANY }, (_, i) => ({
-  id: i + 1,
-  name: `User ${i + 1}`,
-  email: `user${i + 1}@example.com`,
-  companyId: (i % COMPANY_COUNT) + 1,
-  createdAt: 1_000_000 + i,
-}));
-
-export const TABLE_DDL = [
-  `CREATE TABLE "${COMPANY_TABLE}" (
-    id serial PRIMARY KEY,
-    name text NOT NULL
-  )`,
-  `CREATE TABLE "${USER_TABLE}" (
-    id serial PRIMARY KEY,
-    name text NOT NULL,
-    email text NOT NULL,
-    "companyId" int REFERENCES "${COMPANY_TABLE}"(id),
-    "createdAt" int
-  )`,
-  `CREATE INDEX "User_companyId_idx" ON "${USER_TABLE}" ("companyId")`,
-];
