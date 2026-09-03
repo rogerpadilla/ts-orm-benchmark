@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0 - 2026-09-02
+
+- Dependencies: uql-orm 0.33.0 to 0.37.1, TypeORM 1.1.0 to 1.1.1.
+- The database runs natively, never in a container: on macOS that puts a VM between client and server, and the latency lands in `Adds` instead of cancelling against the floor. The method says so now.
+- Results: UQL still adds the least, +186µs on Bun SQL and +234µs on `pg`. The three runtimes sit 313µs apart at p50 on `raw pg`, Deno now leading the median as well as the tail. Type-safety scores unchanged.
+
 ## 0.10.0 - 2026-08-29
 
 **New: a type-safety half.** `bun run bench.types` writes ten ordinary mistakes - a misspelled column in a projection, a filter on a column that is not there, a text operator on a number, a read of a column the projection left out - in each ORM's own API, and reports which the compiler refuses. Each file is compiled twice, once as written and once corrected, so a mark is green only when the mistake errors and the correction is clean.

@@ -281,23 +281,23 @@ That is how both type a projection, so both lose a check they used to have. Coun
 Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the only variable. All three measure the same seven entries. The `(bunSql)` rows sit out even on Bun: that client is a Bun API, and three extra entries per round would show up in the tail as if the runtime had caused it.
 
 <!-- bench:runtime-env -->
-> Bun 1.3.14, Node 24.18.1, Deno 2.9.5, all running the same bundled JavaScript, one at a time against the same database. PostgreSQL 18.6 (Homebrew), Apple M4 Pro, August 2026. µs for a whole lifecycle, nearest-rank percentiles over 2000 rounds after 250 warmup, so a p99 is drawn from the 21 slowest rounds.
+> Bun 1.3.14, Node 24.20.0, Deno 2.9.6, all running the same bundled JavaScript, one at a time against the same database. PostgreSQL 18.6 (Homebrew), Apple M4 Max, September 2026. µs for a whole lifecycle, nearest-rank percentiles over 2000 rounds after 250 warmup, so a p99 is drawn from the 21 slowest rounds.
 <!-- /bench:runtime-env -->
 
 <!-- bench:runtimes -->
 | Entry (µs) | Bun p50 | Bun p99 | Node p50 | Node p99 | Deno p50 | Deno p99 |
 | --- | --- | --- | --- | --- | --- | --- |
-| [raw pg](https://node-postgres.com) | **1284** | 2975 | 1293 | 2988 | 1361 | **2185** |
-| [UQL](https://uql-orm.dev) | **1516** | 3481 | 1533 | 3655 | 1564 | **2824** |
-| [TypeORM](https://typeorm.io) | 1914 | 4202 | **1870** | 4480 | 1871 | **3980** |
-| [Drizzle](https://orm.drizzle.team) | 1959 | 4531 | **1834** | 4160 | 1916 | **3446** |
-| [Sequelize](https://sequelize.org) | 2281 | 5546 | **2261** | 5840 | 2344 | **4632** |
-| [Prisma](https://www.prisma.io) | **2275** | 5433 | 2405 | **5188** | 2652 | 5198 |
-| [MikroORM](https://mikro-orm.io) | **3158** | **8110** | 3935 | 9870 | 3975 | 8531 |
+| [raw pg](https://node-postgres.com) | 1286 | 6063 | 1545 | 5198 | **1232** | **3670** |
+| [UQL](https://uql-orm.dev) | 1547 | 7205 | 1834 | 6625 | **1437** | **4749** |
+| [TypeORM](https://typeorm.io) | 1909 | 9384 | 2247 | 8631 | **1692** | **6141** |
+| [Drizzle](https://orm.drizzle.team) | 1991 | 8831 | 2209 | 7582 | **1739** | **5672** |
+| [Sequelize](https://sequelize.org) | 2407 | 10782 | 2654 | 10333 | **2118** | **7483** |
+| [Prisma](https://www.prisma.io) | **2339** | 9939 | 2824 | 10037 | 2397 | **8141** |
+| [MikroORM](https://mikro-orm.io) | **3273** | 13838 | 4315 | 15538 | 3666 | **12991** |
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 77µs apart at p50 but 803µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 132% on Bun, 131% on Node, 61% on Deno above its own p50. Switching runtime moves any single entry by at most 817µs at p50 (MikroORM), where switching ORM on one runtime moves it 1575-2354µs, so the ORM is the bigger decision here. The one pair that changes places between runtimes is TypeORM and Drizzle, 26µs apart.
+On `raw pg`, the same code on all of them, the runtimes are 313µs apart at p50 but 2393µs apart at p99: Deno leads both, and each p99 is 371% on Bun, 236% on Node, 198% on Deno above its own p50. Switching runtime moves any single entry by at most 1042µs at p50 (MikroORM), where switching ORM on one runtime moves it 1595-2433µs, so the ORM is the bigger decision here. The one pair that changes places between runtimes is TypeORM and Drizzle, 2µs apart.
 <!-- /bench:runtime-note -->
 
 ## Run it
