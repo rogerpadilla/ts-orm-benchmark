@@ -44,8 +44,8 @@
     "pg": "8.23.0",
     "prisma": "7.10.0",
     "sequelize": "6.37.8",
-    "typeorm": "1.1.0",
+    "typeorm": "1.1.1",
     "typescript": "7.0.2",
-    "uql-orm": "0.33.0"
+    "uql-orm": "0.37.1"
   }
 }

@@ -11,34 +11,34 @@ I wrote UQL, so read the tables rather than my summary of them. Clone it and che
 ## Results
 
 <!-- bench:env -->
-> PostgreSQL 18.6 (Homebrew), Bun 1.3.14, Apple M4 Pro, August 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±2.8% or tighter at 95% confidence (widest: UQL (bunSql)).
+> PostgreSQL 18.6 (Homebrew), Bun 1.3.14, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±2.5% or tighter at 95% confidence (widest: Sequelize).
 <!-- /bench:env -->
 
 <!-- bench:versions -->
-_Versions: [UQL](https://uql-orm.dev) 0.33.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.0 · [MikroORM](https://mikro-orm.io) 7.1.14 · [Drizzle](https://orm.drizzle.team) 0.45.2._
+_Versions: [UQL](https://uql-orm.dev) 0.37.1 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [MikroORM](https://mikro-orm.io) 7.1.14 · [Drizzle](https://orm.drizzle.team) 0.45.2._
 <!-- /bench:versions -->
 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1204 |
-| ref | _raw pg_ | floor | 1273 |
-| 🥇 1 | **UQL (bunSql)** | +207 | 1411 |
-| 🥈 2 | UQL | +258 | 1531 |
-| 🥉 3 | Drizzle (bunSql) | +626 | 1830 |
-| 4 | TypeORM | +662 | 1935 |
-| 5 | Drizzle | +697 | 1970 |
-| 6 | Sequelize | +1059 | 2332 |
-| 7 | Prisma | +1094 | 2367 |
-| 8 | MikroORM | +1968 | 3241 |
+| ref | _bun sql_ | floor | 1109 |
+| ref | _raw pg_ | floor | 1189 |
+| 🥇 1 | **UQL (bunSql)** | +186 | 1295 |
+| 🥈 2 | UQL | +234 | 1423 |
+| 🥉 3 | TypeORM | +578 | 1767 |
+| 4 | Drizzle (bunSql) | +596 | 1705 |
+| 5 | Drizzle | +632 | 1821 |
+| 6 | Sequelize | +928 | 2117 |
+| 7 | Prisma | +990 | 2179 |
+| 8 | MikroORM | +1768 | 2957 |
 <!-- /bench:ranking -->
 
 Rank is by `Adds`, not by total, so a lower total can sit further down when the two floors differ.
 
 <!-- bench:headline -->
-Totals only span 2.3x, because every entry pays the same database cost. What the ORM itself adds spans 10x: 207µs for UQL (bunSql), 1968µs for MikroORM.
+Totals only span 2.3x, because every entry pays the same database cost. What the ORM itself adds spans 10x: 186µs for UQL (bunSql), 1768µs for MikroORM.
 
-Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 120µs, but only 51µs of that is UQL: the other 69µs is the gap between the two floors, free to anything on that driver.
+Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 128µs, but only 48µs of that is UQL: the other 80µs is the gap between the two floors, free to anything on that driver.
 <!-- /bench:headline -->
 
 ### Per step
@@ -46,16 +46,16 @@ Each entry is measured against its own driver's floor, so a faster driver is nev
 The three steps where the amount of data bound and hydrated decides the number.
 
 <!-- bench:steps -->
-| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Drizzle](https://orm.drizzle.team) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
+| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [TypeORM](https://typeorm.io) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 423 | 400 | **445** 🥇 | 452 | 596 | 578 | 621 | 570 | 1070 | 541 |
-| SELECT with WHERE, SORT, LIMIT 200 | 183 | 230 | **233** 🥇 | 287 | 267 | 388 | 313 | 456 | 316 | 894 |
-| SELECT 50 parents with their children | 196 | 234 | **275** 🥇 | 325 | 442 | 399 | 499 | 626 | 420 | 995 |
-| **Total**, all 7 steps | 1204 | 1273 | **1411** 🥇 | 1531 | 1830 | 1935 | 1970 | 2332 | 2367 | 3241 |
+| INSERT 10 rows, returning ids | 361 | 343 | **366** 🥇 | 378 | 481 | 514 | 529 | 482 | 938 | 461 |
+| SELECT with WHERE, SORT, LIMIT 200 | 170 | 215 | **210** 🥇 | 269 | 355 | 248 | 291 | 417 | 289 | 819 |
+| SELECT 50 parents with their children | 185 | 227 | **271** 🥇 | 320 | 384 | 424 | 474 | 583 | 406 | 957 |
+| **Total**, all 7 steps | 1109 | 1189 | **1295** 🥇 | 1423 | 1767 | 1705 | 1821 | 2117 | 2179 | 2957 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is Prisma's insert: 1070µs against 445-621µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 458-811µs of each total and separating the field by at most 147µs.
+The biggest gap is MikroORM's nested: 957µs against 271-583µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 448-720µs of each total and separating the field by at most 126µs.
 <!-- /bench:steps-note -->
 
 ### The queries behind those numbers
@@ -78,11 +78,11 @@ sql`INSERT INTO "User" ${sql(NEW_USERS)} RETURNING id`
 // UQL (bunSql), UQL
 q.insertMany(User, NEW_USERS)
 
-// Drizzle (bunSql), Drizzle
-db.insert(drizzleUsers).values(NEW_USERS).returning({ id: drizzleUsers.id })
-
 // TypeORM
 repo.insert(NEW_USERS)
+
+// Drizzle (bunSql), Drizzle
+db.insert(drizzleUsers).values(NEW_USERS).returning({ id: drizzleUsers.id })
 
 // Sequelize
 SqUser.bulkCreate(NEW_USERS)
@@ -116,6 +116,14 @@ q.findMany(User, {
   $limit: READ_LIMIT,
 })
 
+// TypeORM
+repo.find({
+  select: { id: true, name: true, email: true, companyId: true, createdAt: true },
+  where: { companyId: MoreThan(0) },
+  order: { id: 'ASC' },
+  take: READ_LIMIT,
+})
+
 // Drizzle (bunSql), Drizzle
 db
   .select({
@@ -129,14 +137,6 @@ db
   .where(gt(drizzleUsers.companyId, 0))
   .orderBy(asc(drizzleUsers.id))
   .limit(READ_LIMIT)
-
-// TypeORM
-repo.find({
-  select: { id: true, name: true, email: true, companyId: true, createdAt: true },
-  where: { companyId: MoreThan(0) },
-  order: { id: 'ASC' },
-  take: READ_LIMIT,
-})
 
 // Sequelize
 SqUser.findAll({
@@ -196,20 +196,20 @@ q.findMany(Company, {
   $sort: { id: 1 },
 })
 
-// Drizzle (bunSql), Drizzle
-db.query.Company.findMany({
-  columns: { id: true, name: true },
-  with: { users: { columns: { id: true, name: true } } },
-  where: (t, { lte }) => lte(t.id, NESTED_LIMIT),
-  orderBy: (t, { asc: a }) => a(t.id),
-})
-
 // TypeORM
 companies.find({
   select: { id: true, name: true, users: { id: true, name: true } },
   relations: { users: true },
   where: { id: LessThanOrEqual(NESTED_LIMIT) },
   order: { id: 'ASC' },
+})
+
+// Drizzle (bunSql), Drizzle
+db.query.Company.findMany({
+  columns: { id: true, name: true },
+  with: { users: { columns: { id: true, name: true } } },
+  where: (t, { lte }) => lte(t.id, NESTED_LIMIT),
+  orderBy: (t, { asc: a }) => a(t.id),
 })
 
 // Sequelize
@@ -318,6 +318,7 @@ Each rewrites the tables it owns, and none needs the others to have run.
 
 ## Method
 
+- PostgreSQL runs natively on the same machine, never in a container: Docker Desktop on macOS puts a VM between client and server, and that latency lands in `Adds` instead of cancelling against the floor, which is the one column the ranking is built on.
 - All seven steps assert on the rows they return, every round, though only three are published: a step that quietly does nothing fails instead of winning. CI runs `--verify` on every push.
 - Entries are interleaved and rotated, one pass each per round, because running each to completion made the results depend on declaration order. Warmup is half the run, capped at 250 rounds, and discarded.
 - Medians per step, never means, so one GC pause cannot decide a number. Percentiles are of the round total, so a p99 is one slow lifecycle rather than seven unrelated slow operations.
