@@ -276,6 +276,8 @@ findMany({ select: { id: true, emial: true } }); // 5.9.3 errors; 6.0.3 and 7.0.
 
 That is how both type a projection, so both lose a check they used to have. Counted as missing, not excused: a check the compiler no longer makes protects nobody. The two floors have no row at all, being SQL strings.
 
+Each entry uses the one API its version offers. Drizzle is queried through `db.query.*`, not the `db.select()` builder the timed read uses: it is the one of the two that takes a projection, a filter and a sort in one object, like the other five. MikroORM's `User` has no scalar `companyId` (the `company` relation owns it), so its filter probes name `createdAt` instead.
+
 ## Runtimes
 
 Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the only variable. All three measure the same seven entries. The `(bunSql)` rows sit out even on Bun: that client is a Bun API, and three extra entries per round would show up in the tail as if the runtime had caused it.

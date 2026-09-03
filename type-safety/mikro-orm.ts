@@ -1,9 +1,3 @@
-/**
- * MikroORM's `User` has no scalar `companyId`: the `company` relation owns that column, for the reason
- * `src/schema.ts` records. So the filter probes here name `createdAt`, the other numeric column, and say
- * exactly what the same probe says everywhere else.
- */
-
 import { MikroCompanySchema, MikroUserSchema } from '../src/schema';
 import { clients } from './clients';
 

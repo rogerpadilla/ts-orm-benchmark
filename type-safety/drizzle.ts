@@ -1,9 +1,3 @@
-/**
- * Drizzle through its relational query API (`db.query.*`), not the `db.select()` builder the timed read
- * uses: it is the one of the two with a projection, a filter and a sort in one object, so the mistakes
- * below are the same mistakes the other five entries make rather than five different ones.
- */
-
 import { eq } from 'drizzle-orm';
 import { drizzleUsers } from '../src/schema';
 import { clients } from './clients';
