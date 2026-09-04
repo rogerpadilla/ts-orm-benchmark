@@ -12,11 +12,10 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { RuntimeName } from '../src/runtime';
 import type { Run } from './model';
-import { arg, BUILD_DIR, bundleForNode, installedVersion, root } from './project';
+import { arg, BUILD_DIR, bundleForNode, installedVersion, readJson, root, spawnJson, writeJson } from './project';
 import { syncRuntimeReport } from './runtime-report';
 
 type Runner = { command: string; args: (bundle: string) => string[] };
@@ -56,9 +55,7 @@ function found(command: string): boolean {
  * rather than the runtime.
  */
 function denoImportMap(): string {
-  const { devDependencies } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
-    devDependencies: Record<string, string>;
-  };
+  const { devDependencies } = readJson<{ devDependencies: Record<string, string> }>(resolve(root, 'package.json'));
 
   // The bare name and the subpath prefix are separate specifiers: `uql-orm` and `uql-orm/postgres`.
   const imports = Object.keys(devDependencies).flatMap((name) => {
@@ -72,7 +69,7 @@ function denoImportMap(): string {
   });
 
   const path = resolve(BUILD_DIR, 'deno-imports.json');
-  writeFileSync(path, `${JSON.stringify({ imports: Object.fromEntries(imports) }, null, 2)}\n`);
+  writeJson(path, { imports: Object.fromEntries(imports) });
   return `--import-map=${path}`;
 }
 
@@ -82,11 +79,7 @@ function runOn(runtime: RuntimeName, bundlePath: string, iterations: number): Ru
   // `--portable`: Bun would otherwise measure three entries the others cannot, carrying more work per round
   // than they do, and its tail would answer for that instead of for Bun.
   const flags = ['--portable', '--iterations', String(iterations), '--json', out];
-  const result = spawnSync(command, [...args(bundlePath), ...flags], { stdio: 'inherit', env: process.env });
-  if (result.status !== 0) {
-    throw new Error(`${runtime} exited with ${result.status ?? result.signal}`);
-  }
-  return JSON.parse(readFileSync(out, 'utf8')) as Run;
+  return spawnJson<Run>(runtime, command, [...args(bundlePath), ...flags], out);
 }
 
 async function main() {

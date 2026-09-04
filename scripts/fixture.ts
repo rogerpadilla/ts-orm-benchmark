@@ -10,6 +10,9 @@ import { COMPANY_TABLE, USER_TABLE } from '../src/schema';
 
 const BENCH_DB = 'ts_orm_bench';
 
+/** Where to look for a server, in one place: every benchmark takes the same `DATABASE_URL` or the same default. */
+export const databaseUrl = () => process.env.DATABASE_URL ?? 'postgres://localhost:5432/postgres';
+
 type CompanyRow = { id: number; name: string };
 type UserRow = { id: number; name: string; email: string; companyId: number; createdAt: number };
 

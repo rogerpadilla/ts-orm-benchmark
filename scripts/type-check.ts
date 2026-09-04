@@ -22,7 +22,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PROBE_FILES } from './model';
 import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
-import { flag, installedVersion, root, writeReadme } from './project';
+import { flag, installedVersion, root, writeJson, writeReadme } from './project';
 import { bold, linkEntry, mdTable } from './report';
 
 const DIR = resolve(root, 'type-safety');
@@ -198,28 +198,16 @@ const list = (names: string[]) =>
 const VERDICTS = 'type-safety/verdicts.json';
 
 /**
- * The same verdicts the README table is drawn from, in a shape another program can read. Written because
- * uql-orm.dev loads these probe files into a live editor and has to label them with something: parsing
- * the marks back out of a markdown table, or recounting them from a compile of its own, would be a second
- * scoreboard that could disagree with this one. The control compile happens here and only here.
- *
- * Alphabetical, not ranked. This is data rather than a table, and a consumer that walks it in order gets
- * a list that does not rearrange itself every time a score moves - which is worth more than encoding the
- * ranking twice, since each verdict carries its own. `table()` sorts for itself.
+ * The same verdicts the README table is drawn from, in a shape another program can read. uql-orm.dev loads
+ * these probe files into a live editor and has to label them with something; parsing the marks back out of
+ * a markdown table would be a second scoreboard that could disagree with this one.
  */
 function writeVerdicts(results: Map<string, Verdict[]>) {
-  writeFileSync(
-    resolve(root, VERDICTS),
-    `${JSON.stringify(
-      {
-        typescript: installedVersion(COMPILER.pkg),
-        probes: PROBES,
-        entries: Object.fromEntries([...results].sort(([a], [b]) => a.localeCompare(b))),
-      },
-      null,
-      2,
-    )}\n`,
-  );
+  writeJson(resolve(root, VERDICTS), {
+    typescript: installedVersion(COMPILER.pkg),
+    probes: PROBES,
+    entries: Object.fromEntries(ordered(results)),
+  });
 }
 
 function main() {

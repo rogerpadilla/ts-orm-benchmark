@@ -3,6 +3,7 @@
  * generated blocks of README.md are replaced. Everything measured or rendered lives elsewhere.
  */
 
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,13 +43,49 @@ export function arg(name: string): string | undefined {
 
 export const flag = (name: string) => process.argv.includes(`--${name}`);
 
+export const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
+
+/** Trailing newline on every file this writes, so a JSON artifact diffs like the rest of the repo. */
+export const writeJson = (path: string, value: unknown): void =>
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+
+/**
+ * Runs a child that writes its result to `out` and reads it back. Both benchmarks that leave this process
+ * work this way: a runtime or an entry cannot be measured in the parent's heap or on the parent's runtime.
+ */
+export function spawnJson<T>(label: string, command: string, args: string[], out: string): T {
+  const { status, signal } = spawnSync(command, args, { stdio: 'inherit', env: process.env });
+  if (status !== 0) {
+    throw new Error(`${label} exited with ${status ?? signal}`);
+  }
+  return readJson<T>(out);
+}
+
 /** What is on disk, never a hand-kept number: the report states the versions that produced the run. */
 export function installedVersion(pkg: string): string | undefined {
   const manifest = resolve(root, 'node_modules', pkg, 'package.json');
-  if (!existsSync(manifest)) {
-    return undefined;
+  return existsSync(manifest) ? readJson<{ version: string }>(manifest).version : undefined;
+}
+
+/**
+ * How every benchmark ends: assert-only, dump the run for another process, or rewrite the blocks it owns.
+ * One place, so `--verify` cannot mean something different in one of them.
+ */
+export function publish<T>(run: T, write: (run: T) => void, wrote: string): void {
+  if (flag('verify')) {
+    console.log('\n--verify: every step asserted, nothing written');
+    return;
   }
-  return (JSON.parse(readFileSync(manifest, 'utf8')) as { version: string }).version;
+
+  const jsonPath = arg('json');
+  if (jsonPath) {
+    writeJson(jsonPath, run);
+    console.log(`\n${jsonPath} written`);
+    return;
+  }
+
+  write(run);
+  console.log(`\n${wrote}`);
 }
 
 /** Rewrites the region between `<!-- bench:key -->` and `<!-- /bench:key -->`. */

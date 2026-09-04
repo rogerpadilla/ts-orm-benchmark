@@ -67,6 +67,10 @@ export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STE
 /** Median µs per step, index-aligned with the run's own {@link Run.entries}. */
 export type Results = Record<Step, number[]>;
 
+/** The one place that turns {@link STEPS} into a record keyed by them, so the cast lives here alone. */
+export const byStep = <T>(of: (step: Step) => T) =>
+  Object.fromEntries(STEPS.map((step) => [step, of(step)])) as Record<Step, T>;
+
 /** Round-total µs: what one caller waits for a whole lifecycle, at the median and out in the tail. */
 export type Tail = { p50: number; p99: number };
 

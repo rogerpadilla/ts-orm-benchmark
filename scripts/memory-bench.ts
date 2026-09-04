@@ -1,15 +1,8 @@
 /**
  * Measures how much heap each entry allocates per lifecycle, step by step, and rewrites the memory blocks
- * of README.md. The steps are the same seven `scripts/flows.ts` defines and the timing benchmark runs;
- * only the instrument changes, from a clock to `heapUsed`.
- *
- * Runs on Node, alone among the benchmarks here, because it is the only runtime whose heap counter moves
- * on allocation: Bun's `heapStats().heapSize` and `process.memoryUsage().heapUsed` both refresh only at a
- * collection, so on Bun a hundred thousand fresh objects read as zero bytes. That costs the three Bun SQL
- * entries, which is why this measures {@link PORTABLE_ENTRIES}, the set the runtime comparison uses.
- *
- * Timings are deliberately not taken here. Allocation is deterministic and settles inside 60 rounds;
- * latency is not, and off these same rounds it swung 30% between runs. `scripts/flow-bench.ts` owns that.
+ * of README.md. Same seven steps `scripts/flows.ts` defines; only the instrument changes, from a clock to
+ * `heapUsed`. Why Node alone, and why {@link PORTABLE_ENTRIES}, is the Memory section of README.md.
+ * No timings here: allocation settles inside 60 rounds, latency does not, and `flow-bench.ts` owns it.
  *
  * Usage:
  *   DATABASE_URL=postgres://localhost:5432/postgres bun scripts/memory-bench.ts
@@ -18,36 +11,22 @@
  *   bun scripts/memory-bench.ts --json /tmp/mem.json  # write the run, leave README alone
  */
 
-import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PerformanceObserver } from 'node:perf_hooks';
 import pg from 'pg';
 import { createClients } from '../src/clients';
 import { RUNTIME } from '../src/runtime';
-import { ensureDatabase, postgresVersion, resetFixture } from './fixture';
+import { databaseUrl, ensureDatabase, postgresVersion, resetFixture } from './fixture';
 import { checkStep, FLOWS, type Flow } from './flows';
 import { printMemorySummary, syncMemoryReport } from './memory-report';
-import {
-  type Entry,
-  type MemoryRun,
-  median,
-  PORTABLE_ENTRIES,
-  type Results,
-  STEPS,
-  type Step,
-  sortedAsc,
-} from './model';
-import { arg, BUILD_DIR, bundleForNode, flag } from './project';
+import { byStep, type Entry, type MemoryRun, median, PORTABLE_ENTRIES, STEPS, sortedAsc } from './model';
+import { arg, BUILD_DIR, bundleForNode, publish, spawnJson, writeJson } from './project';
 
 /**
- * One entry's whole lifecycle, N times, weighing the heap either side of every step. Comes back as a run
- * one entry wide, which {@link merge} stitches together, so the child returns the type the parent needs.
- *
- * No forced collection anywhere in here. `global.gc()` frees compiled code along with the garbage and the
- * rounds after it pay to re-tier: measured that way UQL read 19% higher over ten rounds than over forty,
- * purely because the early rounds were still recovering. Left alone the heap only grows between
- * collections, so the difference either side of a step is what that step allocated.
+ * One entry's whole lifecycle, N times, weighing the heap either side of every step. Comes back one entry
+ * wide for {@link merge} to stitch together. No forced collection in here, for the reason the README's
+ * method gives: left alone the heap only grows, so the difference either side of a step is what it
+ * allocated. Measured with `global.gc()` instead, UQL read 19% higher over ten rounds than over forty.
  */
 async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
   // Long enough that the hot path has tiered up: allocation per lifecycle keeps falling until it has.
@@ -61,13 +40,13 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
     collections++;
   }).observe({ entryTypes: ['gc'] });
 
-  const benchUrl = await ensureDatabase(process.env.DATABASE_URL ?? 'postgres://localhost:5432/postgres');
+  const benchUrl = await ensureDatabase(databaseUrl());
   const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
   const postgres = await postgresVersion(admin);
   const clients = await createClients(benchUrl);
   const flow = FLOWS[entry](clients);
 
-  const samples = Object.fromEntries(STEPS.map((s) => [s, [] as number[]])) as Record<Step, number[]>;
+  const samples = byStep((): number[] => []);
   let taken = 0;
   let retained = 0;
 
@@ -112,9 +91,7 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
     iterations,
     warmup,
     entries: [entry],
-    results: Object.fromEntries(
-      STEPS.map((step) => [step, [Math.round(median(sortedAsc(samples[step])) / 1024)]]),
-    ) as Results,
+    results: byStep((step) => [Math.round(median(sortedAsc(samples[step])) / 1024)]),
     discarded: [1 - kept / taken],
     retained: [Math.round(retained / 1024)],
   };
@@ -122,9 +99,8 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
 
 /**
  * Whether anything survives the lifecycles: the same rounds again, bracketed by collections, weighed
- * after. Its own phase and always last, because a forced collection frees compiled code along with the
- * garbage and the rounds after it allocate more while they re-tier - the bias that would land on the
- * per-step figures if this shared their loop.
+ * after. Last and on its own, since the re-tiering a forced collection causes would otherwise bias every
+ * per-step figure above.
  */
 async function measureRetention(admin: pg.Pool, flow: Flow, iterations: number): Promise<number> {
   forceGc();
@@ -158,12 +134,8 @@ function forceGc(): void {
 function measureOn(bundlePath: string, entry: Entry, iterations: number): MemoryRun {
   const out = resolve(BUILD_DIR, 'memory-entry.json');
   const flags = ['--entry', entry, '--iterations', String(iterations), '--json', out];
-  const result = spawnSync('node', ['--expose-gc', bundlePath, ...flags], { stdio: 'inherit', env: process.env });
-  if (result.status !== 0) {
-    throw new Error(`measuring ${entry} exited with ${result.status ?? result.signal}`);
-  }
-  // Every child writes the same path, so read back what was asked for rather than whatever is there.
-  const run = JSON.parse(readFileSync(out, 'utf8')) as MemoryRun;
+  const run = spawnJson<MemoryRun>(`measuring ${entry}`, 'node', ['--expose-gc', bundlePath, ...flags], out);
+  // Every child writes the same path, so check we read back what was asked for rather than whatever is there.
   if (run.entries[0] !== entry) {
     throw new TypeError(`asked ${entry} for its numbers and read ${run.entries[0]}'s`);
   }
@@ -175,7 +147,7 @@ function merge(runs: MemoryRun[]): MemoryRun {
   return {
     ...runs[0],
     entries: runs.flatMap((run) => run.entries),
-    results: Object.fromEntries(STEPS.map((step) => [step, runs.flatMap((run) => run.results[step])])) as Results,
+    results: byStep((step) => runs.flatMap((run) => run.results[step])),
     discarded: runs.flatMap((run) => run.discarded),
     retained: runs.flatMap((run) => run.retained),
   };
@@ -187,7 +159,7 @@ async function main(): Promise<void> {
 
   // The child half: one entry, one process, its numbers written where the parent asked for them.
   if (entry) {
-    writeFileSync(arg('json') as string, `${JSON.stringify(await measure(entry, iterations), null, 2)}\n`);
+    writeJson(arg('json') as string, await measure(entry, iterations));
     return;
   }
 
@@ -201,21 +173,7 @@ async function main(): Promise<void> {
 
   console.log();
   printMemorySummary(run);
-
-  if (flag('verify')) {
-    console.log('\n--verify: every step asserted, nothing written');
-    return;
-  }
-
-  const jsonPath = arg('json');
-  if (jsonPath) {
-    writeFileSync(jsonPath, `${JSON.stringify(run, null, 2)}\n`);
-    console.log(`\n${jsonPath} written`);
-    return;
-  }
-
-  syncMemoryReport(run);
-  console.log('\nREADME.md memory blocks updated');
+  publish(run, syncMemoryReport, 'README.md memory blocks updated');
 }
 
 await main();

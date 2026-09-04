@@ -175,12 +175,9 @@ function envLine(run: Run, ranked: TimedRow[]): string {
 }
 
 /**
- * One step as each entry actually writes it, lifted out of `scripts/flows.ts`. The nested read, because
- * it is the step that separates the field most and the one where the APIs differ beyond a method name.
- *
- * One step and not all three: the point is that the code shown is the code that ran, which one step
- * makes as well as three, and the other six are a click away in the file itself. Entries wired to the
- * same builder share a snippet, because they are the same code.
+ * The step the README shows, lifted out of `scripts/flows.ts` so what is printed is what ran. The nested
+ * read, because it separates the field most and is where the APIs differ beyond a method name; the other
+ * six are a click away in that file. Entries wired to the same builder share a snippet.
  */
 const SAMPLE_STEP: Step = 'nested';
 

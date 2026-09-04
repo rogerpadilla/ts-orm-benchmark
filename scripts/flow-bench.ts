@@ -1,10 +1,8 @@
 /**
  * Times each entry's lifecycle against the hand-written `raw pg` and `bun sql` floors, then rewrites every
- * generated block in README.md. That file is where the method and its limits are stated; the steps
- * themselves are `scripts/flows.ts`.
- *
- * Runs on Bun, Node and Deno; off Bun the Bun SQL entries are absent, since that client is a Bun API.
- * `scripts/runtime-bench.ts` is what times one bundle of this file on all three.
+ * generated block in README.md, where the method and its limits are stated. The steps are in
+ * `scripts/flows.ts`. Runs on Bun, Node and Deno; off Bun the Bun SQL entries are absent, since that
+ * client is a Bun API, and `scripts/runtime-bench.ts` times one bundle of this file on all three.
  *
  * Usage:
  *   DATABASE_URL=postgres://localhost:5432/postgres bun scripts/flow-bench.ts
@@ -14,26 +12,24 @@
  *   bun scripts/flow-bench.ts --portable                # only the entries every runtime can load
  */
 
-import { writeFileSync } from 'node:fs';
 import pg from 'pg';
 import { createClients } from '../src/clients';
 import { RUNTIME } from '../src/runtime';
-import { ensureDatabase, postgresVersion, resetFixture } from './fixture';
+import { databaseUrl, ensureDatabase, postgresVersion, resetFixture } from './fixture';
 import { checkStep, FLOWS } from './flows';
 import {
+  byStep,
   ENTRIES,
   median,
   PORTABLE_ENTRIES,
-  type Results,
   type Run,
   STEPS,
-  type Step,
   sortedAsc,
   sortedRoundTotals,
   spreadOf,
   tailFrom,
 } from './model';
-import { arg, flag } from './project';
+import { arg, flag, publish } from './project';
 import { printSummary, syncResults } from './report';
 
 /** Five progress lines whatever the run length, and one when the warmup ends. */
@@ -48,12 +44,7 @@ function logProgress(round: number, warmup: number, iterations: number): void {
 }
 
 async function main() {
-  const baseUrl = process.env.DATABASE_URL ?? 'postgres://localhost:5432/postgres';
   const iterations = Number(arg('iterations') ?? 250);
-  // CI runs a handful of iterations purely to exercise every step's assertions, where the timings are
-  // meaningless and must not reach the published artifacts.
-  const verifyOnly = flag('verify');
-  const jsonPath = arg('json');
   // Half the run again as warmup: below that, per-entry figures swing by hundreds of µs between runs.
   // Capped, because reaching steady state is what warmup is for and a long tail run does not need longer.
   const warmup = Math.min(250, Math.max(40, Math.round(iterations / 2)));
@@ -62,7 +53,7 @@ async function main() {
   const entries = RUNTIME.name === 'bun' && !flag('portable') ? [...ENTRIES] : PORTABLE_ENTRIES;
 
   console.log(`flow benchmark on ${RUNTIME.label}: ${iterations} iterations/step, ${warmup} warmup`);
-  const benchUrl = await ensureDatabase(baseUrl);
+  const benchUrl = await ensureDatabase(databaseUrl());
   const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
   const postgres = await postgresVersion(admin);
   console.log(postgres, '\n');
@@ -71,9 +62,7 @@ async function main() {
   // Built once. Some flows hoist a constant statement out of the timed section, which only holds if the
   // flow itself is not rebuilt per iteration.
   const flows = entries.map((entry) => FLOWS[entry](clients));
-  const samples = entries.map(
-    () => Object.fromEntries(STEPS.map((s) => [s, [] as number[]])) as Record<Step, number[]>,
-  );
+  const samples = entries.map(() => byStep((): number[] => []));
 
   try {
     for (let round = 0; round < warmup + iterations; round++) {
@@ -111,29 +100,14 @@ async function main() {
     iterations,
     warmup,
     entries,
-    results: Object.fromEntries(
-      STEPS.map((step) => [step, samples.map((sample) => Math.round(median(sortedAsc(sample[step]))))]),
-    ) as Results,
+    results: byStep((step) => samples.map((sample) => Math.round(median(sortedAsc(sample[step]))))),
     tails: totals.map(tailFrom),
     spreads: totals.map(spreadOf),
   };
 
   console.log();
   printSummary(run);
-
-  if (verifyOnly) {
-    console.log('\n--verify: every step asserted, nothing written');
-    return;
-  }
-
-  if (jsonPath) {
-    writeFileSync(jsonPath, `${JSON.stringify(run, null, 2)}\n`);
-    console.log(`\n${jsonPath} written`);
-    return;
-  }
-
-  syncResults(run);
-  console.log('\nresults.js + README.md updated');
+  publish(run, syncResults, 'results.js + README.md updated');
 }
 
 await main();
