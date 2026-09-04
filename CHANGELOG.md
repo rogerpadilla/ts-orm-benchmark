@@ -6,6 +6,7 @@
 
 - Drizzle's flat type-safety probes moved to `db.select()`, the builder its timed read uses: it had been timed on one API and scored on the other. 8/10 to 9/10.
 - Dependencies: uql-orm 0.37.1 to 0.39.0.
+- Results: UQL still adds the least, +181µs on Bun SQL and +208µs on `pg`. Deno now leads the runtime table at both p50 and p99.
 
 ## 0.11.0 - 2026-09-02
 

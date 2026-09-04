@@ -88,28 +88,26 @@ Lifted out of [scripts/flows.ts](scripts/flows.ts) at generation time, so what i
   return nestFlatRows(rows);
 }
 
-// UQL (bunSql), UQL
-q.findMany(Company, {
-  $select: { id: true, name: true },
-  $populate: { users: { $select: { id: true, name: true } } },
-  $where: { id: { $lte: NESTED_LIMIT } },
-  $sort: { id: 1 },
-})
-
-// TypeORM
-companies.find({
-  select: { id: true, name: true, users: { id: true, name: true } },
-  relations: { users: true },
-  where: { id: LessThanOrEqual(NESTED_LIMIT) },
-  order: { id: 'ASC' },
-})
-
-// Drizzle (bunSql), Drizzle
+// Drizzle, Drizzle (bunSql)
 db.query.Company.findMany({
   columns: { id: true, name: true },
   with: { users: { columns: { id: true, name: true } } },
   where: (t, { lte }) => lte(t.id, NESTED_LIMIT),
   orderBy: (t, { asc: a }) => a(t.id),
+})
+
+// MikroORM
+fork().find(
+  MikroCompanySchema,
+  { id: { $lte: NESTED_LIMIT } },
+  { fields: ['id', 'name', 'users.id', 'users.name'], populate: ['users'], orderBy: { id: 'ASC' } },
+)
+
+// Prisma
+db.company.findMany({
+  select: { id: true, name: true, users: { select: { id: true, name: true } } },
+  where: { id: { lte: NESTED_LIMIT } },
+  orderBy: { id: 'asc' },
 })
 
 // Sequelize
@@ -120,19 +118,21 @@ SqCompany.findAll({
   order: [['id', 'ASC']],
 })
 
-// Prisma
-db.company.findMany({
-  select: { id: true, name: true, users: { select: { id: true, name: true } } },
-  where: { id: { lte: NESTED_LIMIT } },
-  orderBy: { id: 'asc' },
+// TypeORM
+companies.find({
+  select: { id: true, name: true, users: { id: true, name: true } },
+  relations: { users: true },
+  where: { id: LessThanOrEqual(NESTED_LIMIT) },
+  order: { id: 'ASC' },
 })
 
-// MikroORM
-fork().find(
-  MikroCompanySchema,
-  { id: { $lte: NESTED_LIMIT } },
-  { fields: ['id', 'name', 'users.id', 'users.name'], populate: ['users'], orderBy: { id: 'ASC' } },
-)
+// UQL, UQL (bunSql)
+q.findMany(Company, {
+  $select: { id: true, name: true },
+  $populate: { users: { $select: { id: true, name: true } } },
+  $where: { id: { $lte: NESTED_LIMIT } },
+  $sort: { id: 1 },
+})
 ```
 <!-- /bench:samples -->
 
@@ -147,19 +147,19 @@ What an ORM costs when you get a column name wrong. Ten ordinary mistakes, writt
 <!-- /bench:type-safety-env -->
 
 <!-- bench:type-safety -->
-| Mistake | [UQL](https://uql-orm.dev) | [Drizzle](https://orm.drizzle.team) | [MikroORM](https://mikro-orm.io) | [Prisma](https://www.prisma.io) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) |
+| Mistake | [Drizzle](https://orm.drizzle.team) | [MikroORM](https://mikro-orm.io) | [Prisma](https://www.prisma.io) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [UQL](https://uql-orm.dev) |
 | --- | --- | --- | --- | --- | --- | --- |
-| Misspelled column in the projection | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Misspelled column in the projection | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | Misspelled column in the filter | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| String value against a numeric column | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Text operator against a numeric column | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Misspelled column in the sort | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Misspelled column inside a loaded relation | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| String value against a numeric column | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Text operator against a numeric column | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Misspelled column in the sort | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Misspelled column inside a loaded relation | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Misspelled column in inserted data | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Number written into a text column | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Reading a column the projection left out | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Reading a column the projection left out | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | Reading a misspelled column off a loaded relation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Caught**, of 10 | **10** | 9 | 9 | 9 | 9 | 5 |
+| **Caught**, of 10 | 9 | 9 | 9 | 5 | 9 | **10** |
 <!-- /bench:type-safety -->
 
 <!-- bench:type-safety-note -->

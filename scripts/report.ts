@@ -186,9 +186,11 @@ const SAMPLE_STEP: Step = 'nested';
 
 function samples(ranked: Row[]): string {
   const flows = flowOf();
-  // Ranked order, so a reader scrolling down from the per-step table meets the entries in the order it
-  // just showed them. `ENTRIES` is run order, which is rotation bookkeeping and matches nothing on screen.
-  const order = ranked.map((r) => r.entry);
+  // Floors first as the reference, then alphabetically. These are queries, not results: ordering them by
+  // speed would rank the same field twice, and run order matches nothing on screen either.
+  const order = [...ranked]
+    .sort((a, b) => Number(b.isBaseline) - Number(a.isBaseline) || a.entry.localeCompare(b.entry))
+    .map((r) => r.entry);
   const flowFor = (entry: Entry) => {
     const flow = flows.get(entry);
     if (!flow) {

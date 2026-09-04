@@ -262,7 +262,12 @@
     added over its own driver, against +${slowest.adds}µs for ${slowest.entry}
   `;
 
-  document.getElementById('legend').innerHTML = entries.map((name) => {
+  // Floors first as the reference, then alphabetically: a legend is a key, not a result, and run order
+  // would put the entry we wrote third for no reason a reader could see.
+  const floorFirst = (name) => (isBaseline(name) ? 0 : 1);
+  const legend = [...entries].sort((a, b) => floorFirst(a) - floorFirst(b) || a.localeCompare(b));
+
+  document.getElementById('legend').innerHTML = legend.map((name) => {
     const { meta } = describeEntry(name);
     return `<div class="legend-item"><div class="legend-dot" style="background:${meta.color}"></div><a href="${meta.url}" target="_blank" rel="noopener">${name}</a></div>`;
   }).join('');

@@ -146,15 +146,15 @@ const MARK: Record<Verdict, string> = { caught: '✅', missed: '❌' };
 const score = (vs: Verdict[]) => vs.filter((v) => v === 'caught').length;
 
 /**
- * Best first, so the column order is the ranking and the table needs no separate one. Ties break
- * alphabetically rather than by declaration order: four entries tie at the top today, and putting the
- * one we wrote first would be the benchmark flattering its author.
+ * Alphabetical, not by score. Ten probes cannot separate six tools the way a microsecond can - four of
+ * them tie today - so ordering the columns by score would dress a one-probe gap up as a ranking, and
+ * putting the one we wrote first would be the benchmark flattering its author. The scores are in the
+ * bottom row for anyone who wants them ordered.
  */
-const ranked = (results: Map<string, Verdict[]>) =>
-  [...results].sort((a, b) => score(b[1]) - score(a[1]) || a[0].localeCompare(b[0]));
+const ordered = (results: Map<string, Verdict[]>) => [...results].sort((a, b) => a[0].localeCompare(b[0]));
 
 function table(results: Map<string, Verdict[]>): string {
-  const order = ranked(results);
+  const order = ordered(results);
   const best = Math.max(...order.map(([, vs]) => score(vs)));
 
   return mdTable(
@@ -171,12 +171,14 @@ function table(results: Map<string, Verdict[]>): string {
  * mistake nobody catches, since a probe every tool misses is the one a reader should worry about.
  */
 function note(results: Map<string, Verdict[]>): string {
-  const order = ranked(results);
-  const best = score(order[0][1]);
+  const order = ordered(results);
+  const scores = order.map(([, vs]) => score(vs));
+  const best = Math.max(...scores);
+  const worst = Math.min(...scores);
   // Named as a group, because the top of this table ties far more readily than the timing one does:
   // ten probes cannot separate six tools the way a microsecond can.
   const leaders = order.filter(([, vs]) => score(vs) === best).map(([entry]) => entry);
-  const last = order[order.length - 1];
+  const last = order.find(([, vs]) => score(vs) === worst) ?? order[order.length - 1];
   const missedByAll = PROBES.filter((_, i) => order.every(([, vs]) => vs[i] === 'missed'));
   const universal = missedByAll.length
     ? ` No entry catches ${missedByAll.length === 1 ? 'one of them' : `${missedByAll.length} of them`}: ` +
@@ -236,7 +238,7 @@ function main() {
       compile(COMPILER.bin, 'type-safety/tsconfig.control.json'),
     );
 
-    for (const [entry, vs] of ranked(results)) {
+    for (const [entry, vs] of ordered(results)) {
       console.log(`${entry.padEnd(10)} ${String(score(vs)).padStart(2)}/${PROBES.length}`);
     }
 
