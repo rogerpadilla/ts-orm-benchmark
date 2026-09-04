@@ -204,11 +204,15 @@ function samples(ranked: Row[]): string {
   return `\`\`\`ts\n${shown.join('\n\n')}\n\`\`\``;
 }
 
-/** Six versions are a sentence, not a table, and they belong next to the numbers they produced. */
+/**
+ * Six versions are a sentence, not a table, and they belong next to the numbers they produced.
+ * Alphabetical, because this list is not a result: any other order reads as one.
+ */
 function versionsLine(): string {
-  const tools = Object.entries(TOOLS).flatMap(([entry, { pkg }]) =>
-    pkg ? [`${linkEntry(entry)} ${installedVersion(pkg)}`] : [],
-  );
+  const tools = Object.entries(TOOLS)
+    .flatMap(([entry, { pkg }]) => (pkg ? [{ entry, pkg }] : []))
+    .sort((a, b) => a.entry.localeCompare(b.entry))
+    .map(({ entry, pkg }) => `${linkEntry(entry)} ${installedVersion(pkg)}`);
 
   return `_Versions: ${tools.join(' · ')}._`;
 }
