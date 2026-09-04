@@ -21,6 +21,7 @@ import {
   STEPS,
   type Step,
   stepOf,
+  type TimedRow,
   TOOLS,
 } from './model';
 import { installedVersion, root, writeReadme } from './project';
@@ -138,6 +139,12 @@ function headline(ranked: Row[]): string {
   );
 }
 
+/** Where a run happened, which every report's caption states and none of them should word twice. */
+export const machineFacts = () => ({
+  machine: cpus()[0]?.model ?? 'unknown CPU',
+  when: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+});
+
 /**
  * Generated with the numbers, so the line describing the run cannot drift from the run that produced
  * it. Naming the wrong runtime here once misattributed every figure below.
@@ -146,15 +153,14 @@ export function envFacts(run: Run) {
   return {
     postgres: run.postgres,
     runtime: run.runtime.label,
-    machine: cpus()[0]?.model ?? 'unknown CPU',
-    when: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+    ...machineFacts(),
     /** Widest relative half-width across entries, so one figure can stand for the whole table. */
     interval: Math.max(...run.spreads),
   };
 }
 
 /** The run and its confidence in one caption, so a table of medians never stands without its error bar. */
-function envLine(run: Run, ranked: Row[]): string {
+function envLine(run: Run, ranked: TimedRow[]): string {
   const { postgres, runtime, machine, when } = envFacts(run);
   const worst = ranked.reduce((a, b) => (b.spread > a.spread ? b : a));
   return (
@@ -165,10 +171,15 @@ function envLine(run: Run, ranked: Row[]): string {
 }
 
 /**
- * The published steps as they are actually written, one fence per step, lifted out of `scripts/flows.ts`.
- * Entries wired to the same builder share a snippet, because they are the same code: `UQL (bunSql)` is
- * UQL reached through a second driver, not a second way of writing the query.
+ * One step as each entry actually writes it, lifted out of `scripts/flows.ts`. The nested read, because
+ * it is the step that separates the field most and the one where the APIs differ beyond a method name.
+ *
+ * One step and not all three: the point is that the code shown is the code that ran, which one step
+ * makes as well as three, and the other six are a click away in the file itself. Entries wired to the
+ * same builder share a snippet, because they are the same code.
  */
+const SAMPLE_STEP: Step = 'nested';
+
 function samples(ranked: Row[]): string {
   const flows = flowOf();
   // Ranked order, so a reader scrolling down from the per-step table meets the entries in the order it
@@ -182,13 +193,11 @@ function samples(ranked: Row[]): string {
     return flow;
   };
 
-  return PUBLISHED_STEPS.map((step) => {
-    const shown = [...new Set(order.map(flowFor))].map((flow) => {
-      const entries = order.filter((entry) => flowFor(entry) === flow);
-      return `// ${entries.join(', ')}\n${sampleOf(flow, step)}`;
-    });
-    return `**${STEP_LABELS[step]}**\n\n\`\`\`ts\n${shown.join('\n\n')}\n\`\`\``;
-  }).join('\n\n');
+  const shown = [...new Set(order.map(flowFor))].map((flow) => {
+    const entries = order.filter((entry) => flowFor(entry) === flow);
+    return `// ${entries.join(', ')}\n${sampleOf(flow, SAMPLE_STEP)}`;
+  });
+  return `\`\`\`ts\n${shown.join('\n\n')}\n\`\`\``;
 }
 
 /** Six versions are a sentence, not a table, and they belong next to the numbers they produced. */

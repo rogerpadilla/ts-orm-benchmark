@@ -88,7 +88,29 @@ export type Run = {
   spreads: number[];
 };
 
-/** One entry's whole story in a run, so no renderer has to line up arrays by index again. */
+/**
+ * One run of the memory benchmark: KB allocated per lifecycle, per step. Structurally a {@link Run}
+ * without the timing statistics, because allocation has no tail worth reporting - a step allocates what
+ * it allocates, and the samples that disagree are the ones a GC landed in, which are discarded not
+ * averaged. {@link MemoryRun.discarded} is how many, so a quiet loss of samples cannot pass for a clean run.
+ */
+export type MemoryRun = {
+  runtime: Runtime;
+  postgres: string;
+  iterations: number;
+  warmup: number;
+  entries: Entry[];
+  results: Results;
+  /** Share of samples a GC landed in, index-aligned with {@link MemoryRun.entries}. */
+  discarded: number[];
+  /** KB still held after every round has run and the heap has been collected, index-aligned likewise. */
+  retained: number[];
+};
+
+/**
+ * One entry's whole story in a run, so no renderer has to line up arrays by index again. Unitless: the
+ * flow benchmark fills it with µs and the memory benchmark with KB, and both rank the same way.
+ */
 export type Row = {
   entry: Entry;
   isBaseline: boolean;
@@ -98,9 +120,10 @@ export type Row = {
   total: number;
   /** What the tool itself costs: its total less its own driver's floor. */
   adds: number;
-  tail: Tail;
-  spread: number;
 };
+
+/** A timed row also carries what only a timing run has: where the slow rounds land, and how tight. */
+export type TimedRow = Row & { tail: Tail; spread: number };
 
 /** `Drizzle (bunSql)` is one tool reached through a second driver: same tool, different floor. */
 export function parseEntry(entry: string): { base: string; variant?: string } {
@@ -119,37 +142,39 @@ const floorFor = (entry: string): Entry => (isBunOnly(entry) ? 'bun sql' : 'raw 
 
 export const isBaseline = (entry: string) => (BASELINES as readonly string[]).includes(entry);
 
-/** Run order, one row per entry the run measured. {@link rank} is what orders them for the reader. */
-function rows(run: Run): Row[] {
-  const stepsOf = (i: number) => STEPS.map((step) => run.results[step][i]);
-  const totals = run.entries.map((_, i) => stepsOf(i).reduce((sum, us) => sum + us, 0));
+/** Run order, one row per entry measured. {@link rank} is what orders them for the reader. */
+function rows(entries: Entry[], results: Results): Row[] {
+  const stepsOf = (i: number) => STEPS.map((step) => results[step][i]);
+  const totals = entries.map((_, i) => stepsOf(i).reduce((sum, value) => sum + value, 0));
   const floorTotal = (entry: Entry) => {
-    const floor = run.entries.indexOf(floorFor(entry));
+    const floor = entries.indexOf(floorFor(entry));
     if (floor < 0) {
       throw new TypeError(`run has no ${floorFor(entry)} floor to measure ${entry} against`);
     }
     return totals[floor];
   };
 
-  return run.entries.map((entry, i) => ({
+  return entries.map((entry, i) => ({
     entry,
     isBaseline: isBaseline(entry),
     steps: stepsOf(i),
     total: totals[i],
     adds: totals[i] - floorTotal(entry),
-    tail: run.tails[i],
-    spread: run.spreads[i],
   }));
 }
 
 /** Floors first as the reference, then competitors by what they add. */
-export function rank(run: Run): Row[] {
-  const all = rows(run);
-  return [
-    ...all.filter((r) => r.isBaseline).sort((a, b) => a.total - b.total),
-    ...all.filter((r) => !r.isBaseline).sort((a, b) => a.adds - b.adds),
-  ];
-}
+const ordered = <T extends Row>(all: T[]): T[] => [
+  ...all.filter((r) => r.isBaseline).sort((a, b) => a.total - b.total),
+  ...all.filter((r) => !r.isBaseline).sort((a, b) => a.adds - b.adds),
+];
+
+/** A timing run, ranked, each row carrying where its slow rounds land and how tight its median is. */
+export const rank = (run: Run): TimedRow[] =>
+  ordered(rows(run.entries, run.results).map((row, i) => ({ ...row, tail: run.tails[i], spread: run.spreads[i] })));
+
+/** A memory run, ranked. Nothing to carry: KB per step is the whole story. */
+export const rankMemory = (run: MemoryRun): Row[] => ordered(rows(run.entries, run.results));
 
 /** {@link Row.steps} is aligned with {@link STEPS}; this is the only place that has to know it. */
 export const stepOf = (row: Row, step: Step) => row.steps[STEPS.indexOf(step)];

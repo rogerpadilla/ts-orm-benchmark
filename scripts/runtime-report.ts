@@ -4,7 +4,7 @@
  */
 
 import { RUNTIME_LABELS } from '../src/runtime';
-import { competitorsOf, type Entry, percentileIndex, type Row, type Run, rank, type Tail } from './model';
+import { competitorsOf, type Entry, percentileIndex, type Run, rank, type Tail, type TimedRow } from './model';
 import { writeReadme } from './project';
 import { envFacts, linkEntry, mdTable } from './report';
 
@@ -14,7 +14,7 @@ const PERCENTILES = ['p50', 'p99'] as const;
 type Percentile = (typeof PERCENTILES)[number];
 
 /** One runtime's run with its rows addressable by entry, which is how every line here reads a figure. */
-type Measured = { run: Run; byEntry: Map<Entry, Row> };
+type Measured = { run: Run; byEntry: Map<Entry, TimedRow> };
 
 const measure = (run: Run): Measured => ({ run, byEntry: new Map(rank(run).map((row) => [row.entry, row])) });
 

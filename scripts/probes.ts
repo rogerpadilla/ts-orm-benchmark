@@ -47,9 +47,11 @@ export type ProbeId = (typeof PROBES)[number]['id'];
  *     declare function findMany<T extends Args>(args: Subset<T, Args>): T;
  *     findMany({ select: { id: true, emial: true } });   // 5.9.3 errors; 6.0.3 and 7.0.2 are silent
  *
- * That is exactly how Prisma (`Subset<T, Args>`) and Drizzle (`KnownKeysOnly<TConfig, DBQueryConfig>`)
- * type a projection, so both lose that check. Counted as missing rather than excused: a check the
- * compiler no longer makes protects nobody, whatever the ORM intended. Pinning 5.9.3 alongside to
+ * That is exactly how Prisma (`Subset<T, Args>`) types a projection, so it loses that check. Counted as
+ * missing rather than excused: a check the compiler no longer makes protects nobody, whatever the ORM
+ * intended. Drizzle's `db.query` (`KnownKeysOnly<TConfig, DBQueryConfig>`) is typed the same way, which
+ * is why `drizzle.ts` writes its flat probes on `db.select()` - the API its timed read uses, where a
+ * misspelled column is a property access the compiler still rejects. Pinning 5.9.3 alongside to
  * re-measure this every run was tried and dropped - it is a settled fact about a released compiler
  * rather than something a run can discover, and it cost a second toolchain and a `target` both majors
  * had a name for.

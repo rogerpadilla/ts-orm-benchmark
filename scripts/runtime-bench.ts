@@ -12,15 +12,12 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { RuntimeName } from '../src/runtime';
 import type { Run } from './model';
-import { arg, installedVersion, root } from './project';
+import { arg, BUILD_DIR, bundleForNode, installedVersion, root } from './project';
 import { syncRuntimeReport } from './runtime-report';
-
-/** Sits one level below the root, like `scripts`, so the bundle resolves the same paths its source did. */
-const BUILD_DIR = resolve(root, '.bench-build');
 
 type Runner = { command: string; args: (bundle: string) => string[] };
 
@@ -79,21 +76,6 @@ function denoImportMap(): string {
   return `--import-map=${path}`;
 }
 
-/** `--packages=external` so every entry is the same installed dependency each runtime would load itself. */
-async function bundle(): Promise<string> {
-  mkdirSync(BUILD_DIR, { recursive: true });
-  const built = await Bun.build({
-    entrypoints: [resolve(root, 'scripts/flow-bench.ts')],
-    outdir: BUILD_DIR,
-    target: 'node',
-    packages: 'external',
-  });
-  if (!built.success) {
-    throw new AggregateError(built.logs, 'bundling the flow benchmark failed');
-  }
-  return built.outputs[0].path;
-}
-
 function runOn(runtime: RuntimeName, bundlePath: string, iterations: number): Run {
   const out = resolve(BUILD_DIR, `${runtime}.json`);
   const { command, args } = RUNTIMES[runtime];
@@ -111,7 +93,7 @@ async function main() {
   // Far more rounds than the median tables need: a p99 drawn from 250 rounds is the third slowest of them,
   // which moves by milliseconds between runs. 2000 puts twenty rounds behind the figure instead of two.
   const iterations = Number(arg('iterations') ?? 2000);
-  const bundlePath = await bundle();
+  const bundlePath = await bundleForNode('scripts/flow-bench.ts');
 
   const runs: Run[] = [];
   for (const runtime of Object.keys(RUNTIMES) as RuntimeName[]) {

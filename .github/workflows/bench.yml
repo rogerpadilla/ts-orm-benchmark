@@ -41,6 +41,9 @@ jobs:
       - run: bunx tsc --noEmit
       - run: bunx biome check
       - run: bun scripts/flow-bench.ts --iterations 3 --verify
+      # Same assertions again through the memory harness, which runs its own Node child per entry: the
+      # one path where a step could break without the timing run noticing is the bundle those children load.
+      - run: bun scripts/memory-bench.ts --iterations 3 --verify
       # Costs nothing on a shared runner and is the half of the report a CI job can actually decide: a
       # probe that stopped erroring, or a correction that stopped compiling, is a finding either way.
       - run: bun scripts/type-check.ts --verify
