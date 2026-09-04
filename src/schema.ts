@@ -95,8 +95,8 @@ export const TypeORMUserSchema = new EntitySchema<TypeORMUser>({
 // MikroORM
 
 /**
- * `defineEntity` is not one of two options here: 7.x exports no `@Entity`, `@PrimaryKey`, `@Property`,
- * `@ManyToOne` or `@OneToMany` at all, so this is MikroORM's API rather than a style chosen for it.
+ * `defineEntity` is what `@mikro-orm/core` itself exports: 7.x moved `@Entity`, `@Property` and the rest
+ * into a separate `@mikro-orm/decorators` package, which this benchmark does not install.
  */
 
 export const MikroCompanySchema = defineEntity({
