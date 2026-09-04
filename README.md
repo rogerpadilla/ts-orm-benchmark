@@ -269,9 +269,9 @@ An ORM that places last here can still be the right call on any of those.
 
 1. Add it as a `devDependency`
 2. Give it the same `Company` and `User` shape in `src/schema.ts`, and a client in `src/clients.ts`
-3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` in `scripts/model.ts`
-4. Declare its client in `type-safety/clients.ts`, write the ten mistakes in `type-safety/<tool>.ts`, and name the file in `PROBE_FILES` in `scripts/probes.ts`
-5. Run `bun run bench`, `bun run bench.memory` and `bun run bench.types`; the tables regenerate themselves
+3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts`. `TOOLS` is the one registry: its link, the version the report quotes, and the name of its probe file all come from that entry
+4. Declare its client in `type-safety/clients.ts` and write the ten mistakes in `type-safety/<probe>.ts`, matching the `probe` name you just gave it
+5. Run `bun run bench`, `bun run bench.runtimes`, `bun run bench.memory` and `bun run bench.types`; the tables regenerate themselves
 
 ## License
 
