@@ -207,7 +207,7 @@ On `raw pg`, the same code on all of them, the runtimes are 113µs apart at p50 
 How much heap each entry allocates to serve one lifecycle. Measured on Node, one process per entry: V8's counter is the only one of the three that moves on allocation rather than at a collection, and on Bun a hundred thousand fresh objects read as zero bytes. The `(bunSql)` rows sit out for the same reason the runtime table drops them.
 
 <!-- bench:memory-env -->
-> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Samples a garbage collection landed in are discarded, never corrected: at most 2% of them (MikroORM).
+> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 2% of its own (MikroORM).
 <!-- /bench:memory-env -->
 
 <!-- bench:memory -->
@@ -215,17 +215,17 @@ How much heap each entry allocates to serve one lifecycle. Measured on Node, one
 | --- | --- | --- | --- | --- | --- |
 | _[raw pg](https://node-postgres.com)_ | 14 | 87 | 106 | 245 | floor |
 | [UQL](https://uql-orm.dev) | 42 | 132 | 184 | 446 | **+201** |
-| [Drizzle](https://orm.drizzle.team) | 134 | 249 | 239 | 753 | +508 |
+| [Drizzle](https://orm.drizzle.team) | 140 | 251 | 242 | 769 | +524 |
 | [Prisma](https://www.prisma.io) | 273 | 220 | 373 | 1053 | +808 |
-| [TypeORM](https://typeorm.io) | 126 | 295 | 503 | 1066 | +821 |
-| [Sequelize](https://sequelize.org) | 100 | 425 | 585 | 1288 | +1043 |
-| [MikroORM](https://mikro-orm.io) | 77 | 1469 | 2061 | 3865 | +3620 |
+| [TypeORM](https://typeorm.io) | 126 | 294 | 503 | 1065 | +820 |
+| [Sequelize](https://sequelize.org) | 100 | 426 | 592 | 1296 | +1051 |
+| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2060 | 3864 | +3619 |
 <!-- /bench:memory -->
 
 <!-- bench:memory-note -->
-Above the floor the field spans 18.0x: 201KB for UQL, 3620KB for MikroORM, and nested opens it widest: MikroORM's 2061KB against UQL's 184KB.
+Above the floor the field spans 18.0x: 201KB for UQL, 3619KB for MikroORM, and nested opens it widest: MikroORM's 2060KB against UQL's 184KB.
 
-Almost none of it survives: another 60 lifecycles, collected either side, leave every heap smaller than it started, identity maps included. What the table prices is collector pressure, not a resident set that grows.
+Almost none of it survives: another 60 lifecycles, collected either side, leave at most 42KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
 <!-- /bench:memory-note -->
 
 ## Method

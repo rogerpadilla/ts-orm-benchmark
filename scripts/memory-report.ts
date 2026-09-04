@@ -23,19 +23,26 @@ function memoryTable(ranked: Row[]): string {
 }
 
 /**
- * What the run was, including how many samples it threw away: a benchmark that discards data has to say
- * so next to the numbers it kept.
+ * What the run was, including how many samples it threw away. A benchmark that discards data has to say
+ * so, and it has to say so per entry: the rule drops the rounds a collection ran in, and a collection is
+ * likelier the more an entry allocates, so a heavy entry and a light one are only measured the same way
+ * while both rates stay near zero. {@link driftedEstimator} is what refuses the run when they do not.
  */
+/** The highest of a per-entry figure and whose it is, which both captions below need. */
+function peak(run: MemoryRun, values: number[]) {
+  const most = Math.max(...values);
+  return { most, entry: run.entries[values.indexOf(most)] };
+}
+
 function envLine(run: MemoryRun): string {
   const { machine, when } = machineFacts();
-  const worst = Math.max(...run.discarded);
-  const worstEntry = run.entries[run.discarded.indexOf(worst)];
+  const worst = peak(run, run.discarded);
 
   return (
     `> ${run.postgres}, ${run.runtime.label}, ${machine}, ${when}. Median KB allocated per step over ` +
-    `${run.iterations} rounds after ${run.warmup} warmup of a ${STEPS.length}-step lifecycle. ` +
-    `Samples a garbage collection landed in are discarded, never corrected: at most ` +
-    `${(worst * 100).toFixed(0)}% of them (${worstEntry}).`
+    `${run.iterations} rounds after ${run.warmup} warmup of a ${STEPS.length}-step lifecycle. Rounds a ` +
+    `garbage collection ran in are discarded, never corrected, and no entry lost more than ` +
+    `${(worst.most * 100).toFixed(0)}% of its own (${worst.entry}).`
   );
 }
 
@@ -58,9 +65,9 @@ function note(run: MemoryRun, ranked: Row[]): string {
 
   // Every entry usually ends at or below where it started, so this figure is normally negative. Reported
   // as it fell rather than clamped to zero, since which way it went is the finding.
-  const most = Math.max(...run.retained);
-  const held = run.entries[run.retained.indexOf(most)];
-  const grown = most > 0 ? `leave at most ${most}KB behind (${held})` : 'leave every heap smaller than it started';
+  const kept = peak(run, run.retained);
+  const grown =
+    kept.most > 0 ? `leave at most ${kept.most}KB behind (${kept.entry})` : 'leave every heap smaller than it started';
 
   return (
     `Above the floor the field spans ${(highest.adds / lowest.adds).toFixed(1)}x: ${lowest.adds}KB for ` +
@@ -81,7 +88,31 @@ export function printMemorySummary(run: MemoryRun): void {
   }
 }
 
+/**
+ * The share of its own rounds an entry may lose to a collection and still be measured like the others.
+ * Discarding those rounds is the only way to read an allocation off `heapUsed`, but a collection is
+ * likelier the more an entry allocates: past some rate a heavy entry's median comes from its quietest
+ * rounds while a light one's comes from nearly all of them, and the table is comparing two things.
+ * At 10% every entry still keeps nine rounds in ten. Today the worst is 2%.
+ */
+const MAX_DISCARDED = 0.1;
+
+function assertComparable(run: MemoryRun): void {
+  const strained = run.entries.flatMap((entry, i) =>
+    run.discarded[i] > MAX_DISCARDED ? [`${entry} ${(run.discarded[i] * 100).toFixed(0)}%`] : [],
+  );
+  if (strained.length) {
+    throw new Error(
+      `${strained.join(', ')}: lost more than ${MAX_DISCARDED * 100}% of their rounds to a collection, ` +
+        'so their medians come from their quietest rounds and are not comparable with the rest. ' +
+        'More iterations will not help; the entry allocates enough to disturb its own measurement.',
+    );
+  }
+}
+
 export function syncMemoryReport(run: MemoryRun): void {
+  // Only the publishing path: a `--verify` run measures three rounds, where the rate means nothing.
+  assertComparable(run);
   const ranked = rankMemory(run);
   writeReadme({
     'memory-env': envLine(run),
