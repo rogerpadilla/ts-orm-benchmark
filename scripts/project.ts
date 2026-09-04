@@ -100,7 +100,14 @@ function replaceMarked(markdown: string, key: string, body: string): string {
   return `${markdown.slice(0, start + open.length)}\n${body}\n${markdown.slice(end)}`;
 }
 
-/** Rewrites every named block in README.md in one pass. */
+/** Every block this repo publishes, so another project can render them instead of retyping the numbers. */
+export const REPORT = 'report.json';
+
+/**
+ * Rewrites every named block in README.md, and keeps the same bodies in {@link REPORT}. Merged rather
+ * than replaced, and sorted, because the four benchmarks each own a few blocks and none of them needs
+ * the others to have run.
+ */
 export function writeReadme(blocks: Record<string, string>): void {
   const readmePath = resolve(root, 'README.md');
   const out = Object.entries(blocks).reduce(
@@ -108,4 +115,16 @@ export function writeReadme(blocks: Record<string, string>): void {
     readFileSync(readmePath, 'utf8'),
   );
   writeFileSync(readmePath, out);
+
+  const path = resolve(root, REPORT);
+  const kept = existsSync(path) ? readJson<Record<string, string>>(path) : {};
+  const merged = { ...kept, ...blocks };
+  writeJson(
+    path,
+    Object.fromEntries(
+      Object.keys(merged)
+        .sort()
+        .map((key) => [key, merged[key]]),
+    ),
+  );
 }

@@ -166,7 +166,7 @@ What an ORM costs when you get a column name wrong. Ten ordinary mistakes, writt
 UQL catches 10 of the 10, Sequelize 5. Every mistake here is caught by at least one entry. The corrected copy of every file compiles clean, which is what makes a red mark a missing check rather than a broken query.
 <!-- /bench:type-safety-note -->
 
-Prisma's red mark on the first row is recent: TypeScript 6.0 stopped reporting excess properties on an object literal checked against a mapped type over an inferred type parameter, and 7 inherits it.
+Prisma's red mark on the first row is the compiler's doing: TypeScript 6.0 stopped reporting excess properties on an object literal checked against a mapped type over an inferred type parameter, and 7 inherits it.
 
 ```ts
 type Subset<T, U> = { [K in keyof T]: K extends keyof U ? T[K] : never };
@@ -244,17 +244,17 @@ bun run bench.memory
 bun run bench.types
 ```
 
-Each rewrites the tables it owns, and none needs the others to have run.
+Each rewrites the tables it owns, and none needs the others to have run. Every block they write also lands in `report.json`, for anyone rendering these numbers elsewhere.
 
 ## Method
 
 - PostgreSQL runs natively, never in a container: a VM between client and server puts its latency into `Adds` instead of cancelling against the floor.
 - All seven steps assert on the rows they return, every round, though only three are published: a step that quietly does nothing fails instead of winning. CI runs `--verify` on every push.
-- Entries are interleaved and rotated, one pass each per round, because running each to completion made the results depend on declaration order. Warmup is half the run, capped at 250 rounds, and discarded.
+- Entries are interleaved and rotated, one pass each per round, so no entry keeps a favourable position. Warmup is half the run, capped at 250 rounds, and discarded.
 - Medians per step, never means, so one GC pause cannot decide a number. Percentiles are of the round total, so a p99 is one slow lifecycle rather than seven unrelated slow operations.
 - One connection each, no pooling, and each entry on its own idiomatic API: `.returning()` for Drizzle, `em.find` for MikroORM, `createManyAndReturn` for Prisma, `insertMany` for UQL. Only Prisma needs codegen, and it reaches Postgres through the `pg` adapter like the rest.
 - Timed and scored through the same API, at `strict`, against the same entities and the same columns. Drizzle reaches its flat reads through `db.select()` and its nested read through `db.query`, in both halves, because those are the APIs its version offers for each job.
-- Entity definitions are each ORM's current API, not a style we picked: MikroORM 7 ships no decorators and TypeORM's need a flag UQL's cannot share. Built once at startup, off the query path.
+- Entity definitions are each ORM's current API: MikroORM 7 ships no decorators and TypeORM's need a flag UQL's cannot share. Built once at startup, off the query path.
 - The nested read is one statement for Drizzle, Sequelize and TypeORM, which join, and two for MikroORM, Prisma and UQL, which select the parents and then the children by `IN`. Postgres is local here, so the second round trip is cheap; over a network it would not be, and the split-query entries would lose ground.
 - Deno gets an import map pinned to the installed versions, since it resolves npm itself: all three runtimes load the same libraries, not the same ranges.
 - The memory benchmark inverts two of those: a process per entry, since a shared heap cannot be attributed, and no forced collection, since collecting frees compiled code and the rounds after it re-tier.
@@ -269,8 +269,8 @@ An ORM that places last here can still be the right call on any of those.
 
 1. Add it as a `devDependency`
 2. Give it the same `Company` and `User` shape in `src/schema.ts`, and a client in `src/clients.ts`
-3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts`. `TOOLS` is the one registry: its link, the version the report quotes, and the name of its probe file all come from that entry
-4. Declare its client in `type-safety/clients.ts` and write the ten mistakes in `type-safety/<probe>.ts`, matching the `probe` name you just gave it
+3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts` — `TOOLS` is where its link, version and probe file name come from
+4. Declare its client in `type-safety/clients.ts` and write the ten mistakes in `type-safety/<probe>.ts`
 5. Run `bun run bench`, `bun run bench.runtimes`, `bun run bench.memory` and `bun run bench.types`; the tables regenerate themselves
 
 ## License
