@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "singleQuote": true,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "README.md",
+    "chart.html",
+    "results.js",
+    "report.json",
+    "type-safety/verdicts.json",
+    "src/generated"
+  ],
+  "overrides": [
+    {
+      "files": ["type-safety/**"],
+      "options": { "printWidth": 80 }
+    }
+  ]
+}

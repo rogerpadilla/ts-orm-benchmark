@@ -13,18 +13,28 @@ await em.find(MikroUserSchema, { createdat: { $gt: 0 } }, { fields: ['id'] });
 await em.find(MikroUserSchema, { createdAt: 'one' }, { fields: ['id'] });
 
 // Text operator against a numeric column | $like: 'abc' -> $gte: 1
-await em.find(MikroUserSchema, { createdAt: { $like: 'abc' } }, { fields: ['id'] });
+await em.find(
+  MikroUserSchema,
+  { createdAt: { $like: 'abc' } },
+  { fields: ['id'] },
+);
 
 // Misspelled column in the sort | idd -> id
 await em.find(MikroUserSchema, {}, { fields: ['id'], orderBy: { idd: 'ASC' } });
 
 // Misspelled column inside a loaded relation | users.nmae -> users.name
-await em.find(MikroCompanySchema, {}, { fields: ['id', 'users.nmae'], populate: ['users'] });
+await em.find(
+  MikroCompanySchema,
+  {},
+  { fields: ['id', 'users.nmae'], populate: ['users'] },
+);
 
 // Misspelled column in inserted data | emails -> email
 await em
   .createQueryBuilder(MikroUserSchema)
-  .insert([{ name: 'New User', emails: 'new@example.com', createdAt: 1, company: 1 }])
+  .insert([
+    { name: 'New User', emails: 'new@example.com', createdAt: 1, company: 1 },
+  ])
   .execute();
 
 // Number written into a text column | 42 -> 'Updated Name'

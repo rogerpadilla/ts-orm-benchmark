@@ -10,8 +10,8 @@
     "bench.memory": "bun scripts/memory-bench.ts",
     "bench.types": "bun scripts/type-check.ts",
     "ts": "tsc --noEmit",
-    "lint": "biome check",
-    "lint.fix": "biome check --write --unsafe"
+    "lint": "oxlint && oxfmt --check",
+    "lint.fix": "oxlint --fix && oxfmt"
   },
   "keywords": [
     "orm",
@@ -35,13 +35,14 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "2.5.12",
     "@mikro-orm/core": "7.1.15",
     "@mikro-orm/postgresql": "7.1.15",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "@types/bun": "^1.4.0",
     "drizzle-orm": "0.45.2",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
     "pg": "8.23.0",
     "prisma": "7.10.0",
     "sequelize": "6.37.8",

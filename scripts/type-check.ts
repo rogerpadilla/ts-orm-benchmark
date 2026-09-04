@@ -53,14 +53,12 @@ function readProbeFile(stem: string): ProbeFile {
     throw new TypeError(`${stem}.ts does not mark the ten probes of scripts/probes.ts, in their order`);
   }
 
-  const regions = marked.map(
-    ({ from, fix }, i): Region => ({
-      id: PROBES[i].id,
-      from,
-      to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length,
-      fix,
-    }),
-  );
+  const regions = marked.map(({ from, fix }, i): Region => ({
+    id: PROBES[i].id,
+    from,
+    to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length,
+    fix,
+  }));
 
   return { stem, entry: PROBE_FILES[stem], lines, regions };
 }

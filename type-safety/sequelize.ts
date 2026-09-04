@@ -39,7 +39,9 @@ await SqCompany.findAll({
 });
 
 // Misspelled column in inserted data | emails -> email
-await SqUser.bulkCreate([{ name: 'New User', emails: 'new@example.com', companyId: 1, createdAt: 1 }]);
+await SqUser.bulkCreate([
+  { name: 'New User', emails: 'new@example.com', companyId: 1, createdAt: 1 },
+]);
 
 // Number written into a text column | 42 -> 'Updated Name'
 await SqUser.update({ name: 42 }, { where: { id: 1 } });
