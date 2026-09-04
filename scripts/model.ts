@@ -67,6 +67,10 @@ export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STE
 /** Median µs per step, index-aligned with the run's own {@link Run.entries}. */
 export type Results = Record<Step, number[]>;
 
+/** What the compiler said about one probe, and one entry's ten of them keyed by the name the tables use. */
+export type Verdict = 'caught' | 'missed';
+export type Verdicts = Map<string, Verdict[]>;
+
 /** The one place that turns {@link STEPS} into a record keyed by them, so the cast lives here alone. */
 export const byStep = <T>(of: (step: Step) => T) =>
   Object.fromEntries(STEPS.map((step) => [step, of(step)])) as Record<Step, T>;

@@ -20,10 +20,10 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { PROBE_FILES } from './model';
+import { PROBE_FILES, type Verdict, type Verdicts } from './model';
 import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
-import { flag, installedVersion, root, writeJson, writeReadme } from './project';
-import { bold, linkEntry, mdTable } from './render';
+import { flag, installedVersion, root } from './project';
+import { printTypeSafetySummary, syncTypeSafetyReport, VERDICTS } from './type-safety-report';
 
 const DIR = resolve(root, 'type-safety');
 
@@ -98,15 +98,13 @@ function compile(bin: string, project: string): Diagnostic[] {
   });
 }
 
-type Verdict = 'caught' | 'missed';
-
 const here = (d: Diagnostic) => d.file.includes('/type-safety/') || d.file.startsWith('type-safety/');
 
 const listed = (label: string, diagnostics: Diagnostic[]) =>
   `${label}\n${diagnostics.map((d) => `  ${d.file}:${d.line} ${d.text}`).join('\n')}`;
 
 /** A probe is caught when the mistake errors and the correction does not. */
-function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[]): Map<string, Verdict[]> {
+function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[]): Verdicts {
   const broken = control.filter(here);
   if (broken.length) {
     throw new Error(listed('the corrected probes must compile clean, and these did not:', broken));
@@ -139,75 +137,6 @@ function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[
   );
 }
 
-const MARK: Record<Verdict, string> = { caught: '✅', missed: '❌' };
-
-const score = (vs: Verdict[]) => vs.filter((v) => v === 'caught').length;
-
-/**
- * Alphabetical, not by score. Ten probes cannot separate six tools the way a microsecond can - four of
- * them tie today - so ordering the columns by score would dress a one-probe gap up as a ranking, and
- * putting the one we wrote first would be the benchmark flattering its author. The scores are in the
- * bottom row for anyone who wants them ordered.
- */
-const ordered = (results: Map<string, Verdict[]>) => [...results].sort((a, b) => a[0].localeCompare(b[0]));
-
-function table(results: Map<string, Verdict[]>): string {
-  const order = ordered(results);
-  const best = Math.max(...order.map(([, vs]) => score(vs)));
-
-  return mdTable(
-    ['Mistake', ...order.map(([entry]) => linkEntry(entry))],
-    [
-      ...PROBES.map((probe, i) => [probe.what, ...order.map(([, vs]) => MARK[vs[i]])]),
-      [`**Caught**, of ${PROBES.length}`, ...order.map(([, vs]) => bold(score(vs), score(vs) === best))],
-    ],
-  );
-}
-
-/**
- * The two things worth saying about the table, both computed: how far apart the field is, and which
- * mistake nobody catches, since a probe every tool misses is the one a reader should worry about.
- */
-function note(results: Map<string, Verdict[]>): string {
-  const order = ordered(results);
-  const scores = order.map(([, vs]) => score(vs));
-  const best = Math.max(...scores);
-  const worst = Math.min(...scores);
-  // Named as a group, because the top of this table ties far more readily than the timing one does:
-  // ten probes cannot separate six tools the way a microsecond can.
-  const leaders = order.filter(([, vs]) => score(vs) === best).map(([entry]) => entry);
-  const last = order.find(([, vs]) => score(vs) === worst) ?? order[order.length - 1];
-  const missedByAll = PROBES.filter((_, i) => order.every(([, vs]) => vs[i] === 'missed'));
-  const universal = missedByAll.length
-    ? ` No entry catches ${missedByAll.length === 1 ? 'one of them' : `${missedByAll.length} of them`}: ` +
-      `${missedByAll.map((p) => p.what.toLowerCase()).join(', ')}.`
-    : ' Every mistake here is caught by at least one entry.';
-
-  return (
-    `${list(leaders)} ${leaders.length > 1 ? 'each catch' : 'catches'} ${best} of the ${PROBES.length}, ` +
-    `${last[0]} ${score(last[1])}.${universal} The corrected copy of every file compiles clean, which is ` +
-    `what makes a red mark a missing check rather than a broken query.`
-  );
-}
-
-const list = (names: string[]) =>
-  names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
-
-const VERDICTS = 'type-safety/verdicts.json';
-
-/**
- * The same verdicts the README table is drawn from, in a shape another program can read. uql-orm.dev loads
- * these probe files into a live editor and has to label them with something; parsing the marks back out of
- * a markdown table would be a second scoreboard that could disagree with this one.
- */
-function writeVerdicts(results: Map<string, Verdict[]>) {
-  writeJson(resolve(root, VERDICTS), {
-    typescript: installedVersion(COMPILER.pkg),
-    probes: PROBES,
-    entries: Object.fromEntries(ordered(results)),
-  });
-}
-
 function main() {
   // Driven by the catalogue rather than by whatever is in the directory: a probe file nobody named is a
   // file nobody scores, and `readProbeFile` says which one is missing better than a directory scan could.
@@ -224,21 +153,14 @@ function main() {
       compile(COMPILER.bin, 'type-safety/tsconfig.control.json'),
     );
 
-    for (const [entry, vs] of ordered(results)) {
-      console.log(`${entry.padEnd(10)} ${String(score(vs)).padStart(2)}/${PROBES.length}`);
-    }
+    printTypeSafetySummary(results);
 
     if (flag('verify')) {
       console.log('\n--verify: every probe checked, nothing written');
       return;
     }
 
-    writeReadme({
-      'type-safety': table(results),
-      'type-safety-note': note(results),
-      'type-safety-env': `> Checked with TypeScript ${installedVersion(COMPILER.pkg)}, ${PROBES.length} probes per entry.`,
-    });
-    writeVerdicts(results);
+    syncTypeSafetyReport(results);
     console.log(`\nREADME.md type-safety blocks updated, verdicts written to ${VERDICTS}`);
   } finally {
     for (const { stem } of files) {
