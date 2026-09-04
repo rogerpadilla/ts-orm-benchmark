@@ -13,6 +13,7 @@ import {
   type Entry,
   PUBLISHED_STEPS,
   places,
+  range,
   type Row,
   type Run,
   rank,
@@ -73,12 +74,7 @@ function stepsNote(ranked: Row[]): string {
   );
 
   const sums = competitors.map((r) => ASSERTED_ONLY_STEPS.reduce((sum, step) => sum + stepOf(r, step), 0));
-  const tightest = Math.max(
-    ...ASSERTED_ONLY_STEPS.map((step) => {
-      const values = stepValues(competitors, step);
-      return Math.max(...values) - Math.min(...values);
-    }),
-  );
+  const tightest = Math.max(...ASSERTED_ONLY_STEPS.map((step) => range(stepValues(competitors, step))));
 
   return (
     `The biggest gap is ${worst.entry}'s ${worst.step}: ${worst.value}µs against ` +

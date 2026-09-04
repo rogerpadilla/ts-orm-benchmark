@@ -4,7 +4,7 @@
  */
 
 import { RUNTIME_LABELS } from '../src/runtime';
-import { competitorsOf, type Entry, percentileIndex, type Run, rank, type Tail, type TimedRow } from './model';
+import { competitorsOf, type Entry, percentileIndex, range, type Run, rank, type Tail, type TimedRow } from './model';
 import { writeReadme } from './project';
 import { bold, envFacts, linkEntry, mdTable } from './render';
 
@@ -92,10 +92,7 @@ function envLine(measured: Measured[]): string {
 function floorSentence(measured: Measured[]): string {
   const floors = measured.map((m) => ({ label: name(m), tail: tail(m, 'raw pg') }));
   const fastest = (p: Percentile) => floors.reduce((a, b) => (b.tail[p] < a.tail[p] ? b : a)).label;
-  const spread = (p: Percentile) => {
-    const values = floors.map((f) => f.tail[p]);
-    return Math.max(...values) - Math.min(...values);
-  };
+  const apart = (p: Percentile) => range(floors.map((f) => f.tail[p]));
   const inflation = floors.map((f) => `${Math.round((f.tail.p99 / f.tail.p50 - 1) * 100)}% on ${f.label}`).join(', ');
 
   // One runtime often leads both, and "Bun leads the median, Bun the tail" reads like a typo.
@@ -105,8 +102,8 @@ function floorSentence(measured: Measured[]): string {
       : `${fastest('p50')} leads the median, ${fastest('p99')} the tail`;
 
   return (
-    `On \`raw pg\`, the same code on all of them, the runtimes are ${spread('p50')}µs apart at p50 but ` +
-    `${spread('p99')}µs apart at p99: ${lead}, and each p99 is ${inflation} above its own p50.`
+    `On \`raw pg\`, the same code on all of them, the runtimes are ${apart('p50')}µs apart at p50 but ` +
+    `${apart('p99')}µs apart at p99: ${lead}, and each p99 is ${inflation} above its own p50.`
   );
 }
 
@@ -115,7 +112,7 @@ function scaleSentence(measured: Measured[]): string {
   const widest = entriesOf(measured)
     .map((entry) => {
       const p50s = measured.map((m) => tail(m, entry).p50);
-      return { entry, gap: Math.max(...p50s) - Math.min(...p50s) };
+      return { entry, gap: range(p50s) };
     })
     .reduce((a, b) => (b.gap > a.gap ? b : a));
 

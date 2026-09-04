@@ -223,6 +223,9 @@ export function rowFor<T extends Row>(ranked: T[], entry: Entry): T {
 
 export const sortedAsc = (xs: number[]) => [...xs].sort((a, b) => a - b);
 
+/** How far apart the extremes are. Not {@link spreadOf}, which is a median's confidence interval. */
+export const range = (values: number[]) => Math.max(...values) - Math.min(...values);
+
 /** Median, not mean: one GC pause during a run would otherwise dominate the number. */
 export function median(sorted: number[]): number {
   const mid = sorted.length >> 1;
