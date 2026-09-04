@@ -6,7 +6,7 @@
 
 import { competitorsOf, type MemoryRun, PUBLISHED_STEPS, type Row, rankMemory, STEPS, stepOf } from './model';
 import { writeReadme } from './project';
-import { bold, linkEntry, machineFacts, mdTable } from './report';
+import { bold, linkEntry, machineFacts, mdTable } from './render';
 
 /** Rows are entries here, not steps: seven entries read better down the page than across it. */
 function memoryTable(ranked: Row[]): string {

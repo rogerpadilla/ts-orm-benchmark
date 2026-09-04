@@ -6,6 +6,7 @@
  */
 
 import pg from 'pg';
+import { createClients } from '../src/clients';
 import { COMPANY_TABLE, USER_TABLE } from '../src/schema';
 
 const BENCH_DB = 'ts_orm_bench';
@@ -53,7 +54,7 @@ const TABLE_DDL = [
 ];
 
 /** Its own database, never the one `DATABASE_URL` points at: the reset truncates tables. */
-export async function ensureDatabase(baseUrl: string): Promise<string> {
+async function ensureDatabase(baseUrl: string): Promise<string> {
   const admin = new pg.Pool({ connectionString: baseUrl, max: 1 });
   const exists = await admin.query('SELECT 1 FROM pg_database WHERE datname = $1', [BENCH_DB]);
   if (exists.rowCount === 0) {
@@ -97,7 +98,25 @@ export async function resetFixture(admin: pg.Pool) {
 }
 
 /** The version string without the platform tail, which is what the report quotes. */
-export async function postgresVersion(admin: pg.Pool): Promise<string> {
+async function postgresVersion(admin: pg.Pool): Promise<string> {
   const { rows } = await admin.query('SELECT version()');
   return (rows[0].version as string).split(' on ')[0];
+}
+
+/**
+ * A fresh benchmark database with every client connected to it, and the one way to let go of both. Both
+ * benchmarks opened this by hand and had to remember the same teardown in the same `finally`.
+ */
+export async function connect() {
+  const benchUrl = await ensureDatabase(databaseUrl());
+  const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
+  const postgres = await postgresVersion(admin);
+  const clients = await createClients(benchUrl);
+
+  const close = async () => {
+    await clients.destroyAll();
+    await admin.end();
+  };
+
+  return { admin, clients, postgres, close };
 }

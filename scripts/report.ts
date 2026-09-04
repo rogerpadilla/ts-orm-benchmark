@@ -4,7 +4,6 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { cpus } from 'node:os';
 import { resolve } from 'node:path';
 import {
   ASSERTED_ONLY_STEPS,
@@ -13,7 +12,6 @@ import {
   ENTRIES,
   type Entry,
   PUBLISHED_STEPS,
-  parseEntry,
   places,
   type Row,
   type Run,
@@ -26,6 +24,7 @@ import {
   TOOLS,
 } from './model';
 import { installedVersion, root, writeReadme } from './project';
+import { bold, envFacts, linkEntry, mdTable } from './render';
 import { flowOf, sampleOf } from './samples';
 
 const STEP_LABELS: Record<Step, string> = {
@@ -37,20 +36,6 @@ const STEP_LABELS: Record<Step, string> = {
   delete: 'DELETE by id',
   readEmpty: 'SELECT to verify the delete',
 };
-
-export function linkEntry(entry: string): string {
-  const url = TOOLS[parseEntry(entry).base]?.url;
-  return url ? `[${entry}](${url})` : entry;
-}
-
-/** Every generated table goes through here, so a separator row can never drift from its header. */
-export function mdTable(header: string[], rows: string[][]): string {
-  const line = (cells: string[]) => `| ${cells.join(' | ')} |`;
-  return [line(header), line(header.map(() => '---')), ...rows.map(line)].join('\n');
-}
-
-/** The one convention every table here shares, in one place: the leading cell, and only it, is bold. */
-export const bold = (text: string | number, leading: boolean) => (leading ? `**${text}**` : `${text}`);
 
 const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => stepOf(r, step));
 
@@ -141,26 +126,6 @@ function headline(ranked: Row[]): string {
     `but only ${pg.adds - bun.adds}µs of that is UQL: the other ${floors}µs is the gap between the two ` +
     `floors, free to anything on that driver.`
   );
-}
-
-/** Where a run happened, which every report's caption states and none of them should word twice. */
-export const machineFacts = () => ({
-  machine: cpus()[0]?.model ?? 'unknown CPU',
-  when: new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' }),
-});
-
-/**
- * Generated with the numbers, so the line describing the run cannot drift from the run that produced
- * it. Naming the wrong runtime here once misattributed every figure below.
- */
-export function envFacts(run: Run) {
-  return {
-    postgres: run.postgres,
-    runtime: run.runtime.label,
-    ...machineFacts(),
-    /** Widest relative half-width across entries, so one figure can stand for the whole table. */
-    interval: Math.max(...run.spreads),
-  };
 }
 
 /** The run and its confidence in one caption, so a table of medians never stands without its error bar. */

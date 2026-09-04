@@ -6,17 +6,20 @@
 import { RUNTIME_LABELS } from '../src/runtime';
 import { competitorsOf, type Entry, percentileIndex, type Run, rank, type Tail, type TimedRow } from './model';
 import { writeReadme } from './project';
-import { bold, envFacts, linkEntry, mdTable } from './report';
+import { bold, envFacts, linkEntry, mdTable } from './render';
 
 /** A median and a p99 tell the whole story: one is the common case, the other is the worst you ship. */
 const PERCENTILES = ['p50', 'p99'] as const;
 
 type Percentile = (typeof PERCENTILES)[number];
 
-/** One runtime's run with its rows addressable by entry, which is how every line here reads a figure. */
-type Measured = { run: Run; byEntry: Map<Entry, TimedRow> };
+/** One runtime's run, ranked once: every line below reads its figures off this rather than ranking again. */
+type Measured = { run: Run; ranked: TimedRow[]; byEntry: Map<Entry, TimedRow> };
 
-const measure = (run: Run): Measured => ({ run, byEntry: new Map(rank(run).map((row) => [row.entry, row])) });
+function measure(run: Run): Measured {
+  const ranked = rank(run);
+  return { run, ranked, byEntry: new Map(ranked.map((row) => [row.entry, row])) };
+}
 
 /** Full label for the caption, bare name in the prose under it: the versions are stated once. */
 const label = (m: Measured) => m.run.runtime.label;
@@ -31,7 +34,7 @@ function tail(m: Measured, entry: Entry): Tail {
 }
 
 /** Row order for the table: the first run's ranking, which is why the caller passes Bun first. */
-const entriesOf = (measured: Measured[]): Entry[] => rank(measured[0].run).map((row) => row.entry);
+const entriesOf = (measured: Measured[]): Entry[] => measured[0].ranked.map((row) => row.entry);
 
 /**
  * A runtime that measured fewer entries carried less work per round, and its tail would read better for
@@ -117,7 +120,7 @@ function scaleSentence(measured: Measured[]): string {
     .reduce((a, b) => (b.gap > a.gap ? b : a));
 
   const ormGaps = measured.map((m) => {
-    const competitors = competitorsOf(rank(m.run));
+    const competitors = competitorsOf(m.ranked);
     return competitors[competitors.length - 1].adds - competitors[0].adds;
   });
 
@@ -135,8 +138,8 @@ function scaleSentence(measured: Measured[]): string {
  * the pairs that actually swap, rather than printing every order in full: one pair usually moves.
  */
 function orderSentence(measured: Measured[]): string {
-  const entries = competitorsOf(rank(measured[0].run)).map((r) => r.entry);
-  const adds = measured.map((m) => new Map(competitorsOf(rank(m.run)).map((r) => [r.entry, r.adds])));
+  const entries = competitorsOf(measured[0].ranked).map((r) => r.entry);
+  const adds = measured.map((m) => new Map(competitorsOf(m.ranked).map((r) => [r.entry, r.adds])));
   const addsFor = (i: number, entry: Entry) => adds[i].get(entry) ?? 0;
 
   const swaps = entries.flatMap((a, i) =>

@@ -16,7 +16,9 @@ const FLOWS_PATH = 'scripts/flows.ts';
 /** Every shape the `FLOWS` map uses: `Sequelize: sequelizeFlow,` and `UQL: (c) => uqlFlow(c.uql),`. */
 const WIRING = /^ {2}(?:'([^']+)'|([\w$]+)):.*?\b(\w+Flow)\b/;
 
-const source = () => readFileSync(resolve(root, FLOWS_PATH), 'utf8').split('\n');
+/** Read once: `flowOf` and one `sampleOf` per builder would otherwise open the same file nine times. */
+let lines: string[] | undefined;
+const source = () => (lines ??= readFileSync(resolve(root, FLOWS_PATH), 'utf8').split('\n'));
 
 /** Entry to the builder it is wired to, so two entries on one builder can be shown once. */
 export function flowOf(): Map<Entry, string> {

@@ -37,23 +37,9 @@ export type ProbeId = (typeof PROBES)[number]['id'];
 
 /**
  * Checked by the compiler this repo already builds with, and only that one, so a mark is what a reader's
- * own editor would say rather than what some pinned older toolchain would.
- *
- * Worth knowing while reading `select-key`: TypeScript 6.0 stopped reporting excess properties on an
- * object literal checked against a mapped type over an inferred type parameter, and 7 inherits it.
- * Reduced, with no ORM in it:
- *
- *     type Subset<T, U> = { [K in keyof T]: K extends keyof U ? T[K] : never };
- *     declare function findMany<T extends Args>(args: Subset<T, Args>): T;
- *     findMany({ select: { id: true, emial: true } });   // 5.9.3 errors; 6.0.3 and 7.0.2 are silent
- *
- * That is exactly how Prisma (`Subset<T, Args>`) types a projection, so it loses that check. Counted as
- * missing rather than excused: a check the compiler no longer makes protects nobody, whatever the ORM
- * intended. Drizzle's `db.query` (`KnownKeysOnly<TConfig, DBQueryConfig>`) is typed the same way, which
- * is why `drizzle.ts` writes its flat probes on `db.select()` - the API its timed read uses, where a
- * misspelled column is a property access the compiler still rejects. Pinning 5.9.3 alongside to
- * re-measure this every run was tried and dropped - it is a settled fact about a released compiler
- * rather than something a run can discover, and it cost a second toolchain and a `target` both majors
- * had a name for.
+ * own editor would say rather than what some pinned older toolchain would. Why `select-key` is red for
+ * Prisma and Drizzle on TypeScript 6 and up is the type-safety section of README.md; pinning 5.9.3
+ * alongside to re-measure it every run was tried and dropped, since it is a settled fact about a
+ * released compiler rather than something a run can discover.
  */
 export const COMPILER = { pkg: 'typescript', bin: 'node_modules/typescript/bin/tsc' } as const;

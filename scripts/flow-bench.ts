@@ -12,10 +12,8 @@
  *   bun scripts/flow-bench.ts --portable                # only the entries every runtime can load
  */
 
-import pg from 'pg';
-import { createClients } from '../src/clients';
 import { RUNTIME } from '../src/runtime';
-import { databaseUrl, ensureDatabase, postgresVersion, resetFixture } from './fixture';
+import { connect, resetFixture } from './fixture';
 import { checkStep, FLOWS } from './flows';
 import {
   byStep,
@@ -53,12 +51,9 @@ async function main() {
   const entries = RUNTIME.name === 'bun' && !flag('portable') ? [...ENTRIES] : PORTABLE_ENTRIES;
 
   console.log(`flow benchmark on ${RUNTIME.label}: ${iterations} iterations/step, ${warmup} warmup`);
-  const benchUrl = await ensureDatabase(databaseUrl());
-  const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
-  const postgres = await postgresVersion(admin);
+  const { admin, clients, postgres, close } = await connect();
   console.log(postgres, '\n');
 
-  const clients = await createClients(benchUrl);
   // Built once. Some flows hoist a constant statement out of the timed section, which only holds if the
   // flow itself is not rebuilt per iteration.
   const flows = entries.map((entry) => FLOWS[entry](clients));
@@ -89,8 +84,7 @@ async function main() {
       logProgress(round, warmup, iterations);
     }
   } finally {
-    await clients.destroyAll();
-    await admin.end();
+    await close();
   }
 
   const totals = samples.map(sortedRoundTotals);

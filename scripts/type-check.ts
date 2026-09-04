@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 import { PROBE_FILES } from './model';
 import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
 import { flag, installedVersion, root, writeJson, writeReadme } from './project';
-import { bold, linkEntry, mdTable } from './report';
+import { bold, linkEntry, mdTable } from './render';
 
 const DIR = resolve(root, 'type-safety');
 

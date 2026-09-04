@@ -1,4 +1,4 @@
-# TypeScript ORM Benchmark
+# TypeScript ORM benchmarks
 
 What a TypeScript ORM costs you on one real PostgreSQL round trip, in time and in memory, and which mistakes it catches before you run it.
 

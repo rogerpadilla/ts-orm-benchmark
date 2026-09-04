@@ -13,10 +13,9 @@
 
 import { resolve } from 'node:path';
 import { PerformanceObserver } from 'node:perf_hooks';
-import pg from 'pg';
-import { createClients } from '../src/clients';
+import type pg from 'pg';
 import { RUNTIME } from '../src/runtime';
-import { databaseUrl, ensureDatabase, postgresVersion, resetFixture } from './fixture';
+import { connect, resetFixture } from './fixture';
 import { checkStep, FLOWS, type Flow } from './flows';
 import { printMemorySummary, syncMemoryReport } from './memory-report';
 import { byStep, type Entry, type MemoryRun, median, PORTABLE_ENTRIES, STEPS, sortedAsc } from './model';
@@ -40,10 +39,7 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
     collections++;
   }).observe({ entryTypes: ['gc'] });
 
-  const benchUrl = await ensureDatabase(databaseUrl());
-  const admin = new pg.Pool({ connectionString: benchUrl, max: 1 });
-  const postgres = await postgresVersion(admin);
-  const clients = await createClients(benchUrl);
+  const { admin, clients, postgres, close } = await connect();
   const flow = FLOWS[entry](clients);
 
   const samples = byStep((): number[] => []);
@@ -80,8 +76,7 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
     }
     retained = await measureRetention(admin, flow, iterations);
   } finally {
-    await clients.destroyAll();
-    await admin.end();
+    await close();
   }
 
   const kept = STEPS.reduce((sum, step) => sum + samples[step].length, 0);

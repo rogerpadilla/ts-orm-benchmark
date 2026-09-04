@@ -118,10 +118,11 @@ export async function createClients(connectionString: string) {
     await rawPg.end();
   }
 
+  // `sequelize` itself is not returned: the flow reaches it through its two models, and `destroyAll`
+  // closes it from here.
   return {
     rawPg,
     uql,
-    sequelize,
     SqCompany,
     SqUser,
     typeorm,
