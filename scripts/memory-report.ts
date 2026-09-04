@@ -6,7 +6,7 @@
 
 import { competitorsOf, type MemoryRun, PUBLISHED_STEPS, type Row, rankMemory, STEPS, stepOf } from './model';
 import { writeReadme } from './project';
-import { linkEntry, machineFacts, mdTable } from './report';
+import { bold, linkEntry, machineFacts, mdTable } from './report';
 
 /** Rows are entries here, not steps: seven entries read better down the page than across it. */
 function memoryTable(ranked: Row[]): string {
@@ -16,7 +16,7 @@ function memoryTable(ranked: Row[]): string {
     r.isBaseline ? `_${linkEntry(r.entry)}_` : linkEntry(r.entry),
     ...PUBLISHED_STEPS.map((step) => `${stepOf(r, step)}`),
     `${r.total}`,
-    r.isBaseline ? 'floor' : r.adds === best ? `**+${r.adds}** 🥇` : `+${r.adds}`,
+    r.isBaseline ? 'floor' : bold(`+${r.adds}`, r.adds === best),
   ]);
 
   return mdTable(['Entry', ...PUBLISHED_STEPS, 'Total KB', 'Adds KB'], rows);

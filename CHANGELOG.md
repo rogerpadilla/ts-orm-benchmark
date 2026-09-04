@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+**New: a memory half.** `bun run bench.memory` weighs what each entry allocates per lifecycle, floored against `raw pg` like the timing tables. Node, one process per entry, nothing collected on purpose. UQL adds +201KB, MikroORM +3618KB.
+
+- Drizzle's flat type-safety probes moved to `db.select()`, the builder its timed read uses: it had been timed on one API and scored on the other. 8/10 to 9/10.
+- Dependencies: uql-orm 0.37.1 to 0.39.0.
+
 ## 0.11.0 - 2026-09-02
 
 - Dependencies: uql-orm 0.33.0 to 0.37.1, TypeORM 1.1.0 to 1.1.1.

@@ -125,6 +125,9 @@ export type Row = {
 /** A timed row also carries what only a timing run has: where the slow rounds land, and how tight. */
 export type TimedRow = Row & { tail: Tail; spread: number };
 
+/** A timed row placed against the others: what its `adds` is known to within, and who is measurably faster. */
+export type PlacedRow = TimedRow & { margin: number; place: number };
+
 /** `Drizzle (bunSql)` is one tool reached through a second driver: same tool, different floor. */
 export function parseEntry(entry: string): { base: string; variant?: string } {
   const match = /^(.*?)\s*\((.+)\)$/.exec(entry);
@@ -176,12 +179,33 @@ export const rank = (run: Run): TimedRow[] =>
 /** A memory run, ranked. Nothing to carry: KB per step is the whole story. */
 export const rankMemory = (run: MemoryRun): Row[] => ordered(rows(run.entries, run.results));
 
+/**
+ * Half-width of the 95% interval on `adds`, which is a difference of two measured medians, so the entry's
+ * interval and its floor's add in quadrature rather than one of them standing for both.
+ */
+function marginOf(ranked: TimedRow[], row: TimedRow): number {
+  const floor = rowFor(ranked, floorFor(row.entry));
+  return Math.round(Math.hypot(row.spread * row.total, floor.spread * floor.total));
+}
+
+/**
+ * Places assigned over intervals rather than over medians: an entry's place is one more than the number of
+ * entries measurably faster than it, so two whose intervals overlap share a place instead of being ordered
+ * by noise. Same rule LMArena ranks models by, and the reason this table has no 1-through-8 column.
+ */
+export function places(ranked: TimedRow[]): PlacedRow[] {
+  const competitors = competitorsOf(ranked).map((row) => ({ ...row, margin: marginOf(ranked, row) }));
+  const beats = (a: { adds: number; margin: number }, b: typeof a) => a.adds + a.margin < b.adds - b.margin;
+
+  return competitors.map((row) => ({ ...row, place: 1 + competitors.filter((other) => beats(other, row)).length }));
+}
+
 /** {@link Row.steps} is aligned with {@link STEPS}; this is the only place that has to know it. */
 export const stepOf = (row: Row, step: Step) => row.steps[STEPS.indexOf(step)];
 
-export const competitorsOf = (ranked: Row[]) => ranked.filter((r) => !r.isBaseline);
+export const competitorsOf = <T extends Row>(ranked: T[]): T[] => ranked.filter((r) => !r.isBaseline);
 
-export function rowFor(ranked: Row[], entry: Entry): Row {
+export function rowFor<T extends Row>(ranked: T[], entry: Entry): T {
   const row = ranked.find((r) => r.entry === entry);
   if (!row) {
     throw new TypeError(`run has no ${entry} row`);

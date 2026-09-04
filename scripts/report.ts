@@ -14,6 +14,7 @@ import {
   type Entry,
   PUBLISHED_STEPS,
   parseEntry,
+  places,
   type Row,
   type Run,
   rank,
@@ -48,6 +49,9 @@ export function mdTable(header: string[], rows: string[][]): string {
   return [line(header), line(header.map(() => '---')), ...rows.map(line)].join('\n');
 }
 
+/** The one convention every table here shares, in one place: the leading cell, and only it, is bold. */
+export const bold = (text: string | number, leading: boolean) => (leading ? `**${text}**` : `${text}`);
+
 const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => stepOf(r, step));
 
 /**
@@ -57,7 +61,7 @@ const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => stepOf(r, st
 function stepTable(ranked: Row[]): string {
   const cells = (values: number[]) => {
     const best = Math.min(...values.filter((_, i) => !ranked[i].isBaseline));
-    return values.map((v, i) => (v === best && !ranked[i].isBaseline ? `**${v}** 🥇` : `${v}`));
+    return values.map((v, i) => bold(v, v === best && !ranked[i].isBaseline));
   };
 
   return mdTable(
@@ -100,18 +104,18 @@ function stepsNote(ranked: Row[]): string {
   );
 }
 
-function rankingTable(ranked: Row[]): string {
-  const medals = ['🥇', '🥈', '🥉'];
-  const competitors = competitorsOf(ranked);
+/** Places come from {@link places}, so entries whose intervals overlap share one instead of being ordered by noise. */
+function rankingTable(ranked: TimedRow[]): string {
+  const floors = ranked.filter((r) => r.isBaseline).map((r) => ['ref', `_${r.entry}_`, 'floor', `${r.total}`]);
 
-  const rows = ranked.map((r) => {
-    const place = competitors.indexOf(r) + 1;
-    const position = r.isBaseline ? 'ref' : `${medals[place - 1] ?? ''} ${place}`.trim();
-    const name = r.isBaseline ? `_${r.entry}_` : place === 1 ? `**${r.entry}**` : r.entry;
-    return [position, name, r.isBaseline ? 'floor' : `+${r.adds}`, `${r.total}`];
-  });
+  const competitors = places(ranked).map(({ entry, adds, place, total }) => [
+    `${place}`,
+    bold(entry, place === 1),
+    `+${adds}`,
+    `${total}`,
+  ]);
 
-  return mdTable(['#', 'Entry', 'Adds µs', 'Total µs'], rows);
+  return mdTable(['#', 'Entry', 'Adds µs', 'Total µs'], [...floors, ...competitors]);
 }
 
 /**

@@ -6,7 +6,7 @@
 import { RUNTIME_LABELS } from '../src/runtime';
 import { competitorsOf, type Entry, percentileIndex, type Run, rank, type Tail, type TimedRow } from './model';
 import { writeReadme } from './project';
-import { envFacts, linkEntry, mdTable } from './report';
+import { bold, envFacts, linkEntry, mdTable } from './report';
 
 /** A median and a p99 tell the whole story: one is the common case, the other is the worst you ship. */
 const PERCENTILES = ['p50', 'p99'] as const;
@@ -61,7 +61,7 @@ function runtimeTable(measured: Measured[]): string {
     const cells = measured.flatMap((m) =>
       PERCENTILES.map((p, i) => {
         const us = tail(m, entry)[p];
-        return us === best[i] ? `**${us}**` : `${us}`;
+        return bold(us, us === best[i]);
       }),
     );
     return [linkEntry(entry), ...cells];

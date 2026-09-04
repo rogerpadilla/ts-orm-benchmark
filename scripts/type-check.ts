@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 import { PROBE_FILES } from './model';
 import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
 import { flag, installedVersion, root, writeReadme } from './project';
-import { linkEntry, mdTable } from './report';
+import { bold, linkEntry, mdTable } from './report';
 
 const DIR = resolve(root, 'type-safety');
 
@@ -161,10 +161,7 @@ function table(results: Map<string, Verdict[]>): string {
     ['Mistake', ...order.map(([entry]) => linkEntry(entry))],
     [
       ...PROBES.map((probe, i) => [probe.what, ...order.map(([, vs]) => MARK[vs[i]])]),
-      [
-        `**Caught**, of ${PROBES.length}`,
-        ...order.map(([, vs]) => (score(vs) === best ? `**${score(vs)}** 🥇` : `${score(vs)}`)),
-      ],
+      [`**Caught**, of ${PROBES.length}`, ...order.map(([, vs]) => bold(score(vs), score(vs) === best))],
     ],
   );
 }

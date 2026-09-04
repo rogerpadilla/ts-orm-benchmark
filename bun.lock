@@ -17,7 +17,7 @@
         "sequelize": "6.37.8",
         "typeorm": "1.1.1",
         "typescript": "7.0.2",
-        "uql-orm": "0.37.1",
+        "uql-orm": "0.39.0",
       },
     },
   },
@@ -496,7 +496,7 @@
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 
-    "uql-orm": ["uql-orm@0.37.1", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0", "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.0.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-eFO1bFfWjV8br94HRgRZIxb4nQ4qEa8LwMF9r30wtGD+0LU+OVex63oYHahOB5doec0xv5ilyvN76XODUxXdgw=="],
+    "uql-orm": ["uql-orm@0.39.0", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0", "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.0.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-bE9L5bGcn82r5GBsUMVgPIKoBxIFeBFj9BR6V3y5Ynn92ergCPmj0fHpGZnpDjrb3wGNh2up/afb7dWaudKujg=="],
 
     "uuid": ["uuid@8.3.2", "", { "bin": "dist/bin/uuid" }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 
