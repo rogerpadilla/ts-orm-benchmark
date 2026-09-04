@@ -39,7 +39,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bunx tsc --noEmit
-      - run: bunx biome check
+      - run: bun run lint
       - run: bun scripts/flow-bench.ts --iterations 3 --verify
       # Same assertions again through the memory harness, which runs its own Node child per entry: the
       # one path where a step could break without the timing run noticing is the bundle those children load.

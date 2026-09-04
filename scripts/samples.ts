@@ -3,7 +3,7 @@
  * the source rather than written twice: a sample that is copied is a sample that goes stale, and the one
  * thing a reader has to be able to trust here is that the code shown is the code that ran.
  *
- * The parse leans on the file being Biome-formatted, which it is, and throws rather than guesses.
+ * The parse leans on the file being Oxfmt-formatted, which it is, and throws rather than guesses.
  */
 
 import { readFileSync } from 'node:fs';

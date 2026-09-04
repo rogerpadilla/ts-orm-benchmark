@@ -6,7 +6,13 @@
   },
   "rules": {
     "default-param-last": "error",
-    "eqeqeq": "error",
+    "eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
     "no-async-promise-executor": "error",
     "no-compare-neg-zero": "error",
     "no-constant-binary-expression": "error",
@@ -22,6 +28,7 @@
     "no-var": "error",
     "object-shorthand": "error",
     "one-var": ["error", "never"],
+    "typescript/no-explicit-any": "off",
     "typescript/no-extra-non-null-assertion": "error",
     "typescript/no-inferrable-types": "error",
     "typescript/no-misused-new": "error",
