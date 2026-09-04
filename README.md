@@ -269,7 +269,7 @@ Each rewrites the tables it owns, and none needs the others to have run. Every b
 
 1. Add it as a `devDependency`
 2. Give it the same `Company` and `User` shape in `src/schema.ts`, and a client in `src/clients.ts`
-3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts` — `TOOLS` is where its link, version and probe file name come from
+3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts`. `TOOLS` is where its link, version and probe file name come from
 4. Declare its client in `type-safety/clients.ts` and write the ten mistakes in `type-safety/<probe>.ts`
 5. Run `bun run bench`, `bun run bench.runtimes`, `bun run bench.memory` and `bun run bench.types`; the tables regenerate themselves
 
