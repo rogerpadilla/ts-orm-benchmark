@@ -6,33 +6,19 @@ const users = clients.typeorm.getRepository(TypeORMUserSchema);
 const companies = clients.typeorm.getRepository(TypeORMCompanySchema);
 
 // Misspelled column in the projection | emial -> email
-await users.find({
-  select: { id: true, emial: true },
-});
+await users.find({ select: { id: true, emial: true } });
 
 // Misspelled column in the filter | companyid -> companyId
-await users.find({
-  select: { id: true },
-  where: { companyid: MoreThan(0) },
-});
+await users.find({ select: { id: true }, where: { companyid: MoreThan(0) } });
 
 // String value against a numeric column | 'one' -> 1
-await users.find({
-  select: { id: true },
-  where: { companyId: 'one' },
-});
+await users.find({ select: { id: true }, where: { companyId: 'one' } });
 
 // Text operator against a numeric column | Like('abc') -> MoreThan(1)
-await users.find({
-  select: { id: true },
-  where: { companyId: Like('abc') },
-});
+await users.find({ select: { id: true }, where: { companyId: Like('abc') } });
 
 // Misspelled column in the sort | idd -> id
-await users.find({
-  select: { id: true },
-  order: { idd: 'ASC' },
-});
+await users.find({ select: { id: true }, order: { idd: 'ASC' } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await companies.find({

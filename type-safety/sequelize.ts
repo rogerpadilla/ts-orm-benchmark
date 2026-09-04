@@ -4,9 +4,7 @@ import { clients } from './clients';
 const { SqUser, SqCompany } = clients;
 
 // Misspelled column in the projection | emial -> email
-await SqUser.findAll({
-  attributes: ['id', 'emial'],
-});
+await SqUser.findAll({ attributes: ['id', 'emial'] });
 
 // Misspelled column in the filter | companyid -> companyId
 await SqUser.findAll({
@@ -15,10 +13,7 @@ await SqUser.findAll({
 });
 
 // String value against a numeric column | 'one' -> 1
-await SqUser.findAll({
-  attributes: ['id'],
-  where: { companyId: 'one' },
-});
+await SqUser.findAll({ attributes: ['id'], where: { companyId: 'one' } });
 
 // Text operator against a numeric column | [Op.like]: 'abc' -> [Op.gte]: 1
 await SqUser.findAll({
@@ -27,10 +22,7 @@ await SqUser.findAll({
 });
 
 // Misspelled column in the sort | idd -> id
-await SqUser.findAll({
-  attributes: ['id'],
-  order: [['idd', 'ASC']],
-});
+await SqUser.findAll({ attributes: ['id'], order: [['idd', 'ASC']] });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await SqCompany.findAll({

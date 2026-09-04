@@ -4,9 +4,7 @@ import { clients } from './clients';
 const { uql } = clients;
 
 // Misspelled column in the projection | emial -> email
-await uql.findMany(User, {
-  $select: { id: true, emial: true },
-});
+await uql.findMany(User, { $select: { id: true, emial: true } });
 
 // Misspelled column in the filter | companyid -> companyId
 await uql.findMany(User, {
@@ -27,10 +25,7 @@ await uql.findMany(User, {
 });
 
 // Misspelled column in the sort | idd -> id
-await uql.findMany(User, {
-  $select: { id: true },
-  $sort: { idd: 1 },
-});
+await uql.findMany(User, { $select: { id: true }, $sort: { idd: 1 } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await uql.findMany(Company, {

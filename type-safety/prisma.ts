@@ -3,9 +3,7 @@ import { clients } from './clients';
 const { prisma } = clients;
 
 // Misspelled column in the projection | emial -> email
-await prisma.user.findMany({
-  select: { id: true, emial: true },
-});
+await prisma.user.findMany({ select: { id: true, emial: true } });
 
 // Misspelled column in the filter | companyid -> companyId
 await prisma.user.findMany({
@@ -26,10 +24,7 @@ await prisma.user.findMany({
 });
 
 // Misspelled column in the sort | idd -> id
-await prisma.user.findMany({
-  select: { id: true },
-  orderBy: { idd: 'asc' },
-});
+await prisma.user.findMany({ select: { id: true }, orderBy: { idd: 'asc' } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await prisma.company.findMany({
