@@ -35,19 +35,19 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@mikro-orm/core": "7.1.15",
-    "@mikro-orm/postgresql": "7.1.15",
+    "@mikro-orm/core": "7.2.0",
+    "@mikro-orm/postgresql": "7.2.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "@types/bun": "^1.4.0",
+    "@types/bun": "^1.4.2",
     "drizzle-orm": "0.45.2",
-    "oxfmt": "^0.66.0",
-    "oxlint": "^1.81.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
     "pg": "8.23.0",
     "prisma": "7.10.0",
     "sequelize": "6.37.8",
     "typeorm": "1.1.1",
     "typescript": "7.0.2",
-    "uql-orm": "0.39.0"
+    "uql-orm": "0.47.1"
   }
 }

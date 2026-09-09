@@ -11,49 +11,49 @@ I wrote UQL, so read the tables rather than my summary of them. Clone it and che
 ## Results
 
 <!-- bench:env -->
-> PostgreSQL 18.6 (Homebrew), Bun 1.3.14, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±1.7% or tighter at 95% confidence (widest: Sequelize).
+> PostgreSQL 18.6 (Homebrew), Bun 1.4.2, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±1.6% or tighter at 95% confidence (widest: Sequelize).
 <!-- /bench:env -->
 
 <!-- bench:versions -->
-_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.1.15 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.39.0._
+_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.2.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.47.1._
 <!-- /bench:versions -->
 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1069 |
-| ref | _raw pg_ | floor | 1162 |
-| 1 | **UQL (bunSql)** | +181 | 1250 |
-| 1 | **UQL** | +208 | 1370 |
-| 3 | TypeORM | +571 | 1733 |
-| 3 | Drizzle (bunSql) | +592 | 1661 |
-| 3 | Drizzle | +614 | 1776 |
-| 6 | Sequelize | +914 | 2076 |
-| 6 | Prisma | +953 | 2115 |
-| 8 | MikroORM | +1729 | 2891 |
+| ref | _bun sql_ | floor | 1095 |
+| ref | _raw pg_ | floor | 1128 |
+| 1 | **UQL (bunSql)** | +176 | 1271 |
+| 2 | UQL | +227 | 1355 |
+| 3 | Drizzle (bunSql) | +342 | 1437 |
+| 4 | Drizzle | +387 | 1515 |
+| 5 | TypeORM | +484 | 1612 |
+| 6 | Sequelize | +779 | 1907 |
+| 7 | Prisma | +838 | 1966 |
+| 8 | MikroORM | +1383 | 2511 |
 <!-- /bench:ranking -->
 
 Places are by `Adds`, not by total, so a lower total can sit further down when the two floors differ. Entries share a place when their confidence intervals overlap: an equal number is a difference this run cannot resolve, not a tie broken in someone's favour.
 
 <!-- bench:headline -->
-Totals only span 2.3x, because every entry pays the same database cost. What the ORM itself adds spans 10x: 181µs for UQL (bunSql), 1729µs for MikroORM.
+Totals only span 2.0x, because every entry pays the same database cost. What the ORM itself adds spans 8x: 176µs for UQL (bunSql), 1383µs for MikroORM.
 
-Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 120µs, but only 27µs of that is UQL: the other 93µs is the gap between the two floors, free to anything on that driver.
+Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 84µs, but only 51µs of that is UQL: the other 33µs is the gap between the two floors, free to anything on that driver.
 <!-- /bench:headline -->
 
 ### Per step
 
 <!-- bench:steps -->
-| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [TypeORM](https://typeorm.io) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
+| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 340 | 330 | **348** | 359 | 469 | 500 | 514 | 465 | 910 | 443 |
-| SELECT with WHERE, SORT, LIMIT 200 | 165 | 214 | **202** | 263 | 355 | 247 | 286 | 411 | 291 | 817 |
-| SELECT 50 parents with their children | 184 | 228 | **266** | 313 | 379 | 420 | 471 | 584 | 393 | 952 |
-| **Total**, all 7 steps | 1069 | 1162 | **1250** | 1370 | 1733 | 1661 | 1776 | 2076 | 2115 | 2891 |
+| INSERT 10 rows, returning ids | 338 | 317 | **341** | 354 | 386 | 393 | 435 | 435 | 822 | 423 |
+| SELECT with WHERE, SORT, LIMIT 200 | 173 | 197 | **210** | 247 | 233 | 250 | 319 | 368 | 265 | 679 |
+| SELECT 50 parents with their children | 185 | 213 | **272** | 305 | 345 | 394 | 331 | 509 | 366 | 798 |
+| **Total**, all 7 steps | 1095 | 1128 | **1271** | 1355 | 1437 | 1515 | 1612 | 1907 | 1966 | 2511 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is MikroORM's nested: 952µs against 266-584µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 434-679µs of each total and separating the field by at most 121µs.
+The biggest gap is Prisma's insert: 822µs against 341-435µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 448-611µs of each total and separating the field by at most 100µs.
 <!-- /bench:steps-note -->
 
 ### The nested read, as each entry writes it
@@ -183,23 +183,23 @@ MikroORM's filter probe names `createdAt`, since its `User` has no scalar `compa
 Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the only variable. All three measure the same seven entries. The `(bunSql)` rows sit out even on Bun: that client is a Bun API, and three extra entries per round would show up in the tail as if the runtime had caused it.
 
 <!-- bench:runtime-env -->
-> Bun 1.3.14, Node 24.20.0, Deno 2.9.6, all running the same bundled JavaScript, one at a time against the same database. PostgreSQL 18.6 (Homebrew), Apple M4 Max, September 2026. µs for a whole lifecycle, nearest-rank percentiles over 2000 rounds after 250 warmup, so a p99 is drawn from the 21 slowest rounds.
+> Bun 1.4.2, Node 24.20.0, Deno 2.9.6, all running the same bundled JavaScript, one at a time against the same database. PostgreSQL 18.6 (Homebrew), Apple M4 Max, September 2026. µs for a whole lifecycle, nearest-rank percentiles over 2000 rounds after 250 warmup, so a p99 is drawn from the 21 slowest rounds.
 <!-- /bench:runtime-env -->
 
 <!-- bench:runtimes -->
 | Entry (µs) | Bun p50 | Bun p99 | Node p50 | Node p99 | Deno p50 | Deno p99 |
 | --- | --- | --- | --- | --- | --- | --- |
-| [raw pg](https://node-postgres.com) | 1347 | 7382 | 1282 | 7061 | **1234** | **3924** |
-| [UQL](https://uql-orm.dev) | 1629 | 8507 | 1563 | 8592 | **1429** | **4909** |
-| [TypeORM](https://typeorm.io) | 2045 | 12055 | 1948 | 10431 | **1654** | **6345** |
-| [Drizzle](https://orm.drizzle.team) | 2127 | 10292 | 1831 | 9904 | **1716** | **5720** |
-| [Prisma](https://www.prisma.io) | 2417 | 11785 | 2395 | 12641 | **2373** | **8130** |
-| [Sequelize](https://sequelize.org) | 2469 | 13358 | 2397 | 12239 | **2073** | **7344** |
-| [MikroORM](https://mikro-orm.io) | **3403** | 16799 | 4343 | 19394 | 3768 | **12751** |
+| [raw pg](https://node-postgres.com) | **1149** | 4228 | 1209 | **3301** | 1221 | 3348 |
+| [UQL](https://uql-orm.dev) | **1403** | 5089 | 1444 | 4212 | 1438 | **4064** |
+| [Drizzle](https://orm.drizzle.team) | **1556** | 5955 | 1726 | **4531** | 1725 | 5558 |
+| [TypeORM](https://typeorm.io) | **1602** | 6488 | 1769 | **5261** | 1672 | 6425 |
+| [Sequelize](https://sequelize.org) | **1920** | 8153 | 2097 | **6109** | 2106 | 7299 |
+| [Prisma](https://www.prisma.io) | **1987** | 8344 | 2231 | **6009** | 2423 | 7726 |
+| [MikroORM](https://mikro-orm.io) | **2653** | 11871 | 3751 | **10703** | 3887 | 12229 |
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 113µs apart at p50 but 3458µs apart at p99: Deno leads both, and each p99 is 448% on Bun, 451% on Node, 218% on Deno above its own p50. Switching runtime moves any single entry by at most 940µs at p50 (MikroORM), where switching ORM on one runtime moves it 1645-2718µs, so the ORM is the bigger decision here. 2 pairs change places between runtimes, the closest Prisma and Sequelize at 26µs.
+On `raw pg`, the same code on all of them, the runtimes are 72µs apart at p50 but 927µs apart at p99: Bun leads the median, Node the tail, and each p99 is 268% on Bun, 173% on Node, 174% on Deno above its own p50. Switching runtime moves any single entry by at most 1234µs at p50 (MikroORM), where switching ORM on one runtime moves it 1188-2426µs, so the runtime is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 37µs apart.
 <!-- /bench:runtime-note -->
 
 ## Memory
@@ -207,25 +207,25 @@ On `raw pg`, the same code on all of them, the runtimes are 113µs apart at p50 
 How much heap each entry allocates to serve one lifecycle. Measured on Node, one process per entry: V8's counter is the only one of the three that moves on allocation rather than at a collection, and on Bun a hundred thousand fresh objects read as zero bytes. The `(bunSql)` rows sit out for the same reason the runtime table drops them.
 
 <!-- bench:memory-env -->
-> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 2% of its own (MikroORM).
+> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 1% of its own (MikroORM).
 <!-- /bench:memory-env -->
 
 <!-- bench:memory -->
 | Entry | insert | read | nested | Total KB | Adds KB |
 | --- | --- | --- | --- | --- | --- |
 | _[raw pg](https://node-postgres.com)_ | 14 | 87 | 106 | 245 | floor |
-| [UQL](https://uql-orm.dev) | 42 | 132 | 184 | 446 | **+201** |
-| [Drizzle](https://orm.drizzle.team) | 140 | 251 | 242 | 769 | +524 |
+| [UQL](https://uql-orm.dev) | 42 | 133 | 188 | 454 | **+209** |
+| [Drizzle](https://orm.drizzle.team) | 140 | 250 | 242 | 768 | +523 |
 | [Prisma](https://www.prisma.io) | 273 | 220 | 373 | 1053 | +808 |
-| [TypeORM](https://typeorm.io) | 126 | 294 | 503 | 1065 | +820 |
-| [Sequelize](https://sequelize.org) | 100 | 426 | 592 | 1296 | +1051 |
-| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2060 | 3864 | +3619 |
+| [TypeORM](https://typeorm.io) | 126 | 295 | 503 | 1066 | +821 |
+| [Sequelize](https://sequelize.org) | 100 | 425 | 585 | 1288 | +1043 |
+| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2060 | 3866 | +3621 |
 <!-- /bench:memory -->
 
 <!-- bench:memory-note -->
-Above the floor the field spans 18.0x: 201KB for UQL, 3619KB for MikroORM, and nested opens it widest: MikroORM's 2060KB against UQL's 184KB.
+Above the floor the field spans 17.3x: 209KB for UQL, 3621KB for MikroORM, and read opens it widest: MikroORM's 1470KB against UQL's 133KB.
 
-Almost none of it survives: another 60 lifecycles, collected either side, leave at most 42KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
+Almost none of it survives: another 60 lifecycles, collected either side, leave every heap smaller than it started, identity maps included. What the table prices is collector pressure, not a resident set that grows.
 <!-- /bench:memory-note -->
 
 ## Method
