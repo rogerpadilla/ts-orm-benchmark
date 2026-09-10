@@ -187,17 +187,17 @@ Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the on
 <!-- bench:runtimes -->
 | Entry (µs) | Bun p50 | Bun p99 | Node p50 | Node p99 | Deno p50 | Deno p99 |
 | --- | --- | --- | --- | --- | --- | --- |
-| [raw pg](https://node-postgres.com) | **1139** | 4261 | 1323 | 4757 | 1232 | **3433** |
-| [UQL](https://uql-orm.dev) | **1378** | 5318 | 1612 | 5857 | 1438 | **4764** |
-| [Drizzle](https://orm.drizzle.team) | **1536** | 6162 | 1883 | 7400 | 1721 | **5670** |
-| [TypeORM](https://typeorm.io) | **1558** | 6725 | 1927 | 7669 | 1671 | **5946** |
-| [Sequelize](https://sequelize.org) | **1875** | 8507 | 2389 | 9844 | 2083 | **6982** |
-| [Prisma](https://www.prisma.io) | **1944** | 7891 | 2456 | 9840 | 2398 | **7851** |
-| [MikroORM](https://mikro-orm.io) | **2490** | **12295** | 4081 | 15412 | 3877 | 13173 |
+| [raw pg](https://node-postgres.com) | **1168** | 3327 | 1229 | 2894 | 1242 | **2109** |
+| [UQL](https://uql-orm.dev) | **1387** | 4170 | 1487 | 3657 | 1485 | **2509** |
+| [Drizzle](https://orm.drizzle.team) | **1579** | 4640 | 1771 | 4407 | 1781 | **3444** |
+| [TypeORM](https://typeorm.io) | **1613** | 4603 | 1802 | 4722 | 1727 | **4466** |
+| [Sequelize](https://sequelize.org) | **1921** | 6149 | 2156 | 5671 | 2177 | **4445** |
+| [Prisma](https://www.prisma.io) | **1993** | 5904 | 2282 | 5233 | 2453 | **4930** |
+| [MikroORM](https://mikro-orm.io) | **2558** | **7669** | 3668 | 9127 | 3658 | 8563 |
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 184µs apart at p50 but 1324µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 274% on Bun, 260% on Node, 179% on Deno above its own p50. Switching runtime moves any single entry by at most 1591µs at p50 (MikroORM), where switching ORM on one runtime moves it 1091-2454µs, so the runtime is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 22µs apart.
+On `raw pg`, the same code on all of them, the runtimes are 74µs apart at p50 but 1218µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 185% on Bun, 135% on Node, 70% on Deno above its own p50. Switching runtime moves any single entry by at most 1110µs at p50 (MikroORM), where switching ORM on one runtime moves it 1137-2141µs, so the ORM is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 25µs apart.
 <!-- /bench:runtime-note -->
 
 ## Memory
@@ -205,25 +205,25 @@ On `raw pg`, the same code on all of them, the runtimes are 184µs apart at p50 
 How much heap each entry allocates to serve one lifecycle. Measured on Node, one process per entry: V8's counter is the only one of the three that moves on allocation rather than at a collection, and on Bun a hundred thousand fresh objects read as zero bytes. The `(bunSql)` rows sit out for the same reason the runtime table drops them.
 
 <!-- bench:memory-env -->
-> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 1% of its own (MikroORM).
+> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 2% of its own (MikroORM).
 <!-- /bench:memory-env -->
 
 <!-- bench:memory -->
 | Entry | insert | read | nested | Total KB | Adds KB |
 | --- | --- | --- | --- | --- | --- |
 | _[raw pg](https://node-postgres.com)_ | 14 | 87 | 106 | 245 | floor |
-| [UQL](https://uql-orm.dev) | 43 | 133 | 188 | 456 | **+211** |
-| [Drizzle](https://orm.drizzle.team) | 134 | 249 | 239 | 753 | +508 |
-| [Prisma](https://www.prisma.io) | 273 | 220 | 373 | 1053 | +808 |
+| [UQL](https://uql-orm.dev) | 45 | 133 | 188 | 458 | **+213** |
+| [Drizzle](https://orm.drizzle.team) | 140 | 250 | 239 | 760 | +515 |
+| [Prisma](https://www.prisma.io) | 273 | 220 | 373 | 1054 | +809 |
 | [TypeORM](https://typeorm.io) | 126 | 295 | 503 | 1066 | +821 |
 | [Sequelize](https://sequelize.org) | 100 | 425 | 591 | 1294 | +1049 |
-| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2059 | 3865 | +3620 |
+| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2058 | 3864 | +3619 |
 <!-- /bench:memory -->
 
 <!-- bench:memory-note -->
-Above the floor the field spans 17.2x: 211KB for UQL, 3620KB for MikroORM, and read opens it widest: MikroORM's 1470KB against UQL's 133KB.
+Above the floor the field spans 17.0x: 213KB for UQL, 3619KB for MikroORM, and read opens it widest: MikroORM's 1470KB against UQL's 133KB.
 
-Almost none of it survives: another 60 lifecycles, collected either side, leave at most 16KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
+Almost none of it survives: another 60 lifecycles, collected either side, leave at most 36KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
 <!-- /bench:memory-note -->
 
 ## Method
