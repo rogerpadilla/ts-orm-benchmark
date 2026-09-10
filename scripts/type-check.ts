@@ -21,7 +21,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PROBE_FILES, type Verdict, type Verdicts } from './model';
-import { COMPILER, PROBE_MARKER, PROBES, type ProbeId } from './probes';
+import { COMPILER, PROBE_MARKER, PROBES, type ProbeId, SHARED_FIXES } from './probes';
 import { flag, installedVersion, root } from './project';
 import { printTypeSafetySummary, syncTypeSafetyReport, VERDICTS } from './type-safety-report';
 
@@ -59,6 +59,14 @@ function readProbeFile(stem: string): ProbeFile {
     to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length,
     fix,
   }));
+
+  for (const { id, fix } of regions) {
+    const written = `${fix.mistake} -> ${fix.correction}`;
+    const shared = SHARED_FIXES[id];
+    if (shared && written !== shared) {
+      throw new TypeError(`${stem}.ts corrects '${id}' as '${written}', where every file writes '${shared}'`);
+    }
+  }
 
   return { stem, entry: PROBE_FILES[stem], lines, regions };
 }

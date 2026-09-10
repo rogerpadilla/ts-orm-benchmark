@@ -36,6 +36,23 @@ export const PROBES = [
 export type ProbeId = (typeof PROBES)[number]['id'];
 
 /**
+ * The correction every file writes identically, for the probes whose mistake is the same name in every
+ * API, so no entry can quietly probe an easier column. The operator probe is left out: each ORM spells
+ * its operators its own way.
+ */
+export const SHARED_FIXES: Partial<Record<ProbeId, string>> = {
+  'select-key': 'emial -> email',
+  'where-key': 'createdat -> createdAt',
+  'where-value': "'one' -> 1",
+  'sort-key': 'idd -> id',
+  'nested-select-key': 'nmae -> name',
+  'insert-key': 'emails -> email',
+  'update-value': "42 -> 'Updated Name'",
+  'result-unselected': 'user.email -> user.name',
+  'result-nested': '.nmae -> .name',
+};
+
+/**
  * Checked by the compiler this repo already builds with, and only that one, so a mark is what a reader's
  * own editor would say rather than what some pinned older toolchain would. Why `select-key` is red for
  * Prisma and Drizzle on TypeScript 6 and up is the type-safety section of README.md; pinning 5.9.3

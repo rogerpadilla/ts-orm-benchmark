@@ -1,4 +1,4 @@
-import { asc, eq, gt, like } from 'drizzle-orm';
+import { asc, eq, gt, gte, like } from 'drizzle-orm';
 import { drizzleUsers } from '../src/schema';
 import { clients } from './clients';
 
@@ -9,25 +9,25 @@ await db
   .select({ id: drizzleUsers.id, email: drizzleUsers.emial })
   .from(drizzleUsers);
 
-// Misspelled column in the filter | companyid -> companyId
+// Misspelled column in the filter | createdat -> createdAt
 await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)
-  .where(gt(drizzleUsers.companyid, 0));
+  .where(gt(drizzleUsers.createdat, 0));
 
 // String value against a numeric column | 'one' -> 1
 await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)
-  .where(eq(drizzleUsers.companyId, 'one'));
+  .where(eq(drizzleUsers.createdAt, 'one'));
 
-// Text operator against a numeric column | like(drizzleUsers.companyId, 'abc') -> gt(drizzleUsers.companyId, 1)
+// Text operator against a numeric column | like(drizzleUsers.createdAt, 'abc') -> gte(drizzleUsers.createdAt, 1)
 await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)
-  .where(like(drizzleUsers.companyId, 'abc'));
+  .where(like(drizzleUsers.createdAt, 'abc'));
 
-// Misspelled column in the sort | drizzleUsers.idd -> drizzleUsers.id
+// Misspelled column in the sort | idd -> id
 await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)

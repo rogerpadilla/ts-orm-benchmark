@@ -6,19 +6,19 @@ const { SqUser, SqCompany } = clients;
 // Misspelled column in the projection | emial -> email
 await SqUser.findAll({ attributes: ['id', 'emial'] });
 
-// Misspelled column in the filter | companyid -> companyId
+// Misspelled column in the filter | createdat -> createdAt
 await SqUser.findAll({
   attributes: ['id'],
-  where: { companyid: { [Op.gt]: 0 } },
+  where: { createdat: { [Op.gt]: 0 } },
 });
 
 // String value against a numeric column | 'one' -> 1
-await SqUser.findAll({ attributes: ['id'], where: { companyId: 'one' } });
+await SqUser.findAll({ attributes: ['id'], where: { createdAt: 'one' } });
 
 // Text operator against a numeric column | [Op.like]: 'abc' -> [Op.gte]: 1
 await SqUser.findAll({
   attributes: ['id'],
-  where: { companyId: { [Op.like]: 'abc' } },
+  where: { createdAt: { [Op.like]: 'abc' } },
 });
 
 // Misspelled column in the sort | idd -> id

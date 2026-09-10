@@ -5,22 +5,22 @@ const { prisma } = clients;
 // Misspelled column in the projection | emial -> email
 await prisma.user.findMany({ select: { id: true, emial: true } });
 
-// Misspelled column in the filter | companyid -> companyId
+// Misspelled column in the filter | createdat -> createdAt
 await prisma.user.findMany({
   select: { id: true },
-  where: { companyid: { gt: 0 } },
+  where: { createdat: { gt: 0 } },
 });
 
 // String value against a numeric column | 'one' -> 1
 await prisma.user.findMany({
   select: { id: true },
-  where: { companyId: 'one' },
+  where: { createdAt: 'one' },
 });
 
 // Text operator against a numeric column | contains: 'abc' -> gte: 1
 await prisma.user.findMany({
   select: { id: true },
-  where: { companyId: { contains: 'abc' } },
+  where: { createdAt: { contains: 'abc' } },
 });
 
 // Misspelled column in the sort | idd -> id
@@ -38,7 +38,7 @@ await prisma.user.createManyAndReturn({
 });
 
 // Number written into a text column | 42 -> 'Updated Name'
-await prisma.user.update({ where: { id: 1 }, data: { name: 42 } });
+await prisma.user.updateMany({ where: { id: 1 }, data: { name: 42 } });
 
 // Reading a column the projection left out | user.email -> user.name
 const [user] = await prisma.user.findMany({ select: { id: true, name: true } });

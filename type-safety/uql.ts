@@ -6,22 +6,22 @@ const { uql } = clients;
 // Misspelled column in the projection | emial -> email
 await uql.findMany(User, { $select: { id: true, emial: true } });
 
-// Misspelled column in the filter | companyid -> companyId
+// Misspelled column in the filter | createdat -> createdAt
 await uql.findMany(User, {
   $select: { id: true },
-  $where: { companyid: { $gt: 0 } },
+  $where: { createdat: { $gt: 0 } },
 });
 
 // String value against a numeric column | 'one' -> 1
 await uql.findMany(User, {
   $select: { id: true },
-  $where: { companyId: 'one' },
+  $where: { createdAt: 'one' },
 });
 
 // Text operator against a numeric column | $like: 'abc' -> $gte: 1
 await uql.findMany(User, {
   $select: { id: true },
-  $where: { companyId: { $like: 'abc' } },
+  $where: { createdAt: { $like: 'abc' } },
 });
 
 // Misspelled column in the sort | idd -> id

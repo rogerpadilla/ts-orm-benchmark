@@ -22,7 +22,7 @@ await em.find(
 // Misspelled column in the sort | idd -> id
 await em.find(MikroUserSchema, {}, { fields: ['id'], orderBy: { idd: 'ASC' } });
 
-// Misspelled column inside a loaded relation | users.nmae -> users.name
+// Misspelled column inside a loaded relation | nmae -> name
 await em.find(
   MikroCompanySchema,
   {},

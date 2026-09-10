@@ -1,4 +1,4 @@
-import { Like, MoreThan } from 'typeorm';
+import { Like, MoreThan, MoreThanOrEqual } from 'typeorm';
 import { TypeORMCompanySchema, TypeORMUserSchema } from '../src/schema';
 import { clients } from './clients';
 
@@ -8,14 +8,14 @@ const companies = clients.typeorm.getRepository(TypeORMCompanySchema);
 // Misspelled column in the projection | emial -> email
 await users.find({ select: { id: true, emial: true } });
 
-// Misspelled column in the filter | companyid -> companyId
-await users.find({ select: { id: true }, where: { companyid: MoreThan(0) } });
+// Misspelled column in the filter | createdat -> createdAt
+await users.find({ select: { id: true }, where: { createdat: MoreThan(0) } });
 
 // String value against a numeric column | 'one' -> 1
-await users.find({ select: { id: true }, where: { companyId: 'one' } });
+await users.find({ select: { id: true }, where: { createdAt: 'one' } });
 
-// Text operator against a numeric column | Like('abc') -> MoreThan(1)
-await users.find({ select: { id: true }, where: { companyId: Like('abc') } });
+// Text operator against a numeric column | Like('abc') -> MoreThanOrEqual(1)
+await users.find({ select: { id: true }, where: { createdAt: Like('abc') } });
 
 // Misspelled column in the sort | idd -> id
 await users.find({ select: { id: true }, order: { idd: 'ASC' } });
@@ -27,7 +27,7 @@ await companies.find({
 });
 
 // Misspelled column in inserted data | emails -> email
-await users.insert({ name: 'New User', emails: 'new@example.com' });
+await users.insert([{ name: 'New User', emails: 'new@example.com' }]);
 
 // Number written into a text column | 42 -> 'Updated Name'
 await users.update({ id: 1 }, { name: 42 });

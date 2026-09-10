@@ -11,34 +11,34 @@ I wrote UQL, so read the tables rather than my summary of them. Clone it and che
 ## Results
 
 <!-- bench:env -->
-> PostgreSQL 18.6 (Homebrew), Bun 1.4.2, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±1.6% or tighter at 95% confidence (widest: Prisma).
+> PostgreSQL 18.6 (Homebrew), Bun 1.4.2, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±2.6% or tighter at 95% confidence (widest: MikroORM).
 <!-- /bench:env -->
 
 <!-- bench:versions -->
-_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.2.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.48.0._
+_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.2.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.53.0._
 <!-- /bench:versions -->
 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1108 |
-| ref | _raw pg_ | floor | 1136 |
-| 1 | **UQL (bunSql)** | +176 | 1284 |
-| 2 | UQL | +232 | 1368 |
-| 3 | Drizzle (bunSql) | +342 | 1450 |
-| 4 | Drizzle | +403 | 1539 |
-| 5 | TypeORM | +467 | 1603 |
-| 6 | Sequelize | +767 | 1903 |
-| 6 | Prisma | +824 | 1960 |
-| 8 | MikroORM | +1384 | 2520 |
+| ref | _bun sql_ | floor | 1141 |
+| ref | _raw pg_ | floor | 1175 |
+| 1 | **UQL (bunSql)** | +201 | 1342 |
+| 1 | **UQL** | +230 | 1405 |
+| 3 | Drizzle (bunSql) | +372 | 1513 |
+| 3 | Drizzle | +437 | 1612 |
+| 4 | TypeORM | +507 | 1682 |
+| 6 | Sequelize | +838 | 2013 |
+| 6 | Prisma | +898 | 2073 |
+| 8 | MikroORM | +1449 | 2624 |
 <!-- /bench:ranking -->
 
 Places are by `Adds`, not by total, so a lower total can sit further down when the two floors differ. Entries share a place when their confidence intervals overlap: an equal number is a difference this run cannot resolve, not a tie broken in someone's favour.
 
 <!-- bench:headline -->
-Totals only span 2.0x, because every entry pays the same database cost. What the ORM itself adds spans 8x: 176µs for UQL (bunSql), 1384µs for MikroORM.
+Totals only span 2.0x, because every entry pays the same database cost. What the ORM itself adds spans 7x: 201µs for UQL (bunSql), 1449µs for MikroORM.
 
-Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 84µs, but only 56µs of that is UQL: the other 28µs is the gap between the two floors, free to anything on that driver.
+Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 63µs, but only 29µs of that is UQL: the other 34µs is the gap between the two floors, free to anything on that driver.
 <!-- /bench:headline -->
 
 ### Per step
@@ -46,14 +46,14 @@ Each entry is measured against its own driver's floor, so a faster driver is nev
 <!-- bench:steps -->
 | Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 344 | 325 | **349** | 361 | 389 | 405 | 437 | 437 | 808 | 423 |
-| SELECT with WHERE, SORT, LIMIT 200 | 175 | 197 | **212** | 249 | 230 | 252 | 318 | 369 | 265 | 682 |
-| SELECT 50 parents with their children | 190 | 211 | **272** | 306 | 352 | 404 | 324 | 499 | 369 | 797 |
-| **Total**, all 7 steps | 1108 | 1136 | **1284** | 1368 | 1450 | 1539 | 1603 | 1903 | 1960 | 2520 |
+| INSERT 10 rows, returning ids | 363 | 341 | **377** | 381 | 423 | 438 | 462 | 470 | 889 | 460 |
+| SELECT with WHERE, SORT, LIMIT 200 | 181 | 208 | **225** | 261 | 240 | 266 | 337 | 388 | 277 | 704 |
+| SELECT 50 parents with their children | 195 | 220 | **283** | 311 | 366 | 423 | 341 | 537 | 381 | 822 |
+| **Total**, all 7 steps | 1141 | 1175 | **1342** | 1405 | 1513 | 1612 | 1682 | 2013 | 2073 | 2624 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is Prisma's insert: 808µs against 349-437µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 451-618µs of each total and separating the field by at most 100µs.
+The biggest gap is Prisma's insert: 889µs against 377-470µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 452-638µs of each total and separating the field by at most 110µs.
 <!-- /bench:steps-note -->
 
 ### The nested read, as each entry writes it
@@ -175,8 +175,6 @@ findMany({ select: { id: true, emial: true } }); // 5.9.3 errors; 6.0.3 and 7.0.
 ```
 
 Counted as missing, not excused: a check the compiler no longer makes protects nobody. Drizzle's `db.query` loses it the same way, which is why its flat probes use `db.select()`, the builder its timed read uses: a misspelling there is a property access, and those are still caught.
-
-MikroORM's filter probe names `createdAt`, since its `User` has no scalar `companyId` for one to name.
 
 ## Runtimes
 
