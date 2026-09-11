@@ -28,7 +28,7 @@ await uql.findMany(User, {
 await uql.findMany(User, { $select: { id: true }, $sort: { idd: 1 } });
 
 // Sum over a text column | name -> createdAt
-await uql.aggregate(User, { $agg: { total: { $sum: 'name' } } });
+await uql.aggregate(User, { $select: { total: { $sum: { name: true } } } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await uql.findMany(Company, {

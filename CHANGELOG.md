@@ -4,7 +4,7 @@
 
 **New probe: a sum over a text column.** Prisma, TypeORM and UQL catch it; Drizzle, MikroORM and Sequelize do not.
 
-- Dependencies: uql-orm 0.53.0 to 0.57.0.
+- Dependencies: uql-orm 0.53.0 to 0.58.0. Its aggregate takes computed columns in `$select` and names each by a key, so UQL's sum probe now reads `$sum: { name: true }`.
 
 **New: a memory half.** `bun run bench.memory` weighs what each entry allocates per lifecycle, floored against `raw pg` like the timing tables. Node, one process per entry, nothing collected on purpose. UQL adds +201KB, MikroORM +3618KB.
 
