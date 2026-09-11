@@ -188,17 +188,17 @@ Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the on
 <!-- bench:runtimes -->
 | Entry (µs) | Bun p50 | Bun p99 | Node p50 | Node p99 | Deno p50 | Deno p99 |
 | --- | --- | --- | --- | --- | --- | --- |
-| [raw pg](https://node-postgres.com) | **1147** | 2346 | 1271 | 2713 | 1229 | **2204** |
-| [UQL](https://uql-orm.dev) | **1399** | 2828 | 1575 | 2752 | 1495 | **2482** |
-| [Drizzle](https://orm.drizzle.team) | **1536** | 3316 | 1840 | **3198** | 1734 | 3498 |
-| [TypeORM](https://typeorm.io) | **1575** | 3462 | 1872 | **3382** | 1676 | 3787 |
-| [Sequelize](https://sequelize.org) | **1855** | **4156** | 2264 | 4193 | 2132 | 4452 |
-| [Prisma](https://www.prisma.io) | **1951** | 4389 | 2368 | **4214** | 2419 | 5104 |
-| [MikroORM](https://mikro-orm.io) | **2553** | **6012** | 3739 | 7358 | 3725 | 8311 |
+| [raw pg](https://node-postgres.com) | **1171** | **2573** | 1650 | 5018 | 2313 | 6457 |
+| [UQL](https://uql-orm.dev) | **1436** | **3262** | 2063 | 6390 | 2753 | 7494 |
+| [Drizzle](https://orm.drizzle.team) | **1590** | **3088** | 2370 | 6953 | 3194 | 8640 |
+| [TypeORM](https://typeorm.io) | **1636** | **3713** | 2453 | 7741 | 3088 | 8995 |
+| [Sequelize](https://sequelize.org) | **1928** | **4541** | 2848 | 8804 | 3787 | 10577 |
+| [Prisma](https://www.prisma.io) | **2024** | **4283** | 2975 | 8525 | 4034 | 10794 |
+| [MikroORM](https://mikro-orm.io) | **2668** | **6578** | 4689 | 13655 | 5854 | 16404 |
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 124µs apart at p50 but 509µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 105% on Bun, 113% on Node, 79% on Deno above its own p50. Switching runtime moves any single entry by at most 1186µs at p50 (MikroORM), where switching ORM on one runtime moves it 1123-2194µs, so the runtime is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 29µs apart.
+On `raw pg`, the same code on all of them, the runtimes are 1142µs apart at p50 but 3884µs apart at p99: Bun leads both, and each p99 is 120% on Bun, 204% on Node, 179% on Deno above its own p50. Switching runtime moves any single entry by at most 3186µs at p50 (MikroORM), where switching ORM on one runtime moves it 1188-3018µs, so the runtime is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 50µs apart.
 <!-- /bench:runtime-note -->
 
 ## Memory
