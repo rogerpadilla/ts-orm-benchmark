@@ -22,6 +22,10 @@
       "what": "Misspelled column in the sort"
     },
     {
+      "id": "sum-column",
+      "what": "Sum over a text column"
+    },
+    {
       "id": "nested-select-key",
       "what": "Misspelled column inside a loaded relation"
     },
@@ -49,6 +53,7 @@
       "caught",
       "missed",
       "caught",
+      "missed",
       "caught",
       "caught",
       "caught",
@@ -61,6 +66,7 @@
       "caught",
       "missed",
       "caught",
+      "missed",
       "caught",
       "caught",
       "caught",
@@ -69,6 +75,7 @@
     ],
     "Prisma": [
       "missed",
+      "caught",
       "caught",
       "caught",
       "caught",
@@ -86,6 +93,7 @@
       "caught",
       "missed",
       "missed",
+      "missed",
       "caught",
       "caught",
       "missed",
@@ -100,10 +108,12 @@
       "caught",
       "caught",
       "caught",
+      "caught",
       "missed",
       "caught"
     ],
     "UQL": [
+      "caught",
       "caught",
       "caught",
       "caught",

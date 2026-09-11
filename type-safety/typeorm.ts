@@ -1,4 +1,4 @@
-import { Like, MoreThan, MoreThanOrEqual } from 'typeorm';
+import { Like, MoreThan } from 'typeorm';
 import { TypeORMCompanySchema, TypeORMUserSchema } from '../src/schema';
 import { clients } from './clients';
 
@@ -14,11 +14,14 @@ await users.find({ select: { id: true }, where: { createdat: MoreThan(0) } });
 // String value against a numeric column | 'one' -> 1
 await users.find({ select: { id: true }, where: { createdAt: 'one' } });
 
-// Text operator against a numeric column | Like('abc') -> MoreThanOrEqual(1)
+// Text operator against a numeric column | Like('abc') -> MoreThan(1)
 await users.find({ select: { id: true }, where: { createdAt: Like('abc') } });
 
 // Misspelled column in the sort | idd -> id
 await users.find({ select: { id: true }, order: { idd: 'ASC' } });
+
+// Sum over a text column | name -> createdAt
+await users.sum('name');
 
 // Misspelled column inside a loaded relation | nmae -> name
 await companies.find({

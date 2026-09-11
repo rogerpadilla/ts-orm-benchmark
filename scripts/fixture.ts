@@ -6,7 +6,7 @@
  */
 
 import pg from 'pg';
-import { createClients } from '../src/clients';
+import { closeAll, createClients } from '../src/clients';
 import { COMPANY_TABLE, USER_TABLE } from '../src/schema';
 
 const BENCH_DB = 'ts_orm_bench';
@@ -113,10 +113,7 @@ export async function connect() {
   const postgres = await postgresVersion(admin);
   const clients = await createClients(benchUrl);
 
-  const close = async () => {
-    await clients.destroyAll();
-    await admin.end();
-  };
+  const close = () => closeAll([clients.destroyAll(), admin.end()]);
 
   return { admin, clients, postgres, close };
 }

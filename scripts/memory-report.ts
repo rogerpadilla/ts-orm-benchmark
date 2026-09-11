@@ -8,7 +8,7 @@ import { competitorsOf, type MemoryRun, PUBLISHED_STEPS, type Row, rankMemory, S
 import { writeReadme } from './project';
 import { bold, linkEntry, machineFacts, mdTable } from './render';
 
-/** Rows are entries here, not steps: seven entries read better down the page than across it. */
+/** Rows are entries here, not steps: entries read better down the page than across it. */
 function memoryTable(ranked: Row[]): string {
   const best = Math.min(...competitorsOf(ranked).map((r) => r.adds));
 

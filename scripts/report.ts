@@ -127,11 +127,11 @@ function headline(ranked: Row[]): string {
 /** The run and its confidence in one caption, so a table of medians never stands without its error bar. */
 function envLine(run: Run, ranked: TimedRow[]): string {
   const { postgres, runtime, machine, when } = envFacts(run);
-  const worst = ranked.reduce((a, b) => (b.spread > a.spread ? b : a));
+  const widest = Math.max(...ranked.map((row) => row.spread));
   return (
     `> ${postgres}, ${runtime}, ${machine}, ${when}. Median µs per operation over ${run.iterations} ` +
     `rounds, after ${run.warmup} warmup rounds, interleaved and rotated. Every median is ` +
-    `±${(worst.spread * 100).toFixed(1)}% or tighter at 95% confidence (widest: ${worst.entry}).`
+    `±${(widest * 100).toFixed(1)}% or tighter at 95% confidence.`
   );
 }
 
@@ -165,7 +165,7 @@ function samples(ranked: Row[]): string {
 }
 
 /**
- * Six versions are a sentence, not a table, and they belong next to the numbers they produced.
+ * The versions are a sentence, not a table, and they belong next to the numbers they produced.
  * Alphabetical, because this list is not a result: any other order reads as one.
  */
 function versionsLine(): string {

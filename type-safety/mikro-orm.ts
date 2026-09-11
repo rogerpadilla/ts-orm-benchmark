@@ -1,3 +1,4 @@
+import { sql } from '@mikro-orm/postgresql';
 import { MikroCompanySchema, MikroUserSchema } from '../src/schema';
 import { clients } from './clients';
 
@@ -12,7 +13,7 @@ await em.find(MikroUserSchema, { createdat: { $gt: 0 } }, { fields: ['id'] });
 // String value against a numeric column | 'one' -> 1
 await em.find(MikroUserSchema, { createdAt: 'one' }, { fields: ['id'] });
 
-// Text operator against a numeric column | $like: 'abc' -> $gte: 1
+// Text operator against a numeric column | $like: 'abc' -> $gt: 1
 await em.find(
   MikroUserSchema,
   { createdAt: { $like: 'abc' } },
@@ -21,6 +22,12 @@ await em.find(
 
 // Misspelled column in the sort | idd -> id
 await em.find(MikroUserSchema, {}, { fields: ['id'], orderBy: { idd: 'ASC' } });
+
+// Sum over a text column | name -> createdAt
+await em
+  .createQueryBuilder(MikroUserSchema)
+  .select(sql`sum(${sql.ref('name')})`.as('total'))
+  .execute();
 
 // Misspelled column inside a loaded relation | nmae -> name
 await em.find(

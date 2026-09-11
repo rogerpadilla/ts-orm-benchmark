@@ -1,6 +1,6 @@
 /**
  * What the type-safety check asks of every ORM, and how a probe file says it. The queries themselves are
- * `type-safety/<tool>.ts`, one file per tool, each writing these same ten mistakes in that tool's own API.
+ * `type-safety/<tool>.ts`, one file per tool, each writing these same mistakes in that tool's own API.
  *
  * A probe is a comment and the statement under it:
  *
@@ -26,6 +26,7 @@ export const PROBES = [
   { id: 'where-value', what: 'String value against a numeric column' },
   { id: 'where-operator', what: 'Text operator against a numeric column' },
   { id: 'sort-key', what: 'Misspelled column in the sort' },
+  { id: 'sum-column', what: 'Sum over a text column' },
   { id: 'nested-select-key', what: 'Misspelled column inside a loaded relation' },
   { id: 'insert-key', what: 'Misspelled column in inserted data' },
   { id: 'update-value', what: 'Number written into a text column' },
@@ -45,6 +46,7 @@ export const SHARED_FIXES: Partial<Record<ProbeId, string>> = {
   'where-key': 'createdat -> createdAt',
   'where-value': "'one' -> 1",
   'sort-key': 'idd -> id',
+  'sum-column': 'name -> createdAt',
   'nested-select-key': 'nmae -> name',
   'insert-key': 'emails -> email',
   'update-value': "42 -> 'Updated Name'",

@@ -8,8 +8,8 @@ import type { Runtime } from '../src/runtime';
 
 /**
  * `raw pg` and `bun sql` are hand-written driver code with manual row mapping: reference floors, not
- * competitors. The `(bunSql)` rows are the same query builder on a different driver, which only UQL and
- * Drizzle ship an adapter for.
+ * competitors. The `(bunSql)` rows are the same query builder on a different driver, which UQL and Drizzle
+ * ship an adapter for in their own package.
  */
 export const ENTRIES = [
   'raw pg',
@@ -67,7 +67,7 @@ export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STE
 /** Median µs per step, index-aligned with the run's own {@link Run.entries}. */
 export type Results = Record<Step, number[]>;
 
-/** What the compiler said about one probe, and one entry's ten of them keyed by the name the tables use. */
+/** What the compiler said about one probe, and every probe of one entry keyed by the name the tables use. */
 export type Verdict = 'caught' | 'missed';
 export type Verdicts = Map<string, Verdict[]>;
 

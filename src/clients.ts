@@ -31,10 +31,18 @@ export type Clients = Awaited<ReturnType<typeof createClients>>;
 /** Present only on Bun, where the `bun` module and the two adapters reaching it can be imported at all. */
 export type BunSqlClients = Awaited<ReturnType<typeof createBunSqlClients>>;
 
+/** Closes every client even when one fails, so a failed close can neither leak the rest nor hang the exit. */
+export async function closeAll(closing: (Promise<unknown> | undefined)[]): Promise<void> {
+  const failed = (await Promise.allSettled(closing)).flatMap((r) => (r.status === 'rejected' ? [r.reason] : []));
+  if (failed.length) {
+    throw new AggregateError(failed, `${failed.length} client(s) failed to close`);
+  }
+}
+
 /**
  * Bun's native SQL client, ~2.4x faster than `pg` on a trivial query and ~1.6x on a 200-row read. It is a
  * second reference floor: it shows how much of every entry's cost is really the driver rather than the ORM.
- * UQL and Drizzle are the only two entries with a Bun SQL adapter, so both get an extra row and both are
+ * UQL and Drizzle ship a Bun SQL adapter in their own package, so both get an extra row and both are
  * labelled, because a faster driver is not an apples-to-apples ORM win.
  *
  * Imported dynamically, and only on Bun: a static `from 'bun'` makes the whole benchmark unloadable on
@@ -52,11 +60,7 @@ async function createBunSqlClients(connectionString: string) {
   const drizzleClient = new SQL(connectionString, { max: 1 });
   const drizzleDb = drizzleBunSql(drizzleClient, { schema: drizzleSchema });
 
-  async function end() {
-    await drizzleClient.end();
-    await uqlBunSql.end();
-    await bunSql.end();
-  }
+  const end = () => closeAll([drizzleClient.end(), uqlBunSql.end(), bunSql.end()]);
 
   return { bunSql, uqlBunSql, drizzleDb, end };
 }
@@ -105,18 +109,17 @@ export async function createClients(connectionString: string) {
 
   const bun = RUNTIME.name === 'bun' ? await createBunSqlClients(connectionString) : undefined;
 
-  async function destroyAll() {
-    await prisma.$disconnect();
-    await bun?.end();
-    await drizzlePool.end();
-    await mikroOrm.close(true);
-    if (typeorm.isInitialized) {
-      await typeorm.destroy();
-    }
-    await sequelize.close();
-    await uql.end();
-    await rawPg.end();
-  }
+  const destroyAll = () =>
+    closeAll([
+      prisma.$disconnect(),
+      bun?.end(),
+      drizzlePool.end(),
+      mikroOrm.close(true),
+      typeorm.isInitialized ? typeorm.destroy() : undefined,
+      sequelize.close(),
+      uql.end(),
+      rawPg.end(),
+    ]);
 
   // `sequelize` itself is not returned: the flow reaches it through its two models, and `destroyAll`
   // closes it from here.

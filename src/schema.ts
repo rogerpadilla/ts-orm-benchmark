@@ -49,9 +49,8 @@ export class User {
  * `EntitySchema` rather than the decorators TypeORM's docs lead with, and not as a preference: at 1.1.0
  * those decorators are still the legacy kind, so they need `experimentalDecorators` - which this project
  * does not set, because the standard TC39 decorators are what UQL's entry compiles with and one project
- * has one setting. Measured before settling for it: compiled with the flag on, the decorator entities
- * score the same nine of ten and miss the same probe (`result-unselected`), so nothing about the table
- * turns on this.
+ * has one setting. Measured before settling for it, on the first ten probes: compiled with the flag on,
+ * the decorator entities scored the same and missed the same probe (`result-unselected`).
  */
 
 /** `EntitySchema` derives its allowed keys from this, so relations need it stated. */
@@ -109,7 +108,7 @@ export const MikroCompanySchema = defineEntity({
 });
 
 /**
- * No scalar `companyId` here, unlike the other six: MikroORM refuses two persisted properties on one
+ * No scalar `companyId` here, unlike every other entry: MikroORM refuses two persisted properties on one
  * column, and the `company` relation owns it. So MikroORM queries say `company` where the others say
  * `companyId`, which compiles to the identical `"u0"."companyId"` either way. `persist(false)` was tried
  * first and rejected: it makes `select(['companyId'])` silently omit the column.

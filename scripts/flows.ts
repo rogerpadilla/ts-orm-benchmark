@@ -326,15 +326,7 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
 }
 
 function mikroFlow(orm: Clients['mikroOrm']): Flow {
-  // A fresh EntityManager per operation, the same request-scoped fork MikroORM's own docs call for
-  // (https://mikro-orm.io/docs/identity-map), instead of one shared em accumulating Unit-of-Work state
-  // across the whole run.
-  //
-  // Through the EntityManager rather than `createQueryBuilder`, which is what this used to time. The
-  // builder is the escape hatch; `em.find` is the API MikroORM's docs lead with, it is the one the
-  // type-safety probes are scored on, and timing one while scoring the other made the two halves of the
-  // report about two different MikroORMs. It is not a handicap either: measured over 160 rounds of the
-  // 200-row read, `em.find` came in at 1253µs against the builder's 1294µs.
+  // A request-scoped fork per operation, as MikroORM's docs call for: https://mikro-orm.io/docs/identity-map
   const fork = () => orm.em.fork() as SqlEntityManager;
   const mikroNew = NEW_USERS.map((u) => ({
     name: u.name,
@@ -344,10 +336,7 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
   }));
   return {
     insert: {
-      // The one step still on the builder, and the probes match it. `em.insertMany` emits the identical
-      // single `INSERT ... RETURNING "id"`, but hands back only the first id rather than all ten, so the
-      // step could not be asserted through it - and an insert nobody can count is how MikroORM's used to
-      // score well while doing nothing.
+      // `em.insertMany` returns only the first id, so the insert stays on the builder (see README, Method).
       run: () => fork().createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
       rows: affectedRows,
     },

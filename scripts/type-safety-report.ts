@@ -15,10 +15,10 @@ const MARK: Record<Verdict, string> = { caught: '✅', missed: '❌' };
 export const score = (vs: Verdict[]) => vs.filter((v) => v === 'caught').length;
 
 /**
- * Alphabetical, not by score. Ten probes cannot separate six tools the way a microsecond can - four of
- * them tie today - so ordering the columns by score would dress a one-probe gap up as a ranking, and
- * putting the one we wrote first would be the benchmark flattering its author. The scores are in the
- * bottom row for anyone who wants them ordered.
+ * Alphabetical, not by score. A handful of probes cannot separate tools the way a microsecond can, so
+ * ordering the columns by score would dress a one-probe gap up as a ranking, and putting the one we
+ * wrote first would be the benchmark flattering its author. The scores are in the bottom row for anyone
+ * who wants them ordered.
  */
 export const ordered = (results: Verdicts) => [...results].sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -48,7 +48,7 @@ function note(results: Verdicts): string {
   const best = Math.max(...scores);
   const worst = Math.min(...scores);
   // Named as a group, because the top of this table ties far more readily than the timing one does:
-  // ten probes cannot separate six tools the way a microsecond can.
+  // a handful of probes cannot separate tools the way a microsecond can.
   const leaders = order.filter(([, vs]) => score(vs) === best).map(([entry]) => entry);
   const last = order.find(([, vs]) => score(vs) === worst) ?? order[order.length - 1];
   const missedByAll = PROBES.filter((_, i) => order.every(([, vs]) => vs[i] === 'missed'));

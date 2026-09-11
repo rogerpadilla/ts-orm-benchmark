@@ -1,6 +1,6 @@
 /**
- * The type-safety half of the benchmark: the same ten mistakes written in six ORMs' own APIs, and which
- * of them the compiler refuses. `scripts/probes.ts` is the vocabulary, `type-safety/<tool>.ts` the queries.
+ * The type-safety half of the benchmark: the same mistakes written in each tool's own API, and which of
+ * them the compiler refuses. `scripts/probes.ts` is the vocabulary, `type-safety/<tool>.ts` the queries.
  *
  * Every probe is compiled twice - as written, and with its correction applied - so a diagnostic only
  * counts when the corrected copy is clean. That control is the whole difference between measuring a
@@ -50,7 +50,7 @@ function readProbeFile(stem: string): ProbeFile {
   const declared = marked.map(({ what }) => what).join('\n');
   const expected = PROBES.map(({ what }) => what).join('\n');
   if (declared !== expected) {
-    throw new TypeError(`${stem}.ts does not mark the ten probes of scripts/probes.ts, in their order`);
+    throw new TypeError(`${stem}.ts does not mark the ${PROBES.length} probes of scripts/probes.ts, in their order`);
   }
 
   const regions = marked.map(({ from, fix }, i): Region => ({

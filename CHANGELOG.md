@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+**New probe: a sum over a text column.** Prisma, TypeORM and UQL catch it; Drizzle, MikroORM and Sequelize do not.
+
+- Dependencies: uql-orm 0.53.0 to 0.57.0.
+
 **New: a memory half.** `bun run bench.memory` weighs what each entry allocates per lifecycle, floored against `raw pg` like the timing tables. Node, one process per entry, nothing collected on purpose. UQL adds +201KB, MikroORM +3618KB.
 
 - Drizzle's flat type-safety probes moved to `db.select()`, the builder its timed read uses: it had been timed on one API and scored on the other. 8/10 to 9/10.

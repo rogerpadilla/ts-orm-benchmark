@@ -15,7 +15,7 @@ await SqUser.findAll({
 // String value against a numeric column | 'one' -> 1
 await SqUser.findAll({ attributes: ['id'], where: { createdAt: 'one' } });
 
-// Text operator against a numeric column | [Op.like]: 'abc' -> [Op.gte]: 1
+// Text operator against a numeric column | [Op.like]: 'abc' -> [Op.gt]: 1
 await SqUser.findAll({
   attributes: ['id'],
   where: { createdAt: { [Op.like]: 'abc' } },
@@ -23,6 +23,9 @@ await SqUser.findAll({
 
 // Misspelled column in the sort | idd -> id
 await SqUser.findAll({ attributes: ['id'], order: [['idd', 'ASC']] });
+
+// Sum over a text column | name -> createdAt
+await SqUser.sum('name');
 
 // Misspelled column inside a loaded relation | nmae -> name
 await SqCompany.findAll({

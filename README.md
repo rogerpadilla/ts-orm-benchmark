@@ -2,7 +2,7 @@
 
 What a TypeScript ORM costs you on one real PostgreSQL round trip, in time and in memory, and which mistakes it catches before you run it.
 
-Every entry runs the same seven-step lifecycle over the same `Company`/`User` schema in its own idiomatic API, measured against hand-written `raw pg` and `bun sql` floors, so what you read is the ORM's cost and not Postgres'. The six ORMs are also [compiled against ten ordinary mistakes](#type-safety), and the same lifecycle is [run on Bun, Node and Deno](#runtimes) and [weighed for what it allocates](#memory).
+Every entry runs the same seven-step lifecycle over the same `Company`/`User` schema in its own idiomatic API, measured against hand-written `raw pg` and `bun sql` floors, so what you read is the ORM's cost and not Postgres'. Every tool is also [compiled against the same ordinary mistakes](#type-safety), and the same lifecycle is [run on Bun, Node and Deno](#runtimes) and [weighed for what it allocates](#memory).
 
 I wrote UQL, so read the tables rather than my summary of them. Clone it and check: that is what the [method](#method) is for.
 
@@ -11,34 +11,34 @@ I wrote UQL, so read the tables rather than my summary of them. Clone it and che
 ## Results
 
 <!-- bench:env -->
-> PostgreSQL 18.6 (Homebrew), Bun 1.4.2, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±2.6% or tighter at 95% confidence (widest: MikroORM).
+> PostgreSQL 18.6 (Homebrew), Bun 1.4.2, Apple M4 Max, September 2026. Median µs per operation over 250 rounds, after 125 warmup rounds, interleaved and rotated. Every median is ±1.7% or tighter at 95% confidence.
 <!-- /bench:env -->
 
 <!-- bench:versions -->
-_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.2.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.53.0._
+_Versions: [Drizzle](https://orm.drizzle.team) 0.45.2 · [MikroORM](https://mikro-orm.io) 7.2.0 · [Prisma](https://www.prisma.io) 7.10.0 · [Sequelize](https://sequelize.org) 6.37.8 · [TypeORM](https://typeorm.io) 1.1.1 · [UQL](https://uql-orm.dev) 0.57.0._
 <!-- /bench:versions -->
 
 <!-- bench:ranking -->
 | # | Entry | Adds µs | Total µs |
 | --- | --- | --- | --- |
-| ref | _bun sql_ | floor | 1141 |
-| ref | _raw pg_ | floor | 1175 |
-| 1 | **UQL (bunSql)** | +201 | 1342 |
-| 1 | **UQL** | +230 | 1405 |
-| 3 | Drizzle (bunSql) | +372 | 1513 |
-| 3 | Drizzle | +437 | 1612 |
-| 4 | TypeORM | +507 | 1682 |
-| 6 | Sequelize | +838 | 2013 |
-| 6 | Prisma | +898 | 2073 |
-| 8 | MikroORM | +1449 | 2624 |
+| ref | _bun sql_ | floor | 1155 |
+| ref | _raw pg_ | floor | 1192 |
+| 1 | **UQL (bunSql)** | +271 | 1426 |
+| 1 | **UQL** | +306 | 1498 |
+| 3 | Drizzle (bunSql) | +394 | 1549 |
+| 3 | Drizzle | +437 | 1629 |
+| 5 | TypeORM | +558 | 1750 |
+| 6 | Sequelize | +884 | 2076 |
+| 6 | Prisma | +932 | 2124 |
+| 8 | MikroORM | +1631 | 2823 |
 <!-- /bench:ranking -->
 
 Places are by `Adds`, not by total, so a lower total can sit further down when the two floors differ. Entries share a place when their confidence intervals overlap: an equal number is a difference this run cannot resolve, not a tie broken in someone's favour.
 
 <!-- bench:headline -->
-Totals only span 2.0x, because every entry pays the same database cost. What the ORM itself adds spans 7x: 201µs for UQL (bunSql), 1449µs for MikroORM.
+Totals only span 2.0x, because every entry pays the same database cost. What the ORM itself adds spans 6x: 271µs for UQL (bunSql), 1631µs for MikroORM.
 
-Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 63µs, but only 29µs of that is UQL: the other 34µs is the gap between the two floors, free to anything on that driver.
+Each entry is measured against its own driver's floor, so a faster driver is never counted as the ORM's win. Running the same UQL code on Bun SQL instead of `pg` saves 72µs, but only 35µs of that is UQL: the other 37µs is the gap between the two floors, free to anything on that driver.
 <!-- /bench:headline -->
 
 ### Per step
@@ -46,14 +46,14 @@ Each entry is measured against its own driver's floor, so a faster driver is nev
 <!-- bench:steps -->
 | Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 363 | 341 | **377** | 381 | 423 | 438 | 462 | 470 | 889 | 460 |
-| SELECT with WHERE, SORT, LIMIT 200 | 181 | 208 | **225** | 261 | 240 | 266 | 337 | 388 | 277 | 704 |
-| SELECT 50 parents with their children | 195 | 220 | **283** | 311 | 366 | 423 | 341 | 537 | 381 | 822 |
-| **Total**, all 7 steps | 1141 | 1175 | **1342** | 1405 | 1513 | 1612 | 1682 | 2013 | 2073 | 2624 |
+| INSERT 10 rows, returning ids | 361 | 340 | **384** | 385 | 423 | 432 | 472 | 476 | 886 | 459 |
+| SELECT with WHERE, SORT, LIMIT 200 | 184 | 215 | **234** | 273 | 248 | 278 | 353 | 402 | 295 | 784 |
+| SELECT 50 parents with their children | 203 | 229 | **338** | 374 | 383 | 427 | 367 | 564 | 400 | 907 |
+| **Total**, all 7 steps | 1155 | 1192 | **1426** | 1498 | 1549 | 1629 | 1750 | 2076 | 2124 | 2823 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is Prisma's insert: 889µs against 377-470µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 452-638µs of each total and separating the field by at most 110µs.
+The biggest gap is MikroORM's nested: 907µs against 338-564µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 466-673µs of each total and separating the field by at most 114µs.
 <!-- /bench:steps-note -->
 
 ### The nested read, as each entry writes it
@@ -140,10 +140,10 @@ q.findMany(Company, {
 
 ## Type safety
 
-What an ORM costs when you get a column name wrong. Ten ordinary mistakes, written in each ORM's own API in [type-safety/](type-safety/) and compiled to see whether the compiler objects.
+What an ORM costs when you get a column name wrong. Ordinary mistakes, written in each tool's own API in [type-safety/](type-safety/) and compiled to see whether the compiler objects.
 
 <!-- bench:type-safety-env -->
-> Checked with TypeScript 7.0.2, 10 probes per entry.
+> Checked with TypeScript 7.0.2, 11 probes per entry.
 <!-- /bench:type-safety-env -->
 
 <!-- bench:type-safety -->
@@ -154,16 +154,17 @@ What an ORM costs when you get a column name wrong. Ten ordinary mistakes, writt
 | String value against a numeric column | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Text operator against a numeric column | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Misspelled column in the sort | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Sum over a text column | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | Misspelled column inside a loaded relation | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Misspelled column in inserted data | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Number written into a text column | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Reading a column the projection left out | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
 | Reading a misspelled column off a loaded relation | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Caught**, of 10 | 9 | 9 | 9 | 5 | 9 | **10** |
+| **Caught**, of 11 | 9 | 9 | 10 | 5 | 10 | **11** |
 <!-- /bench:type-safety -->
 
 <!-- bench:type-safety-note -->
-UQL catches 10 of the 10, Sequelize 5. Every mistake here is caught by at least one entry. The corrected copy of every file compiles clean, which is what makes a red mark a missing check rather than a broken query.
+UQL catches 11 of the 11, Sequelize 5. Every mistake here is caught by at least one entry. The corrected copy of every file compiles clean, which is what makes a red mark a missing check rather than a broken query.
 <!-- /bench:type-safety-note -->
 
 Prisma's red mark on the first row is the compiler's doing: TypeScript 6.0 stopped reporting excess properties on an object literal checked against a mapped type over an inferred type parameter, and 7 inherits it.
@@ -178,7 +179,7 @@ Counted as missing, not excused: a check the compiler no longer makes protects n
 
 ## Runtimes
 
-Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the only variable. All three measure the same seven entries. The `(bunSql)` rows sit out even on Bun: that client is a Bun API, and three extra entries per round would show up in the tail as if the runtime had caused it.
+Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the only variable. All three measure the same entries. The `(bunSql)` rows sit out even on Bun: that client is a Bun API, and three extra entries per round would show up in the tail as if the runtime had caused it.
 
 <!-- bench:runtime-env -->
 > Bun 1.4.2, Node 24.20.0, Deno 2.9.6, all running the same bundled JavaScript, one at a time against the same database. PostgreSQL 18.6 (Homebrew), Apple M4 Max, September 2026. µs for a whole lifecycle, nearest-rank percentiles over 2000 rounds after 250 warmup, so a p99 is drawn from the 21 slowest rounds.
@@ -187,17 +188,17 @@ Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the on
 <!-- bench:runtimes -->
 | Entry (µs) | Bun p50 | Bun p99 | Node p50 | Node p99 | Deno p50 | Deno p99 |
 | --- | --- | --- | --- | --- | --- | --- |
-| [raw pg](https://node-postgres.com) | **1168** | 3327 | 1229 | 2894 | 1242 | **2109** |
-| [UQL](https://uql-orm.dev) | **1387** | 4170 | 1487 | 3657 | 1485 | **2509** |
-| [Drizzle](https://orm.drizzle.team) | **1579** | 4640 | 1771 | 4407 | 1781 | **3444** |
-| [TypeORM](https://typeorm.io) | **1613** | 4603 | 1802 | 4722 | 1727 | **4466** |
-| [Sequelize](https://sequelize.org) | **1921** | 6149 | 2156 | 5671 | 2177 | **4445** |
-| [Prisma](https://www.prisma.io) | **1993** | 5904 | 2282 | 5233 | 2453 | **4930** |
-| [MikroORM](https://mikro-orm.io) | **2558** | **7669** | 3668 | 9127 | 3658 | 8563 |
+| [raw pg](https://node-postgres.com) | **1147** | 2346 | 1271 | 2713 | 1229 | **2204** |
+| [UQL](https://uql-orm.dev) | **1399** | 2828 | 1575 | 2752 | 1495 | **2482** |
+| [Drizzle](https://orm.drizzle.team) | **1536** | 3316 | 1840 | **3198** | 1734 | 3498 |
+| [TypeORM](https://typeorm.io) | **1575** | 3462 | 1872 | **3382** | 1676 | 3787 |
+| [Sequelize](https://sequelize.org) | **1855** | **4156** | 2264 | 4193 | 2132 | 4452 |
+| [Prisma](https://www.prisma.io) | **1951** | 4389 | 2368 | **4214** | 2419 | 5104 |
+| [MikroORM](https://mikro-orm.io) | **2553** | **6012** | 3739 | 7358 | 3725 | 8311 |
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 74µs apart at p50 but 1218µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 185% on Bun, 135% on Node, 70% on Deno above its own p50. Switching runtime moves any single entry by at most 1110µs at p50 (MikroORM), where switching ORM on one runtime moves it 1137-2141µs, so the ORM is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 25µs apart.
+On `raw pg`, the same code on all of them, the runtimes are 124µs apart at p50 but 509µs apart at p99: Bun leads the median, Deno the tail, and each p99 is 105% on Bun, 113% on Node, 79% on Deno above its own p50. Switching runtime moves any single entry by at most 1186µs at p50 (MikroORM), where switching ORM on one runtime moves it 1123-2194µs, so the runtime is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 29µs apart.
 <!-- /bench:runtime-note -->
 
 ## Memory
@@ -205,34 +206,34 @@ On `raw pg`, the same code on all of them, the runtimes are 74µs apart at p50 b
 How much heap each entry allocates to serve one lifecycle. Measured on Node, one process per entry: V8's counter is the only one of the three that moves on allocation rather than at a collection, and on Bun a hundred thousand fresh objects read as zero bytes. The `(bunSql)` rows sit out for the same reason the runtime table drops them.
 
 <!-- bench:memory-env -->
-> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 2% of its own (MikroORM).
+> PostgreSQL 18.6 (Homebrew), Node 24.20.0, Apple M4 Max, September 2026. Median KB allocated per step over 60 rounds after 60 warmup of a 7-step lifecycle. Rounds a garbage collection ran in are discarded, never corrected, and no entry lost more than 1% of its own (MikroORM).
 <!-- /bench:memory-env -->
 
 <!-- bench:memory -->
 | Entry | insert | read | nested | Total KB | Adds KB |
 | --- | --- | --- | --- | --- | --- |
 | _[raw pg](https://node-postgres.com)_ | 14 | 87 | 106 | 245 | floor |
-| [UQL](https://uql-orm.dev) | 45 | 133 | 188 | 458 | **+213** |
-| [Drizzle](https://orm.drizzle.team) | 140 | 250 | 239 | 760 | +515 |
-| [Prisma](https://www.prisma.io) | 273 | 220 | 373 | 1054 | +809 |
+| [UQL](https://uql-orm.dev) | 46 | 104 | 81 | 318 | **+73** |
+| [Drizzle](https://orm.drizzle.team) | 140 | 251 | 242 | 769 | +524 |
+| [Prisma](https://www.prisma.io) | 274 | 220 | 373 | 1055 | +810 |
 | [TypeORM](https://typeorm.io) | 126 | 295 | 503 | 1066 | +821 |
-| [Sequelize](https://sequelize.org) | 100 | 425 | 591 | 1294 | +1049 |
-| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2058 | 3864 | +3619 |
+| [Sequelize](https://sequelize.org) | 100 | 426 | 592 | 1296 | +1051 |
+| [MikroORM](https://mikro-orm.io) | 77 | 1470 | 2059 | 3865 | +3620 |
 <!-- /bench:memory -->
 
 <!-- bench:memory-note -->
-Above the floor the field spans 17.0x: 213KB for UQL, 3619KB for MikroORM, and read opens it widest: MikroORM's 1470KB against UQL's 133KB.
+Above the floor the field spans 49.6x: 73KB for UQL, 3620KB for MikroORM, and nested opens it widest: MikroORM's 2059KB against UQL's 81KB.
 
-Almost none of it survives: another 60 lifecycles, collected either side, leave at most 36KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
+Almost none of it survives: another 60 lifecycles, collected either side, leave at most 31KB behind (Sequelize), identity maps included. What the table prices is collector pressure, not a resident set that grows.
 <!-- /bench:memory-note -->
 
 ## Method
 
 - PostgreSQL runs natively, never in a container: a VM between client and server puts its latency into `Adds` instead of cancelling against the floor.
-- One connection each, no pooling, and each entry on its own idiomatic API: `.returning()` for Drizzle, `em.find` for MikroORM, `createManyAndReturn` for Prisma, `insertMany` for UQL. Only Prisma needs codegen, and it reaches Postgres through the `pg` adapter like the rest.
+- One connection each, no pooling, and each entry on its own idiomatic API: `.returning()` for Drizzle, `em.find` for MikroORM, `createManyAndReturn` for Prisma, `insertMany` for UQL. MikroORM gets a fresh `em.fork()` per operation, as its [identity-map docs](https://mikro-orm.io/docs/identity-map) call for, so no Unit-of-Work state piles up across the run. Its insert is the one step on `createQueryBuilder`: `em.insertMany` emits the same single `INSERT ... RETURNING "id"` but returns only the first id, so the step could not assert all ten rows through it. Only Prisma needs codegen, and it reaches Postgres through the `pg` adapter like the rest.
 - Entity definitions are each ORM's current API: MikroORM 7 keeps its decorators in a separate package this does not install, and TypeORM's need `experimentalDecorators`, which UQL's standard decorators cannot share. Built once at startup, off the query path.
 - Timed and scored through the same API, at `strict`, against the same entities and the same columns. Drizzle reaches its flat reads through `db.select()` and its nested read through `db.query`, in both halves, because those are the APIs its version offers for each job.
-- The nested read is one statement for Drizzle, Sequelize and TypeORM, which join, and two for MikroORM, Prisma and UQL, which select the parents and then the children by `IN`. Postgres is local here, so the second round trip is cheap; over a network it would not be, and the split-query entries would lose ground.
+- The nested read is one statement for Drizzle, Sequelize, TypeORM and UQL, and two for MikroORM and Prisma, which select the parents and then the children by `IN`. Postgres is local here, so the second round trip is cheap; over a network it would not be, and the split-query entries would lose ground. UQL has Postgres build the children as JSON, so its client reads 50 rows where the floor's join reads 200.
 - Entries are interleaved and rotated, one pass each per round, so no entry keeps a favourable position. Warmup is half the run, capped at 250 rounds, and discarded.
 - All seven steps assert on the rows they return, every round, though only three are published: a step that quietly does nothing fails instead of winning. CI runs `--verify` on every push.
 - Medians per step, never means, so one GC pause cannot decide a number. Percentiles are of the round total, so a p99 is one slow lifecycle rather than seven unrelated slow operations.
@@ -268,7 +269,7 @@ Each rewrites the tables it owns, and none needs the others to have run. Every b
 1. Add it as a `devDependency`
 2. Give it the same `Company` and `User` shape in `src/schema.ts`, and a client in `src/clients.ts`
 3. Write its seven steps in `scripts/flows.ts`, wire them into `FLOWS`, and add it to `ENTRIES` and `TOOLS` in `scripts/model.ts`. `TOOLS` is where its link, version and probe file name come from
-4. Declare its client in `type-safety/clients.ts` and write the ten mistakes in `type-safety/<probe>.ts`
+4. Declare its client in `type-safety/clients.ts` and write the probes of `scripts/probes.ts` in `type-safety/<probe>.ts`
 5. Run `bun run bench`, `bun run bench.runtimes`, `bun run bench.memory` and `bun run bench.types`; the tables regenerate themselves
 
 ## License

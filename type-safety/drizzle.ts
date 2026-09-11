@@ -1,4 +1,4 @@
-import { asc, eq, gt, gte, like } from 'drizzle-orm';
+import { asc, eq, gt, like, sum } from 'drizzle-orm';
 import { drizzleUsers } from '../src/schema';
 import { clients } from './clients';
 
@@ -21,7 +21,7 @@ await db
   .from(drizzleUsers)
   .where(eq(drizzleUsers.createdAt, 'one'));
 
-// Text operator against a numeric column | like(drizzleUsers.createdAt, 'abc') -> gte(drizzleUsers.createdAt, 1)
+// Text operator against a numeric column | like(drizzleUsers.createdAt, 'abc') -> gt(drizzleUsers.createdAt, 1)
 await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)
@@ -32,6 +32,9 @@ await db
   .select({ id: drizzleUsers.id })
   .from(drizzleUsers)
   .orderBy(asc(drizzleUsers.idd));
+
+// Sum over a text column | name -> createdAt
+await db.select({ total: sum(drizzleUsers.name) }).from(drizzleUsers);
 
 // Misspelled column inside a loaded relation | nmae -> name
 await db.query.Company.findMany({

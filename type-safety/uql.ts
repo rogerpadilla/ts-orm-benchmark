@@ -18,7 +18,7 @@ await uql.findMany(User, {
   $where: { createdAt: 'one' },
 });
 
-// Text operator against a numeric column | $like: 'abc' -> $gte: 1
+// Text operator against a numeric column | $like: 'abc' -> $gt: 1
 await uql.findMany(User, {
   $select: { id: true },
   $where: { createdAt: { $like: 'abc' } },
@@ -26,6 +26,9 @@ await uql.findMany(User, {
 
 // Misspelled column in the sort | idd -> id
 await uql.findMany(User, { $select: { id: true }, $sort: { idd: 1 } });
+
+// Sum over a text column | name -> createdAt
+await uql.aggregate(User, { $agg: { total: { $sum: 'name' } } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await uql.findMany(Company, {

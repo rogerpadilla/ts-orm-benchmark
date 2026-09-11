@@ -17,7 +17,7 @@ await prisma.user.findMany({
   where: { createdAt: 'one' },
 });
 
-// Text operator against a numeric column | contains: 'abc' -> gte: 1
+// Text operator against a numeric column | contains: 'abc' -> gt: 1
 await prisma.user.findMany({
   select: { id: true },
   where: { createdAt: { contains: 'abc' } },
@@ -25,6 +25,9 @@ await prisma.user.findMany({
 
 // Misspelled column in the sort | idd -> id
 await prisma.user.findMany({ select: { id: true }, orderBy: { idd: 'asc' } });
+
+// Sum over a text column | name -> createdAt
+await prisma.user.aggregate({ _sum: { name: true } });
 
 // Misspelled column inside a loaded relation | nmae -> name
 await prisma.company.findMany({
