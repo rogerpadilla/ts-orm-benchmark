@@ -6,13 +6,14 @@
 
 import { spawn } from 'node:child_process';
 
-type Position = { line: number; character: number };
+export type Position = { line: number; character: number };
 export type TextEdit = { range: { start: Position; end: Position }; newText: string };
 type WorkspaceEdit = {
   changes?: Record<string, TextEdit[]>;
   documentChanges?: { textDocument: { uri: string }; edits: TextEdit[] }[];
 };
-type Message = { id?: number; method?: string; params?: { items?: unknown[] }; result?: unknown; error?: unknown };
+/** A response, or a request from the server. The only result this client reads is a rename's. */
+type Message = { id?: number; method?: string; params?: { items?: unknown[] }; result?: WorkspaceEdit | null };
 
 export type LanguageServer = {
   open(uri: string, languageId: string, text: string): void;
@@ -41,13 +42,12 @@ export async function startLanguageServer(command: string, args: string[], rootU
       const message: Message = JSON.parse(buffer.subarray(headerEnd + 4, headerEnd + 4 + length).toString());
       buffer = buffer.subarray(headerEnd + 4 + length);
       if (message.id === undefined) continue;
-      const answer = message.method === undefined ? pending.get(message.id) : undefined;
-      if (answer) {
-        pending.delete(message.id);
-        answer(message);
-      } else if (message.method) {
-        // A request from the server: an empty setting for each item it asks about, nothing for the rest.
+      if (message.method) {
+        // An empty setting for each item the server asks about, nothing for anything else.
         send({ id: message.id, result: message.params?.items?.map(() => ({})) ?? null });
+      } else {
+        pending.get(message.id)?.(message);
+        pending.delete(message.id);
       }
     }
   });
@@ -67,25 +67,32 @@ export async function startLanguageServer(command: string, args: string[], rootU
       send({ method: 'textDocument/didOpen', params: { textDocument: { uri, languageId, version: 1, text } } }),
     rename: async (uri, position, newName) => {
       const { result } = await request('textDocument/rename', { textDocument: { uri }, position, newName });
-      const edit = result as WorkspaceEdit | null;
       return [
-        ...(edit?.changes?.[uri] ?? []),
-        ...(edit?.documentChanges ?? []).filter((change) => change.textDocument.uri === uri).flatMap((c) => c.edits),
+        ...(result?.changes?.[uri] ?? []),
+        ...(result?.documentChanges ?? []).filter((change) => change.textDocument.uri === uri).flatMap((c) => c.edits),
       ];
     },
     close: () => server.kill(),
   };
 }
 
+export const offsetAt = (text: string, { line, character }: Position) =>
+  text
+    .split('\n')
+    .slice(0, line)
+    .reduce((sum, current) => sum + current.length + 1, 0) + character;
+
+export const positionAt = (text: string, offset: number): Position => {
+  const before = text.slice(0, offset).split('\n');
+  return { line: before.length - 1, character: before[before.length - 1].length };
+};
+
 /** `edits` applied to `text`, last first, so no edit moves the range of one still to come. */
-export function applyEdits(text: string, edits: readonly TextEdit[]): string {
-  const lines = text.split('\n');
-  const offset = ({ line, character }: Position) =>
-    lines.slice(0, line).reduce((sum, current) => sum + current.length + 1, 0) + character;
-  return [...edits]
-    .sort((a, b) => offset(b.range.start) - offset(a.range.start))
+export const applyEdits = (text: string, edits: readonly TextEdit[]): string =>
+  [...edits]
+    .sort((a, b) => offsetAt(text, b.range.start) - offsetAt(text, a.range.start))
     .reduce(
-      (out, edit) => out.slice(0, offset(edit.range.start)) + edit.newText + out.slice(offset(edit.range.end)),
+      (out, { range, newText }) =>
+        out.slice(0, offsetAt(text, range.start)) + newText + out.slice(offsetAt(text, range.end)),
       text,
     );
-}

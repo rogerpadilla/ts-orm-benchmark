@@ -17,12 +17,12 @@
  *   bun scripts/type-check.ts --verify   # fail on a probe that stopped erroring, write nothing
  */
 
-import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { COMPILER, compile, type Diagnostic, listed } from './compiler';
 import { regionEnd } from './markers';
 import { PROBE_FILES, type Verdict, type Verdicts } from './model';
-import { COMPILER, PROBE_MARKER, PROBES, type ProbeId, SHARED_FIXES } from './probes';
+import { PROBE_MARKER, PROBES, type ProbeId, SHARED_FIXES } from './probes';
 import { flag, installedVersion, root } from './project';
 import { printTypeSafetySummary, syncTypeSafetyReport, VERDICTS } from './type-safety-report';
 
@@ -90,28 +90,7 @@ function controlSource({ lines, regions }: ProbeFile): string {
   return out.join('\n');
 }
 
-type Diagnostic = { file: string; line: number; text: string };
-
-/** `path(line,col): error TSxxxx: message`, which both compilers emit with `--pretty false`. */
-const DIAGNOSTIC = /^(.+?)\((\d+),\d+\): error (TS\d+): (.*)$/;
-
-function compile(bin: string, project: string): Diagnostic[] {
-  const { stdout, stderr } = spawnSync(process.execPath, [resolve(root, bin), '-p', project, '--pretty', 'false'], {
-    cwd: root,
-    encoding: 'utf8',
-  });
-  return `${stdout}${stderr}`.split('\n').flatMap((line) => {
-    const match = DIAGNOSTIC.exec(line);
-    return match
-      ? [{ file: match[1].replaceAll('\\', '/'), line: Number(match[2]), text: `${match[3]}: ${match[4]}` }]
-      : [];
-  });
-}
-
-const here = (d: Diagnostic) => d.file.includes('/type-safety/') || d.file.startsWith('type-safety/');
-
-const listed = (label: string, diagnostics: Diagnostic[]) =>
-  `${label}\n${diagnostics.map((d) => `  ${d.file}:${d.line} ${d.text}`).join('\n')}`;
+const here = (d: Diagnostic) => dirname(d.file) === DIR;
 
 /** A probe is caught when the mistake errors and the correction does not. */
 function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[]): Verdicts {
@@ -123,13 +102,11 @@ function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[
   // A diagnostic outside every probe region is the context itself failing - `clients.ts` no longer
   // describing the real clients, most likely. Nothing below would look at it, and the run would report a
   // set of verdicts drawn from a file that does not compile.
-  const inRegion = (d: Diagnostic) =>
-    files.some(
-      ({ stem, regions }) =>
-        d.file.endsWith(`type-safety/${stem}.ts`) &&
-        regions.some((region) => d.line >= region.from && d.line <= region.to),
-    );
-  const stray = probed.filter((d) => here(d) && !inRegion(d));
+  const inRegion = (d: Diagnostic, stem: string, region: Region) =>
+    d.file === resolve(DIR, `${stem}.ts`) && d.line >= region.from && d.line <= region.to;
+  const stray = probed.filter(
+    (d) => here(d) && !files.some(({ stem, regions }) => regions.some((region) => inRegion(d, stem, region))),
+  );
   if (stray.length) {
     throw new Error(listed('every error has to belong to a probe, and these belong to nothing:', stray));
   }
@@ -137,12 +114,7 @@ function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[
   return new Map(
     files.map(({ stem, entry, regions }) => [
       entry,
-      regions.map((region): Verdict => {
-        const hit = probed.some(
-          (d) => d.file.endsWith(`type-safety/${stem}.ts`) && d.line >= region.from && d.line <= region.to,
-        );
-        return hit ? 'caught' : 'missed';
-      }),
+      regions.map((region): Verdict => (probed.some((d) => inRegion(d, stem, region)) ? 'caught' : 'missed')),
     ]),
   );
 }
@@ -157,11 +129,7 @@ function main() {
 
   try {
     console.log(`checking with TypeScript ${installedVersion(COMPILER.pkg)}\n`);
-    const results = verdicts(
-      files,
-      compile(COMPILER.bin, 'type-safety/tsconfig.json'),
-      compile(COMPILER.bin, 'type-safety/tsconfig.control.json'),
-    );
+    const results = verdicts(files, compile('type-safety/tsconfig.json'), compile('type-safety/tsconfig.control.json'));
 
     printTypeSafetySummary(results);
 

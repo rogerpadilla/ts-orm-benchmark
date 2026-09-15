@@ -58,7 +58,9 @@ export type RenameProbeId = (typeof RENAME_PROBES)[number]['id'];
  * `followed`: the rename edited every mention. `flagged`: one was left, and the renamed code fails to
  * compile there. `silent`: one was left and it compiles, so it breaks at run time or in a migration.
  */
-export type RenameVerdict = 'followed' | 'flagged' | 'silent' | 'n/a';
+export const RENAME_VERDICTS = ['followed', 'flagged', 'silent', 'n/a'] as const;
+
+export type RenameVerdict = (typeof RENAME_VERDICTS)[number];
 
 /** One probe as one entry scored it, with what uql-orm.dev needs to show it without compiling anything. */
 export type RenameMention = {
@@ -94,9 +96,7 @@ export type RenameRegion = {
   id: RenameProbeId;
   /** The file the marker is in, as the caller named it. */
   file: string;
-  /** 0-based line of the marker. */
-  marker: number;
-  /** 0-based, inclusive; empty (`to < from`) for a probe that does not apply. */
+  /** 0-based, inclusive, marker excluded; empty (`to < from`) for a probe that does not apply. */
   from: number;
   to: number;
   na?: string;
@@ -114,20 +114,22 @@ export function renameRegions(source: string, file: string): RenameRegion[] {
   const isMarker = new Set(markers.map(({ marker }) => marker));
   return markers.map(({ id, marker, na }): RenameRegion => {
     if (na) {
-      return { id, file, marker, from: marker + 1, to: marker, na };
+      return { id, file, from: marker + 1, to: marker, na };
     }
     const to = regionEnd(lines, marker, (line) => isMarker.has(line));
     if (to === marker) {
       throw new TypeError(`${file}:${marker + 1}: '${lines[marker].trim()}' marks no code`);
     }
-    return { id, file, marker, from: marker + 1, to };
+    return { id, file, from: marker + 1, to };
   });
 }
 
-/** Throws unless `regions`, gathered from every file of one tool, mark each probe exactly once. */
-export function assertEveryProbe(regions: readonly RenameRegion[], tool: string): void {
-  const wrong = RENAME_PROBES.filter(({ id }) => regions.filter((region) => region.id === id).length !== 1);
+/** `regions`, gathered from every file of one tool, in {@link RENAME_PROBES} order; each probe marked once. */
+export function byProbe(regions: readonly RenameRegion[], tool: string): RenameRegion[] {
+  const marked = RENAME_PROBES.map(({ id }) => regions.filter((region) => region.id === id));
+  const wrong = RENAME_PROBES.filter((_, i) => marked[i].length !== 1);
   if (wrong.length) {
     throw new TypeError(`${tool} has to mark each probe once, and does not: ${wrong.map((p) => p.what).join(', ')}`);
   }
+  return marked.flat();
 }

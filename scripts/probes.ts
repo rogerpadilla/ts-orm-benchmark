@@ -53,12 +53,3 @@ export const SHARED_FIXES: Partial<Record<ProbeId, string>> = {
   'result-unselected': 'user.email -> user.name',
   'result-nested': '.nmae -> .name',
 };
-
-/**
- * Checked by the compiler this repo already builds with, and only that one, so a mark is what a reader's
- * own editor would say rather than what some pinned older toolchain would. Why `select-key` is red for
- * Prisma and Drizzle on TypeScript 6 and up is the type-safety section of README.md; pinning 5.9.3
- * alongside to re-measure it every run was tried and dropped, since it is a settled fact about a
- * released compiler rather than something a run can discover.
- */
-export const COMPILER = { pkg: 'typescript', bin: 'node_modules/typescript/bin/tsc' } as const;

@@ -4,10 +4,12 @@
  */
 
 import { resolve } from 'node:path';
+import { COMPILER } from './compiler';
 import { installedVersion, root, writeJson, writeReadme } from './project';
 import {
   RENAME_GROUPS,
   RENAME_PROBES,
+  RENAME_VERDICTS,
   type RenameMention,
   type RenamePlayground,
   type RenameVerdict,
@@ -18,12 +20,24 @@ import { alphabetical, linkEntry, list, mdTable } from './render';
 /** Each entry's mentions, in {@link RENAME_PROBES} order. */
 export type RenameResults = Map<string, RenameMention[]>;
 
+export const VERDICTS = 'rename-safety/verdicts.json';
+
 const MARK: Record<RenameVerdict, string> = { followed: '✅', flagged: '⚠️', silent: '❌', 'n/a': '-' };
 
-export const VERDICTS = 'rename-safety/verdicts.json';
+const TOTALS: [RenameVerdict, string][] = [
+  ['followed', '**Followed**'],
+  ['flagged', '**Flagged by the compiler**'],
+  ['silent', '**Silently left behind**'],
+];
 
 const count = (mentions: RenameMention[], verdict: RenameVerdict) =>
   mentions.filter((mention) => mention.verdict === verdict).length;
+
+/** The language servers that did the renaming, as installed. */
+export const renameTooling = () => ({
+  typescript: installedVersion(COMPILER.pkg),
+  prismaLanguageServer: installedVersion('@prisma/language-server'),
+});
 
 function table(results: RenameResults): string {
   const order = alphabetical(results);
@@ -37,9 +51,7 @@ function table(results: RenameResults): string {
     ['Mention', ...order.map(([entry]) => linkEntry(entry))],
     [
       ...groups,
-      ['**Followed**', ...order.map(([, mentions]) => String(count(mentions, 'followed')))],
-      ['**Flagged by the compiler**', ...order.map(([, mentions]) => String(count(mentions, 'flagged')))],
-      ['**Silently left behind**', ...order.map(([, mentions]) => String(count(mentions, 'silent')))],
+      ...TOTALS.map(([verdict, label]) => [label, ...order.map(([, mentions]) => String(count(mentions, verdict)))]),
     ],
   );
 }
@@ -58,12 +70,9 @@ function note(results: RenameResults): string {
 }
 
 export function printRenameSummary(results: RenameResults): void {
-  const cell = (mentions: RenameMention[], verdict: RenameVerdict) =>
-    `${verdict} ${String(count(mentions, verdict)).padStart(2)}`;
   for (const [entry, mentions] of alphabetical(results)) {
-    console.log(
-      `${entry.padEnd(10)} ${cell(mentions, 'followed')}, ${cell(mentions, 'flagged')}, ${cell(mentions, 'silent')}, ${cell(mentions, 'n/a')}`,
-    );
+    const cells = RENAME_VERDICTS.map((verdict) => `${verdict} ${String(count(mentions, verdict)).padStart(2)}`);
+    console.log(`${entry.padEnd(10)} ${cells.join(', ')}`);
   }
 }
 
@@ -72,20 +81,19 @@ export function printRenameSummary(results: RenameResults): void {
  * excerpts scored the same way: uql-orm.dev shows them as they are, rather than scoring anything itself.
  */
 export function syncRenameReport(results: RenameResults, playground: RenamePlayground): void {
+  const tooling = renameTooling();
   const renames = list(RENAMES.map(({ from, to }) => `\`${from}\` to \`${to}\``));
   writeReadme({
     'rename-safety': table(results),
     'rename-safety-note': note(results),
-    'rename-safety-env': `> Renamed ${renames}, with TypeScript ${installedVersion('typescript')} and prisma-language-server ${installedVersion('@prisma/language-server')}.`,
+    'rename-safety-env': `> Renamed ${renames}, with TypeScript ${tooling.typescript} and prisma-language-server ${tooling.prismaLanguageServer}.`,
   });
   writeJson(resolve(root, VERDICTS), {
-    typescript: installedVersion('typescript'),
-    prismaLanguageServer: installedVersion('@prisma/language-server'),
+    ...tooling,
     renames: RENAMES,
     groups: RENAME_GROUPS,
     probes: RENAME_PROBES,
     entries: Object.fromEntries(alphabetical(results)),
     playground,
   });
-  console.log(`\nREADME.md rename-safety blocks updated, results written to ${VERDICTS}`);
 }

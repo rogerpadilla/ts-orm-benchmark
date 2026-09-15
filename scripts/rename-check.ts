@@ -24,12 +24,27 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { applyEdits, type LanguageServer, startLanguageServer, type TextEdit } from './lsp';
-import { PROBE_FILES } from './model';
-import { flag, installedVersion, root } from './project';
-import { printRenameSummary, type RenameResults, syncRenameReport } from './rename-safety-report';
+import { COMPILER, compile, type Diagnostic, listed } from './compiler';
 import {
-  assertEveryProbe,
+  applyEdits,
+  type LanguageServer,
+  offsetAt,
+  type Position,
+  positionAt,
+  startLanguageServer,
+  type TextEdit,
+} from './lsp';
+import { PROBE_FILES } from './model';
+import { flag, root } from './project';
+import {
+  printRenameSummary,
+  renameTooling,
+  type RenameResults,
+  syncRenameReport,
+  VERDICTS,
+} from './rename-safety-report';
+import {
+  byProbe,
   PLAYGROUND,
   PLAYGROUND_RENAMES,
   RENAME_PROBES,
@@ -58,68 +73,39 @@ const projectOf = (file: string) => (existsSync(resolve(DIR, dirname(file), 'tsc
 const copyOf = (file: string) =>
   join(projectOf(file), relative(projectOf(file), file).replace(/\.ts$/, '').replaceAll('/', '-'));
 
-type Diagnostic = { file: string; line: number; text: string };
-
-const listed = (diagnostics: Diagnostic[]) => diagnostics.map((d) => `  ${d.file}:${d.line} ${d.text}`).join('\n');
-
-/** `path(line,col): error TSxxxx: message`, with `--pretty false`. */
-const TS_DIAGNOSTIC = /^(.+?)\((\d+),\d+\): error (TS\d+: .*)$/;
-
-function compile(project: string): Diagnostic[] {
-  const { stdout, stderr } = spawnSync(resolve(root, 'node_modules/.bin/tsc'), ['-p', project, '--pretty', 'false'], {
-    cwd: root,
-    encoding: 'utf8',
-  });
-  return `${stdout}${stderr}`.split('\n').flatMap((line) => {
-    const match = TS_DIAGNOSTIC.exec(line);
-    return match ? [{ file: resolve(root, match[1]), line: Number(match[2]), text: match[3] }] : [];
-  });
-}
-
 /** Validates a schema, and generates its client when it is valid; each error by the line it points at. */
-function prisma(schema: string): Diagnostic[] {
-  const run = (command: string) =>
-    spawnSync(resolve(root, 'node_modules/.bin/prisma'), [command, '--schema', schema], {
-      cwd: root,
-      encoding: 'utf8',
-    });
-  const validated = run('validate');
-  const output = `${validated.stdout}${validated.stderr}`;
-  const errors = [...output.matchAll(/^error: (.+)\n\s*-->\s+.*?:(\d+)/gm)].map((match) => ({
+function validateSchema(schema: string): Diagnostic[] {
+  const prisma = (command: string) => {
+    const { status, stdout, stderr } = spawnSync(
+      resolve(root, 'node_modules/.bin/prisma'),
+      [command, '--schema', schema],
+      { cwd: root, encoding: 'utf8' },
+    );
+    return { status, output: `${stdout}${stderr}` };
+  };
+  const validated = prisma('validate');
+  const errors = [...validated.output.matchAll(/^error: (.+)\n\s*-->\s+.*?:(\d+)/gm)].map((match) => ({
     file: schema,
     line: Number(match[2]),
     text: match[1],
   }));
   if (validated.status !== 0 && !errors.length) {
-    throw new Error(`prisma validate failed without naming a line:\n${output}`);
+    throw new Error(`prisma validate failed without naming a line:\n${validated.output}`);
   }
-  if (!errors.length) {
-    const generated = run('generate');
-    if (generated.status !== 0) {
-      throw new Error(`prisma generate failed:\n${generated.stdout}${generated.stderr}`);
-    }
+  if (errors.length) {
+    return errors;
   }
-  return errors;
+  const generated = prisma('generate');
+  if (generated.status !== 0) {
+    throw new Error(`prisma generate failed:\n${generated.output}`);
+  }
+  return [];
 }
 
-type Position = TextEdit['range']['start'];
-type Rename = (typeof RENAMES)[number];
-
-const positionOf = (text: string, offset: number): Position => {
-  const before = text.slice(0, offset).split('\n');
-  return { line: before.length - 1, character: before[before.length - 1].length };
-};
-
-const offsetOf = (text: string, { line, character }: Position) =>
-  text
-    .split('\n')
-    .slice(0, line)
-    .reduce((sum, current) => sum + current.length + 1, 0) + character;
-
 /** A rename edit, and the member whose rename made it. */
-type MemberEdit = { member: string; range: TextEdit['range'] };
+type MemberEdit = TextEdit & { member: string };
 
-const renamedTo = (member: string) => RENAMES.find(({ from }) => from === member)?.to ?? member;
+type Rename = (typeof RENAMES)[number];
 
 /**
  * Each member renamed from where the server will start: its first mention outside a comment and a string that
@@ -129,14 +115,13 @@ const renamedTo = (member: string) => RENAMES.find(({ from }) => from === member
  */
 async function renameEdits(
   server: LanguageServer,
-  path: string,
-  languageId: string,
+  file: string,
   renames: readonly Rename[],
-  keep = (_: string) => true,
+  keep: (edit: TextEdit) => boolean,
 ): Promise<MemberEdit[]> {
-  const uri = pathToFileURL(path).href;
-  const text = readFileSync(path, 'utf8');
-  server.open(uri, languageId, text);
+  const uri = pathToFileURL(resolve(DIR, file)).href;
+  const text = readFileSync(resolve(DIR, file), 'utf8');
+  server.open(uri, file.endsWith('.prisma') ? 'prisma' : 'typescript', text);
 
   const edits: MemberEdit[] = [];
   for (const { from, to } of renames) {
@@ -145,18 +130,16 @@ async function renameEdits(
       if (before.trimStart().startsWith('//') || /['"`]$/.test(before)) {
         continue;
       }
-      const found = await server.rename(uri, positionOf(text, match.index), to);
+      const found = await server.rename(uri, positionAt(text, match.index), to);
       if (!found.length) {
         continue;
       }
-      for (const { range, newText } of found.filter((edit) => keep(edit.newText))) {
-        const replaced = text.slice(offsetOf(text, range.start), offsetOf(text, range.end));
-        if (replaced !== from || newText !== to) {
-          throw new Error(
-            `${path}: renaming '${from}' turned '${replaced}' into '${newText}', which is not that rename`,
-          );
+      for (const edit of found.filter(keep)) {
+        const replaced = text.slice(offsetAt(text, edit.range.start), offsetAt(text, edit.range.end));
+        if (replaced !== from || edit.newText !== to) {
+          throw new Error(`${file}: renaming '${from}' turned '${replaced}' into '${edit.newText}'`);
         }
-        edits.push({ member: from, range });
+        edits.push({ ...edit, member: from });
       }
       break;
     }
@@ -165,81 +148,65 @@ async function renameEdits(
 }
 
 /** Every file's rename edits, by its path under `rename-safety/`, each made by its own tool. */
-async function renameEverything(stems: string[]): Promise<Map<string, MemberEdit[]>> {
+async function renameEverything(toolFiles: readonly string[]): Promise<Map<string, MemberEdit[]>> {
   const edits = new Map<string, MemberEdit[]>();
+  const all = () => true;
 
-  const ts = await startLanguageServer(
-    resolve(root, 'node_modules/.bin/tsc'),
-    ['--lsp', '--stdio'],
-    pathToFileURL(root).href,
-  );
+  const ts = await startLanguageServer(process.execPath, [COMPILER.bin, '--lsp', '--stdio'], pathToFileURL(root).href);
   try {
-    for (const stem of stems) {
-      // Prisma's queries declare nothing a TypeScript rename could start from: its schema does.
-      const renames = stem === 'prisma' ? [] : RENAMES;
-      for (const file of filesOf(stem).filter((path) => path.endsWith('.ts'))) {
-        edits.set(file, await renameEdits(ts, resolve(DIR, file), 'typescript', renames));
-      }
+    // Prisma's queries declare nothing a TypeScript rename could start from: its schema does.
+    for (const file of toolFiles.filter((file) => file.endsWith('.ts') && file !== 'prisma.ts')) {
+      edits.set(file, await renameEdits(ts, file, RENAMES, all));
     }
     for (const file of Object.values(PLAYGROUND)) {
-      edits.set(file, await renameEdits(ts, resolve(DIR, file), 'typescript', PLAYGROUND_RENAMES));
+      edits.set(file, await renameEdits(ts, file, PLAYGROUND_RENAMES, all));
     }
   } finally {
     ts.close();
   }
 
-  const schema = await startLanguageServer(
+  const prisma = await startLanguageServer(
     resolve(root, 'node_modules/.bin/prisma-language-server'),
     ['--stdio'],
     pathToFileURL(DIR).href,
   );
   try {
-    const keep = (newText: string) => !newText.trimStart().startsWith('@map(');
-    edits.set(SCHEMA, await renameEdits(schema, resolve(DIR, SCHEMA), 'prisma', RENAMES, keep));
+    const takesColumn = ({ newText }: TextEdit) => !newText.trimStart().startsWith('@map(');
+    edits.set(SCHEMA, await renameEdits(prisma, SCHEMA, RENAMES, takesColumn));
   } finally {
-    schema.close();
+    prisma.close();
   }
 
   return edits;
 }
 
-const OLD_NAMES = RENAMES.map(({ from }) => from).join('|');
-
-/** The regions that still name something the rename was meant to reach. */
-const leftIn = (text: string, regions: readonly RenameRegion[]) => {
-  const lines = text.split('\n');
-  const stale = new RegExp(`\\b(${OLD_NAMES})\\b`);
-  return regions.filter(
-    (region) => !region.na && lines.slice(region.from, region.to + 1).some((line) => stale.test(line)),
-  );
-};
+const STALE = new RegExp(`\\b(${RENAMES.map(({ from }) => from).join('|')})\\b`, 'g');
+const renamedTo = (member: string) => RENAMES.find(({ from }) => from === member)?.to ?? member;
 
 /** `text` with the mentions in `regions` written as renamed, as if the rename had reached them. */
 function settle(text: string, regions: readonly RenameRegion[]): string {
   const lines = text.split('\n');
-  const stale = new RegExp(`\\b(${OLD_NAMES})\\b`, 'g');
   for (const { from, to } of regions) {
     for (let i = from; i <= to; i++) {
-      lines[i] = lines[i].replace(stale, renamedTo);
+      lines[i] = lines[i].replace(STALE, renamedTo);
     }
   }
   return lines.join('\n');
 }
 
+/** Whether `region` of `text` still names something the rename was meant to reach. */
+const isLeft = (text: string, region: RenameRegion) => settle(text, [region]) !== text;
+
 /** A region's code with its common indent removed, and each rename edit inside it by offset in that code. */
-function snippetOf(text: string, region: RenameRegion, edits: readonly MemberEdit[]) {
-  if (region.na) {
-    return { snippet: '', edits: [] };
-  }
-  const lines = text.split('\n').slice(region.from, region.to + 1);
+function snippetOf(text: string, { from, to }: RenameRegion, edits: readonly MemberEdit[]) {
+  const lines = text.split('\n').slice(from, to + 1);
   const indent = Math.min(...lines.map((line) => line.length - line.trimStart().length));
-  const startOf = (line: number) =>
-    lines.slice(0, line - region.from).reduce((sum, current) => sum + current.length - indent + 1, 0);
-  const at = ({ line, character }: Position) => startOf(line) + character - indent;
+  const snippet = lines.map((line) => line.slice(indent)).join('\n');
+  const at = ({ line, character }: Position) => offsetAt(snippet, { line: line - from, character: character - indent });
   return {
-    snippet: lines.map((line) => line.slice(indent)).join('\n'),
+    snippet,
     edits: edits
-      .filter(({ range }) => range.start.line >= region.from && range.end.line <= region.to)
+      .filter(({ range }) => range.start.line >= from && range.end.line <= to)
       .map(({ member, range }) => ({ member, start: at(range.start), end: at(range.end) })),
   };
 }
@@ -251,31 +218,21 @@ async function main() {
   const files = [...stems.flatMap(filesOf), ...Object.values(PLAYGROUND)];
   const typescriptFiles = files.filter((file) => file.endsWith('.ts'));
   const projects = [...new Set(typescriptFiles.map(projectOf))];
-  const originals = new Map(files.map((file) => [file, readFileSync(resolve(DIR, file), 'utf8')] as const));
+  const originals = new Map(files.map((file) => [file, readFileSync(resolve(DIR, file), 'utf8')]));
   const regionsOf = (file: string) => renameRegions(originals.get(file) ?? '', file);
-  const regions = new Map(stems.map((stem) => [stem, filesOf(stem).flatMap(regionsOf)]));
-  for (const [stem, found] of regions) {
-    assertEveryProbe(found, stem);
-  }
+  const tools = stems.map((stem) => ({ stem, regions: byProbe(filesOf(stem).flatMap(regionsOf), stem) }));
 
   const broken = [
-    ...prisma(resolve(DIR, SCHEMA)),
+    ...validateSchema(resolve(DIR, SCHEMA)),
     ...projects.flatMap((project) => compile(join('rename-safety', project, 'tsconfig.json'))),
   ];
   if (broken.length) {
-    throw new Error(`the originals must compile clean, and these did not:\n${listed(broken)}`);
+    throw new Error(listed('the originals must compile clean, and these did not:', broken));
   }
 
-  const edits = await renameEverything(stems);
-  const renamed = new Map(
-    [...originals].map(([file, text]) => [
-      file,
-      applyEdits(
-        text,
-        (edits.get(file) ?? []).map(({ member, range }) => ({ range, newText: renamedTo(member) })),
-      ),
-    ]),
-  );
+  const edits = await renameEverything(stems.flatMap(filesOf));
+  const renamed = new Map([...originals].map(([file, text]) => [file, applyEdits(text, edits.get(file) ?? [])]));
+  const leftIn = (file: string) => regionsOf(file).filter((region) => isLeft(renamed.get(file) ?? '', region));
 
   rmSync(RENAMED, { recursive: true, force: true });
   mkdirSync(resolve(RENAMED, 'prisma'), { recursive: true });
@@ -289,18 +246,17 @@ async function main() {
   // Prisma's validator scores what the rename left in its schema; the queries compile against a client
   // generated as if the rename had reached all of it, so they are scored on their own mentions.
   const schemaPath = resolve(RENAMED, SCHEMA);
-  const schemaText = renamed.get(SCHEMA) ?? '';
-  writeFileSync(schemaPath, schemaText);
-  const schemaErrors = prisma(schemaPath);
-  writeFileSync(schemaPath, settle(schemaText, leftIn(schemaText, regionsOf(SCHEMA))));
-  const settledSchema = prisma(schemaPath);
+  writeFileSync(schemaPath, renamed.get(SCHEMA) ?? '');
+  const schemaErrors = validateSchema(schemaPath);
+  writeFileSync(schemaPath, settle(renamed.get(SCHEMA) ?? '', leftIn(SCHEMA)));
+  const settledSchema = validateSchema(schemaPath);
   if (settledSchema.length) {
-    throw new Error(`the schema written as fully renamed must validate, and did not:\n${listed(settledSchema)}`);
+    throw new Error(listed('the schema written as fully renamed must validate, and did not:', settledSchema));
   }
 
   for (const file of typescriptFiles) {
     const text = renamed.get(file) ?? '';
-    const left = leftIn(text, regionsOf(file));
+    const left = leftIn(file);
     writeFileSync(resolve(RENAMED, `${copyOf(file)}.settled.ts`), settle(text, left));
     for (const region of left) {
       const others = left.filter((other) => other !== region);
@@ -313,54 +269,50 @@ async function main() {
 
   const unsettled = typescriptFiles.flatMap((file) => errorsIn(`${copyOf(file)}.settled.ts`));
   if (unsettled.length) {
-    throw new Error(`each file written as fully renamed must compile clean, and these did not:\n${listed(unsettled)}`);
+    throw new Error(listed('each file written as fully renamed must compile clean, and these did not:', unsettled));
   }
 
-  const mentionOf = (region: RenameRegion): RenameMention => {
-    const shown = {
-      file: region.file,
-      startLine: region.from + 1,
-      endLine: region.to + 1,
-      ...snippetOf(originals.get(region.file) ?? '', region, edits.get(region.file) ?? []),
-      reason: region.na ?? null,
-    };
+  const verdictOf = (region: RenameRegion): Pick<RenameMention, 'verdict' | 'message'> => {
     if (region.na) {
-      return { verdict: 'n/a', ...shown, message: null };
+      return { verdict: 'n/a', message: null };
     }
-    if (!leftIn(renamed.get(region.file) ?? '', [region]).length) {
-      return { verdict: 'followed', ...shown, message: null };
+    if (!isLeft(renamed.get(region.file) ?? '', region)) {
+      return { verdict: 'followed', message: null };
     }
     const refusal =
       region.file === SCHEMA
         ? schemaErrors.find((d) => d.line >= region.from + 1 && d.line <= region.to + 1)
         : errorsIn(`${copyOf(region.file)}.${region.id}.ts`)[0];
-    return refusal
-      ? { verdict: 'flagged', ...shown, message: refusal.text }
-      : { verdict: 'silent', ...shown, message: null };
+    return refusal ? { verdict: 'flagged', message: refusal.text } : { verdict: 'silent', message: null };
   };
 
-  const results: RenameResults = new Map(
-    stems.map((stem) => [
-      PROBE_FILES[stem],
-      RENAME_PROBES.map(({ id }) => {
-        const region = (regions.get(stem) ?? []).find((candidate) => candidate.id === id);
-        if (!region) {
-          throw new TypeError(`${stem} marks no '${id}'`);
-        }
-        return mentionOf(region);
-      }),
-    ]),
-  );
+  const mentionOf = (region: RenameRegion): RenameMention => {
+    const { verdict, message } = verdictOf(region);
+    return {
+      verdict,
+      file: region.file,
+      startLine: region.from + 1,
+      endLine: region.to + 1,
+      ...snippetOf(originals.get(region.file) ?? '', region, edits.get(region.file) ?? []),
+      reason: region.na ?? null,
+      message,
+    };
+  };
+
+  const results: RenameResults = new Map(tools.map(({ stem, regions }) => [PROBE_FILES[stem], regions.map(mentionOf)]));
 
   const playground: RenamePlayground = {
     renames: PLAYGROUND_RENAMES,
     entries: Object.fromEntries(
       Object.entries(PLAYGROUND).map(([entry, file]) => {
-        const scored = results.get(entry) ?? [];
+        const scored = results.get(entry);
+        if (!scored) {
+          throw new TypeError(`${file} is the excerpt of '${entry}', which no probe file scores`);
+        }
         const mentions = regionsOf(file).map((region) => {
           const excerpt = mentionOf(region);
           const whole = scored[RENAME_PROBES.findIndex(({ id }) => id === region.id)];
-          if (!whole || !flat(excerpt.snippet).includes(flat(whole.snippet))) {
+          if (!flat(excerpt.snippet).includes(flat(whole.snippet))) {
             throw new Error(`${file}: '${region.id}' is not the code ${entry}'s own file scores`);
           }
           if (excerpt.verdict !== whole.verdict) {
@@ -375,10 +327,8 @@ async function main() {
     ),
   };
 
-  console.log(
-    `renamed with TypeScript ${installedVersion('typescript')} and prisma-language-server ` +
-      `${installedVersion('@prisma/language-server')}\n`,
-  );
+  const { typescript, prismaLanguageServer } = renameTooling();
+  console.log(`renamed with TypeScript ${typescript} and prisma-language-server ${prismaLanguageServer}\n`);
   printRenameSummary(results);
 
   if (flag('verify')) {
@@ -386,6 +336,7 @@ async function main() {
     return;
   }
   syncRenameReport(results, playground);
+  console.log(`\nREADME.md rename-safety blocks updated, results written to ${VERDICTS}`);
 }
 
 await main();

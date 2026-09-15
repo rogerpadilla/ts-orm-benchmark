@@ -5,8 +5,9 @@
  */
 
 import { resolve } from 'node:path';
+import { COMPILER } from './compiler';
 import type { Verdict, Verdicts } from './model';
-import { COMPILER, PROBES } from './probes';
+import { PROBES } from './probes';
 import { installedVersion, root, writeJson, writeReadme } from './project';
 import { alphabetical, bold, linkEntry, list, mdTable } from './render';
 
