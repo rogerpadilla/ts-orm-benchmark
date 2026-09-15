@@ -2,7 +2,7 @@
 
 What a TypeScript ORM costs you on one real PostgreSQL round trip, in time and in memory, and which mistakes it catches before you run it.
 
-Every entry runs the same seven-step lifecycle over the same `Company`/`User` schema in its own idiomatic API, measured against hand-written `raw pg` and `bun sql` floors, so what you read is the ORM's cost and not Postgres'. Every tool is also [compiled against the same ordinary mistakes](#type-safety), and the same lifecycle is [run on Bun, Node and Deno](#runtimes) and [weighed for what it allocates](#memory).
+Every entry runs the same seven-step lifecycle over the same `Company`/`User` schema in its own idiomatic API, measured against hand-written `raw pg` and `bun sql` floors, so what you read is the ORM's cost and not Postgres'. Every tool is also [compiled against the same ordinary mistakes](#type-safety) and [renamed with its own tooling](#rename-safety), and the same lifecycle is [run on Bun, Node and Deno](#runtimes) and [weighed for what it allocates](#memory).
 
 I wrote UQL, so read the tables rather than my summary of them. Clone it and check: that is what the [method](#method) is for.
 
@@ -176,6 +176,53 @@ findMany({ select: { id: true, emial: true } }); // 5.9.3 errors; 6.0.3 and 7.0.
 ```
 
 Counted as missing, not excused: a check the compiler no longer makes protects nobody. Drizzle's `db.query` loses it the same way, which is why its flat probes use `db.select()`, the builder its timed read uses: a misspelling there is a property access, and those are still caught.
+
+## Rename safety
+
+What an ORM costs when you rename a field. Each entry's model and every place that names three of its members are in [rename-safety/](rename-safety/), written the most rename-friendly way its API allows, then renamed with that tool's own rename: TypeScript's language server, or Prisma's for its schema. For TypeORM that way is its decorators, whose inverse side takes a callback where an entity schema takes a string; they need `experimentalDecorators`, which UQL's standard decorators cannot share a project with, so [rename-safety/typeorm/](rename-safety/typeorm/) has its own. A rename takes the column with the field, which is what every entry maps by default; Prisma's server also adds `@map` to keep the old column, and that edit is left out.
+
+[rename-safety/playground/](rename-safety/playground/) holds the two short excerpts, UQL and Drizzle, that [uql-orm.dev/rename-safety](https://uql-orm.dev/rename-safety) renames live. They are renamed and scored the same way, and a run fails if one disagrees with the full file it comes from.
+
+<!-- bench:rename-safety-env -->
+> Renamed `emailAddress` to `email`, `employerId` to `workplaceId` and `employer` to `workplace`, with TypeScript 7.0.2 and prisma-language-server 31.12.10.
+<!-- /bench:rename-safety-env -->
+
+<!-- bench:rename-safety -->
+| Mention | [Drizzle](https://orm.drizzle.team) | [MikroORM](https://mikro-orm.io) | [Prisma](https://www.prisma.io) | [Sequelize](https://sequelize.org) | [TypeORM](https://typeorm.io) | [UQL](https://uql-orm.dev) |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Definitions** |  |  |  |  |  |  |
+| Index on the field | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ |
+| Composite unique index | ✅ | ⚠️ | ✅ | ❌ | ✅ | ✅ |
+| Covering index column | - | ⚠️ | - | - | - | ✅ |
+| Foreign key of a relation | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| Inverse side of a relation | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| **SQL in definitions** |  |  |  |  |  |  |
+| Expression index | ✅ | ⚠️ | - | ❌ | - | ✅ |
+| Partial index condition | ✅ | ⚠️ | - | ❌ | ❌ | ✅ |
+| Check constraint | ✅ | ⚠️ | - | - | ❌ | ✅ |
+| Generated column | ✅ | ❌ | - | - | ❌ | ✅ |
+| **Queries** |  |  |  |  |  |  |
+| Field in the projection | ✅ | ⚠️ | ❌ | ❌ | ✅ | ✅ |
+| Field in the filter | ✅ | ⚠️ | ⚠️ | ✅ | ✅ | ✅ |
+| Field in the sort | ✅ | ⚠️ | ⚠️ | ❌ | ✅ | ✅ |
+| Field inside a loaded relation | ⚠️ | ⚠️ | ⚠️ | ❌ | ✅ | ✅ |
+| Relation loaded by name | ⚠️ | ⚠️ | ⚠️ | ❌ | ✅ | ✅ |
+| Field in inserted data | ⚠️ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
+| Field in updated data | ⚠️ | ⚠️ | ❌ | ✅ | ✅ | ✅ |
+| Foreign key in a grouped count | ✅ | ⚠️ | ⚠️ | ❌ | ❌ | ✅ |
+| Field read off the result | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
+| **Raw SQL in a query** |  |  |  |  |  |  |
+| Raw SQL in a filter | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **Followed** | 14 | 3 | 4 | 4 | 12 | 19 |
+| **Flagged by the compiler** | 4 | 13 | 7 | 0 | 0 | 0 |
+| **Silently left behind** | 0 | 3 | 3 | 12 | 5 | 0 |
+<!-- /bench:rename-safety -->
+
+<!-- bench:rename-safety-note -->
+Drizzle and UQL leave nothing behind silently; Sequelize leaves 12 of the 19. A mention left behind silently still compiles, and breaks when the code runs or the schema migrates.
+<!-- /bench:rename-safety-note -->
+
+✅ the rename edited it. ⚠️ it was left behind and the renamed code no longer compiles there. ❌ it was left behind and still compiles, so it breaks at run time or in the next migration. `-` the entry has no way to declare it.
 
 ## Runtimes
 

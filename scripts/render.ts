@@ -21,6 +21,17 @@ export function mdTable(header: string[], rows: string[][]): string {
 /** The one convention every table here shares, in one place: the leading cell, and only it, is bold. */
 export const bold = (text: string | number, leading: boolean) => (leading ? `**${text}**` : `${text}`);
 
+/**
+ * Entries alphabetically, which is how both scored tables order their columns: sorting by score would dress a
+ * one-probe gap up as a ranking, and putting the one we wrote first would be the benchmark flattering its author.
+ */
+export const alphabetical = <T>(results: Map<string, T>): [string, T][] =>
+  [...results].sort((a, b) => a[0].localeCompare(b[0]));
+
+/** Names as prose: `a, b and c`. */
+export const list = (names: readonly string[]) =>
+  names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : (names[0] ?? '');
+
 /** Where a run happened, which every report's caption states and none of them should word twice. */
 export const machineFacts = () => ({
   machine: cpus()[0]?.model ?? 'unknown CPU',

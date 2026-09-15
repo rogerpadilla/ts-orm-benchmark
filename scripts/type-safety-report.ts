@@ -8,22 +8,14 @@ import { resolve } from 'node:path';
 import type { Verdict, Verdicts } from './model';
 import { COMPILER, PROBES } from './probes';
 import { installedVersion, root, writeJson, writeReadme } from './project';
-import { bold, linkEntry, mdTable } from './render';
+import { alphabetical, bold, linkEntry, list, mdTable } from './render';
 
 const MARK: Record<Verdict, string> = { caught: '✅', missed: '❌' };
 
 export const score = (vs: Verdict[]) => vs.filter((v) => v === 'caught').length;
 
-/**
- * Alphabetical, not by score. A handful of probes cannot separate tools the way a microsecond can, so
- * ordering the columns by score would dress a one-probe gap up as a ranking, and putting the one we
- * wrote first would be the benchmark flattering its author. The scores are in the bottom row for anyone
- * who wants them ordered.
- */
-export const ordered = (results: Verdicts) => [...results].sort((a, b) => a[0].localeCompare(b[0]));
-
 function table(results: Verdicts): string {
-  const order = ordered(results);
+  const order = alphabetical(results);
   const best = Math.max(...order.map(([, vs]) => score(vs)));
 
   return mdTable(
@@ -35,15 +27,12 @@ function table(results: Verdicts): string {
   );
 }
 
-const list = (names: string[]) =>
-  names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
-
 /**
  * The two things worth saying about the table, both computed: how far apart the field is, and which
  * mistake nobody catches, since a probe every tool misses is the one a reader should worry about.
  */
 function note(results: Verdicts): string {
-  const order = ordered(results);
+  const order = alphabetical(results);
   const scores = order.map(([, vs]) => score(vs));
   const best = Math.max(...scores);
   const worst = Math.min(...scores);
@@ -67,7 +56,7 @@ function note(results: Verdicts): string {
 export const VERDICTS = 'type-safety/verdicts.json';
 
 export function printTypeSafetySummary(results: Verdicts): void {
-  for (const [entry, vs] of ordered(results)) {
+  for (const [entry, vs] of alphabetical(results)) {
     console.log(`${entry.padEnd(10)} ${String(score(vs)).padStart(2)}/${PROBES.length}`);
   }
 }
@@ -86,6 +75,6 @@ export function syncTypeSafetyReport(results: Verdicts): void {
   writeJson(resolve(root, VERDICTS), {
     typescript: installedVersion(COMPILER.pkg),
     probes: PROBES,
-    entries: Object.fromEntries(ordered(results)),
+    entries: Object.fromEntries(alphabetical(results)),
   });
 }

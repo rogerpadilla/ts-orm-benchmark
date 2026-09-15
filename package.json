@@ -9,6 +9,7 @@
     "bench.runtimes": "bun scripts/runtime-bench.ts",
     "bench.memory": "bun scripts/memory-bench.ts",
     "bench.types": "bun scripts/type-check.ts",
+    "bench.renames": "bun scripts/rename-check.ts",
     "ts": "tsc --noEmit",
     "lint": "oxlint && oxfmt --check",
     "lint.fix": "oxlint --fix && oxfmt"
@@ -39,15 +40,16 @@
     "@mikro-orm/postgresql": "7.2.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "@prisma/language-server": "31.12.10",
     "@types/bun": "^1.4.2",
     "drizzle-orm": "0.45.2",
-    "oxfmt": "^0.67.0",
-    "oxlint": "^1.82.0",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
     "pg": "8.23.0",
     "prisma": "7.10.0",
     "sequelize": "6.37.8",
     "typeorm": "1.1.1",
     "typescript": "7.0.2",
-    "uql-orm": "0.58.0"
+    "uql-orm": "0.65.1"
   }
 }

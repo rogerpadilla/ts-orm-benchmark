@@ -20,6 +20,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { regionEnd } from './markers';
 import { PROBE_FILES, type Verdict, type Verdicts } from './model';
 import { COMPILER, PROBE_MARKER, PROBES, type ProbeId, SHARED_FIXES } from './probes';
 import { flag, installedVersion, root } from './project';
@@ -53,10 +54,11 @@ function readProbeFile(stem: string): ProbeFile {
     throw new TypeError(`${stem}.ts does not mark the ${PROBES.length} probes of scripts/probes.ts, in their order`);
   }
 
+  const markerLines = new Set(marked.map(({ from }) => from - 1));
   const regions = marked.map(({ from, fix }, i): Region => ({
     id: PROBES[i].id,
     from,
-    to: marked[i + 1] ? marked[i + 1].from - 1 : lines.length,
+    to: regionEnd(lines, from - 1, (line) => markerLines.has(line)) + 1,
     fix,
   }));
 

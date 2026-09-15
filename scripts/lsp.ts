@@ -1,0 +1,91 @@
+/**
+ * Just enough of a language-server client to ask for a rename: start a server over stdio, open a document,
+ * and request `textDocument/rename` on it. The rename-safety check uses it for TypeScript's server and for
+ * Prisma's, so each tool is renamed by its own tooling.
+ */
+
+import { spawn } from 'node:child_process';
+
+type Position = { line: number; character: number };
+export type TextEdit = { range: { start: Position; end: Position }; newText: string };
+type WorkspaceEdit = {
+  changes?: Record<string, TextEdit[]>;
+  documentChanges?: { textDocument: { uri: string }; edits: TextEdit[] }[];
+};
+type Message = { id?: number; method?: string; params?: { items?: unknown[] }; result?: unknown; error?: unknown };
+
+export type LanguageServer = {
+  open(uri: string, languageId: string, text: string): void;
+  rename(uri: string, position: Position, newName: string): Promise<TextEdit[]>;
+  close(): void;
+};
+
+export async function startLanguageServer(command: string, args: string[], rootUri: string): Promise<LanguageServer> {
+  const server = spawn(command, args);
+  const pending = new Map<number, (message: Message) => void>();
+  let buffer = Buffer.alloc(0);
+  let lastId = 0;
+
+  const send = (message: object) => {
+    const body = JSON.stringify({ jsonrpc: '2.0', ...message });
+    server.stdin.write(`Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
+  };
+
+  server.stdout.on('data', (chunk: Buffer) => {
+    buffer = Buffer.concat([buffer, chunk]);
+    for (;;) {
+      const headerEnd = buffer.indexOf('\r\n\r\n');
+      if (headerEnd < 0) return;
+      const length = Number(/Content-Length: (\d+)/.exec(buffer.subarray(0, headerEnd).toString())?.[1]);
+      if (buffer.length < headerEnd + 4 + length) return;
+      const message: Message = JSON.parse(buffer.subarray(headerEnd + 4, headerEnd + 4 + length).toString());
+      buffer = buffer.subarray(headerEnd + 4 + length);
+      if (message.id === undefined) continue;
+      const answer = message.method === undefined ? pending.get(message.id) : undefined;
+      if (answer) {
+        pending.delete(message.id);
+        answer(message);
+      } else if (message.method) {
+        // A request from the server: an empty setting for each item it asks about, nothing for the rest.
+        send({ id: message.id, result: message.params?.items?.map(() => ({})) ?? null });
+      }
+    }
+  });
+
+  const request = (method: string, params: object) =>
+    new Promise<Message>((answer) => {
+      const id = ++lastId;
+      pending.set(id, answer);
+      send({ id, method, params });
+    });
+
+  await request('initialize', { processId: process.pid, rootUri, capabilities: {} });
+  send({ method: 'initialized', params: {} });
+
+  return {
+    open: (uri, languageId, text) =>
+      send({ method: 'textDocument/didOpen', params: { textDocument: { uri, languageId, version: 1, text } } }),
+    rename: async (uri, position, newName) => {
+      const { result } = await request('textDocument/rename', { textDocument: { uri }, position, newName });
+      const edit = result as WorkspaceEdit | null;
+      return [
+        ...(edit?.changes?.[uri] ?? []),
+        ...(edit?.documentChanges ?? []).filter((change) => change.textDocument.uri === uri).flatMap((c) => c.edits),
+      ];
+    },
+    close: () => server.kill(),
+  };
+}
+
+/** `edits` applied to `text`, last first, so no edit moves the range of one still to come. */
+export function applyEdits(text: string, edits: readonly TextEdit[]): string {
+  const lines = text.split('\n');
+  const offset = ({ line, character }: Position) =>
+    lines.slice(0, line).reduce((sum, current) => sum + current.length + 1, 0) + character;
+  return [...edits]
+    .sort((a, b) => offset(b.range.start) - offset(a.range.start))
+    .reduce(
+      (out, edit) => out.slice(0, offset(edit.range.start)) + edit.newText + out.slice(offset(edit.range.end)),
+      text,
+    );
+}

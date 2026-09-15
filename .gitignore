@@ -3,6 +3,9 @@ node_modules/
 src/generated/
 # Written by `scripts/type-check.ts` while it compiles the corrected probes, deleted after.
 type-safety/*.control.ts
+# Generated from rename-safety/prisma/schema.prisma, and the renamed copies `scripts/rename-check.ts` compiles.
+rename-safety/prisma/generated/
+rename-safety/renamed/
 # The bundle `bench.runtimes` builds, and the GitHub Pages payload.
 .bench-build/
 _site/

@@ -1,0 +1,35 @@
+// The model `rename-safety/prisma.ts` queries. Renamed by Prisma's own language server, which is what
+// its editor extension runs.
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id    Int    @id @default(autoincrement())
+  // Inverse side of a relation
+  staff User[]
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  emailAddress      String
+  employerId Int?
+  // Foreign key of a relation
+  employer   Company? @relation(fields: [employerId], references: [id])
+  // Generated column | n/a: Prisma schemas declare no generated columns
+
+  // Index on the field
+  @@index([emailAddress])
+  // Composite unique index
+  @@unique([emailAddress, employerId])
+  // Covering index column | n/a: Prisma's indexes have no INCLUDE
+  // Expression index | n/a: Prisma indexes fields, never an expression
+  // Partial index condition | n/a: Prisma's indexes take no condition
+  // Check constraint | n/a: Prisma schemas declare no CHECK constraints
+}

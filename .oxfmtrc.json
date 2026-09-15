@@ -14,11 +14,14 @@
     "results.js",
     "report.json",
     "type-safety/verdicts.json",
+    "rename-safety/verdicts.json",
+    "rename-safety/prisma/generated",
+    "rename-safety/renamed",
     "src/generated"
   ],
   "overrides": [
     {
-      "files": ["type-safety/**"],
+      "files": ["type-safety/**", "rename-safety/**"],
       "options": {
         "printWidth": 80,
         "objectWrap": "collapse"

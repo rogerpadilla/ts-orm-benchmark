@@ -40,7 +40,7 @@ export class User {
   @Field({ type: String }) email?: string;
   @Field({ type: Number, references: () => Company }) companyId?: number;
   @Field({ type: Number }) createdAt?: number;
-  @ManyToOne({ entity: () => Company }) company?: Company;
+  @ManyToOne({ entity: () => Company, references: (user) => user.companyId }) company?: Company;
 }
 
 // TypeORM
