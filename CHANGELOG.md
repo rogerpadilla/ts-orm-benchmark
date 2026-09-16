@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Dependencies: uql-orm 0.65.1 to 0.66.0.
+- Results: UQL still adds the least, +239µs on Bun SQL and +260µs on `pg`. Bun leads the runtime table at both p50 and p99 again, with Node and Deno now within 113µs of it at p50 on `raw pg`. Type-safety and rename-safety scores unchanged.
+
 **New: a rename-safety half.** `bun run bench.renames` renames a field, a foreign key and a relation in each entry's model with that tool's own rename (TypeScript's language server, Prisma's for its schema) and scores 19 places that name them, from indexes and checks to queries and raw SQL, as followed, flagged by the compiler, or left behind silently. UQL follows all 19, Drizzle 14, Sequelize leaves 12 behind silently.
 
 - `rename-safety/playground/` holds the short UQL and Drizzle excerpts the UQL site renames live, scored the same way and held to the verdicts of the full files they come from.
