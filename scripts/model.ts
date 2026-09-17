@@ -50,6 +50,10 @@ export const PROBE_FILES: Record<string, string> = Object.fromEntries(
   Object.entries(TOOLS).flatMap(([entry, { probe }]) => (probe ? [[probe, entry]] : [])),
 );
 
+/** Each of `names` with its probe file stem, which is what uql-orm.dev files and links a tool under. */
+export const stemsOf = (names: readonly string[]) =>
+  Object.fromEntries(names.flatMap((name) => (TOOLS[name]?.probe ? [[name, TOOLS[name].probe]] : [])));
+
 export const STEPS = ['insert', 'read', 'update', 'readAgain', 'nested', 'delete', 'readEmpty'] as const;
 
 export type Entry = (typeof ENTRIES)[number];

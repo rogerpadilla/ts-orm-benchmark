@@ -121,6 +121,23 @@
       "what": "Raw SQL in a filter"
     }
   ],
+  "stems": {
+    "Drizzle": "drizzle",
+    "MikroORM": "mikro-orm",
+    "Prisma": "prisma",
+    "Sequelize": "sequelize",
+    "TypeORM": "typeorm",
+    "UQL": "uql"
+  },
+  "files": [
+    "rename-safety/uql.ts",
+    "rename-safety/prisma.ts",
+    "rename-safety/prisma/schema.prisma",
+    "rename-safety/sequelize.ts",
+    "rename-safety/typeorm/typeorm.ts",
+    "rename-safety/mikro-orm.ts",
+    "rename-safety/drizzle.ts"
+  ],
   "projects": {
     "typeorm": {
       "experimentalDecorators": true,

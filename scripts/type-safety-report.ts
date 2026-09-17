@@ -6,7 +6,7 @@
 
 import { resolve } from 'node:path';
 import { COMPILER } from './compiler';
-import type { Verdict, Verdicts } from './model';
+import { stemsOf, type Verdict, type Verdicts } from './model';
 import { PROBES } from './probes';
 import { installedVersion, root, writeJson, writeReadme } from './project';
 import { alphabetical, bold, linkEntry, list, mdTable } from './render';
@@ -56,6 +56,9 @@ function note(results: Verdicts): string {
 
 export const VERDICTS = 'type-safety/verdicts.json';
 
+/** What the probes compile against besides themselves: their clients, the schema those are typed by, and Prisma's. */
+const CONTEXT = ['type-safety/clients.ts', 'src/schema.ts', 'prisma/schema.prisma'];
+
 export function printTypeSafetySummary(results: Verdicts): void {
   for (const [entry, vs] of alphabetical(results)) {
     console.log(`${entry.padEnd(10)} ${String(score(vs)).padStart(2)}/${PROBES.length}`);
@@ -63,9 +66,9 @@ export function printTypeSafetySummary(results: Verdicts): void {
 }
 
 /**
- * The README blocks and, in {@link VERDICTS}, the same verdicts in a shape another program can read.
- * uql-orm.dev loads these probe files into a live editor and has to label them with something; parsing
- * the marks back out of a markdown table would be a second scoreboard that could disagree with this one.
+ * The README blocks and, in {@link VERDICTS}, the same verdicts in a shape another program can read, with every
+ * file it takes to compile them. uql-orm.dev loads these files into a live editor; parsing the marks back out of a
+ * markdown table would be a second scoreboard that could disagree with this one.
  */
 export function syncTypeSafetyReport(results: Verdicts): void {
   writeReadme({
@@ -73,9 +76,13 @@ export function syncTypeSafetyReport(results: Verdicts): void {
     'type-safety-note': note(results),
     'type-safety-env': `> Checked with TypeScript ${installedVersion(COMPILER.pkg)}, ${PROBES.length} probes per entry.`,
   });
+  const order = alphabetical(results);
+  const stems = stemsOf(order.map(([entry]) => entry));
   writeJson(resolve(root, VERDICTS), {
     typescript: installedVersion(COMPILER.pkg),
     probes: PROBES,
-    entries: Object.fromEntries(alphabetical(results)),
+    stems,
+    files: [...Object.values(stems).map((stem) => `type-safety/${stem}.ts`), ...CONTEXT],
+    entries: Object.fromEntries(order),
   });
 }

@@ -260,6 +260,7 @@ async function main() {
 
   const results: RenameResults = new Map(tools.map(({ stem, regions }) => [PROBE_FILES[stem], regions.map(mentionOf)]));
   const record: RenameRecord = {
+    files: files.map((file) => relative(root, resolve(DIR, file))),
     projects: Object.fromEntries(
       projects
         .filter((project) => project !== '.')

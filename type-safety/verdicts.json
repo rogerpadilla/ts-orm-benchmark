@@ -46,6 +46,25 @@
       "what": "Reading a misspelled column off a loaded relation"
     }
   ],
+  "stems": {
+    "Drizzle": "drizzle",
+    "MikroORM": "mikro-orm",
+    "Prisma": "prisma",
+    "Sequelize": "sequelize",
+    "TypeORM": "typeorm",
+    "UQL": "uql"
+  },
+  "files": [
+    "type-safety/drizzle.ts",
+    "type-safety/mikro-orm.ts",
+    "type-safety/prisma.ts",
+    "type-safety/sequelize.ts",
+    "type-safety/typeorm.ts",
+    "type-safety/uql.ts",
+    "type-safety/clients.ts",
+    "src/schema.ts",
+    "prisma/schema.prisma"
+  ],
   "entries": {
     "Drizzle": [
       "caught",
