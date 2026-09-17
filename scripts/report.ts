@@ -41,29 +41,28 @@ const STEP_LABELS: Record<Step, string> = {
 const stepValues = (ranked: Row[], step: Step) => ranked.map((r) => stepOf(r, step));
 
 /**
- * The published steps only, same entry order as the ranking table so the two agree on who is winning.
- * Total stays the whole lifecycle, which is what the ranking and the floors are built on.
+ * The published steps only, one row per entry like the memory table: a column per entry outgrows a page.
+ * Same entry order as the ranking table so the two agree on who is winning. Total stays the whole
+ * lifecycle, which is what the ranking and the floors are built on.
  */
 function stepTable(ranked: Row[]): string {
-  const cells = (values: number[]) => {
-    const best = Math.min(...values.filter((_, i) => !ranked[i].isBaseline));
-    return values.map((v, i) => bold(v, v === best && !ranked[i].isBaseline));
-  };
+  const columns = [...PUBLISHED_STEPS.map((step) => (r: Row) => stepOf(r, step)), (r: Row) => r.total];
+  const best = columns.map((of) => Math.min(...competitorsOf(ranked).map(of)));
 
-  return mdTable(
-    ['Operation (µs)', ...ranked.map((r) => linkEntry(r.entry))],
-    [
-      ...PUBLISHED_STEPS.map((step) => [STEP_LABELS[step], ...cells(stepValues(ranked, step))]),
-      [`**Total**, all ${STEPS.length} steps`, ...cells(ranked.map((r) => r.total))],
-    ],
-  );
+  const rows = ranked.map((r) => [
+    r.isBaseline ? `_${linkEntry(r.entry)}_` : linkEntry(r.entry),
+    ...columns.map((of, i) => bold(of(r), !r.isBaseline && of(r) === best[i])),
+  ]);
+
+  return mdTable(['Entry (µs)', ...PUBLISHED_STEPS, `Total, ${STEPS.length} steps`], rows);
 }
 
 /**
- * The two things to say about the table above: which step spreads the field most, and what the steps it
- * leaves out actually cost, so the omission is a figure rather than a claim.
+ * The three things to say about the table above: what its columns ran, which step spreads the field most,
+ * and what the steps it leaves out actually cost, so the omission is a figure rather than a claim.
  */
 function stepsNote(ranked: Row[]): string {
+  const legend = PUBLISHED_STEPS.map((step) => `${step} is ${STEP_LABELS[step]}`).join('; ');
   const competitors = competitorsOf(ranked);
   const worst = competitors
     .flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: stepOf(r, step) })))
@@ -77,7 +76,7 @@ function stepsNote(ranked: Row[]): string {
   const tightest = Math.max(...ASSERTED_ONLY_STEPS.map((step) => range(stepValues(competitors, step))));
 
   return (
-    `The biggest gap is ${worst.entry}'s ${worst.step}: ${worst.value}µs against ` +
+    `Columns: ${legend}. The biggest gap is ${worst.entry}'s ${worst.step}: ${worst.value}µs against ` +
     `${Math.min(...others)}-${Math.max(...others)}µs for everyone else. The other ` +
     `${ASSERTED_ONLY_STEPS.length} steps are asserted every round but not published: they are round trips ` +
     `with almost nothing in them, worth ${Math.min(...sums)}-${Math.max(...sums)}µs of each total and ` +

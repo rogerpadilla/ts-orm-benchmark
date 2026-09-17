@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The per-step table has a row per entry, like the memory table, instead of eleven entry columns that outgrew the page. Its note names what each column ran.
 - Dependencies: uql-orm 0.65.1 to 0.66.0.
 - Results: UQL still adds the least, +239µs on Bun SQL and +260µs on `pg`. Bun leads the runtime table at both p50 and p99 again, with Node and Deno now within 113µs of it at p50 on `raw pg`. Type-safety and rename-safety scores unchanged.
 

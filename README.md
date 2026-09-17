@@ -44,16 +44,22 @@ Each entry is measured against its own driver's floor, so a faster driver is nev
 ### Per step
 
 <!-- bench:steps -->
-| Operation (µs) | [bun sql](https://bun.sh/docs/api/sql) | [raw pg](https://node-postgres.com) | [UQL (bunSql)](https://uql-orm.dev) | [UQL](https://uql-orm.dev) | [Drizzle (bunSql)](https://orm.drizzle.team) | [Drizzle](https://orm.drizzle.team) | [TypeORM](https://typeorm.io) | [Sequelize](https://sequelize.org) | [Prisma](https://www.prisma.io) | [MikroORM](https://mikro-orm.io) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| INSERT 10 rows, returning ids | 341 | 325 | **356** | 358 | 400 | 409 | 448 | 446 | 867 | 431 |
-| SELECT with WHERE, SORT, LIMIT 200 | 174 | 198 | **217** | 248 | 233 | 255 | 326 | 379 | 275 | 728 |
-| SELECT 50 parents with their children | 188 | 214 | **309** | 341 | 358 | 400 | 340 | 532 | 378 | 862 |
-| **Total**, all 7 steps | 1099 | 1135 | **1338** | 1395 | 1464 | 1543 | 1644 | 1957 | 2037 | 2654 |
+| Entry (µs) | insert | read | nested | Total, 7 steps |
+| --- | --- | --- | --- | --- |
+| _[bun sql](https://bun.sh/docs/api/sql)_ | 341 | 174 | 188 | 1099 |
+| _[raw pg](https://node-postgres.com)_ | 325 | 198 | 214 | 1135 |
+| [UQL (bunSql)](https://uql-orm.dev) | **356** | **217** | **309** | **1338** |
+| [UQL](https://uql-orm.dev) | 358 | 248 | 341 | 1395 |
+| [Drizzle (bunSql)](https://orm.drizzle.team) | 400 | 233 | 358 | 1464 |
+| [Drizzle](https://orm.drizzle.team) | 409 | 255 | 400 | 1543 |
+| [TypeORM](https://typeorm.io) | 448 | 326 | 340 | 1644 |
+| [Sequelize](https://sequelize.org) | 446 | 379 | 532 | 1957 |
+| [Prisma](https://www.prisma.io) | 867 | 275 | 378 | 2037 |
+| [MikroORM](https://mikro-orm.io) | 431 | 728 | 862 | 2654 |
 <!-- /bench:steps -->
 
 <!-- bench:steps-note -->
-The biggest gap is Prisma's insert: 867µs against 356-448µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 448-633µs of each total and separating the field by at most 100µs.
+Columns: insert is INSERT 10 rows, returning ids; read is SELECT with WHERE, SORT, LIMIT 200; nested is SELECT 50 parents with their children. The biggest gap is Prisma's insert: 867µs against 356-448µs for everyone else. The other 4 steps are asserted every round but not published: they are round trips with almost nothing in them, worth 448-633µs of each total and separating the field by at most 100µs.
 <!-- /bench:steps-note -->
 
 ### The nested read, as each entry writes it
