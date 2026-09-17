@@ -5,7 +5,7 @@
 
 import { resolve } from 'node:path';
 import { COMPILER } from './compiler';
-import { stemsOf } from './model';
+import { maxBy, stemsOf } from './model';
 import { installedVersion, root, writeJson, writeReadme } from './project';
 import {
   RENAME_GROUPS,
@@ -70,7 +70,7 @@ function table(results: RenameResults): string {
 function note(results: RenameResults): string {
   const order = alphabetical(results);
   const clean = order.filter(([, mentions]) => !count(mentions, 'silent')).map(([entry]) => entry);
-  const worst = order.reduce((a, b) => (count(b[1], 'silent') > count(a[1], 'silent') ? b : a));
+  const worst = maxBy(order, ([, mentions]) => count(mentions, 'silent'));
   const lead = clean.length
     ? `${list(clean)} ${clean.length > 1 ? 'leave' : 'leaves'} nothing behind silently`
     : 'Every entry leaves something behind silently';

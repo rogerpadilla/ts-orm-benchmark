@@ -52,7 +52,7 @@ export const RENAME_PROBES = [
   { id: 'raw-filter', group: 'raw', what: 'Raw SQL in a filter' },
 ] as const satisfies readonly { id: string; group: keyof typeof RENAME_GROUPS; what: string }[];
 
-export type RenameProbeId = (typeof RENAME_PROBES)[number]['id'];
+type RenameProbeId = (typeof RENAME_PROBES)[number]['id'];
 
 /**
  * `followed`: the rename edited every mention. `flagged`: one was left, and the renamed code fails to

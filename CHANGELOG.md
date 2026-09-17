@@ -4,7 +4,9 @@
 
 - The per-step table has a row per entry, like the memory table, instead of eleven entry columns that outgrew the page. Its note names what each column ran.
 - Dependencies: uql-orm 0.65.1 to 0.68.1.
-- Results: UQL still adds the least, +247µs on Bun SQL and +275µs on `pg`. Bun leads the runtime table at p50 and Node at p99, and the three sit 93µs apart at p50 on `raw pg`, close enough that the ORM is now the bigger decision rather than the runtime. Sequelize and Prisma share a place, their intervals overlapping. Type-safety and rename-safety scores unchanged.
+- The runtime note states the runtime gap and the ORM gap as two ranges with the margin on each, instead of naming the wider one. Which one was wider flipped between two runs whose tables otherwise agreed: both are an extreme of extremes, and the distance between them was inside the drift from one run to the next, so the sentence was reporting noise as guidance.
+- `maxBy` and `minBy` replace twelve hand-rolled reduce idioms across the four reports, and the caption's confidence figure is read from one place rather than recomputed next to it.
+- Results: UQL still adds the least, +247µs on Bun SQL and +275µs on `pg`. Bun leads the runtime table at p50 and Node at p99, and the three sit 93µs apart at p50 on `raw pg`. Sequelize and Prisma share a place, their intervals overlapping. Type-safety and rename-safety scores unchanged.
 
 **New: a rename-safety half.** `bun run bench.renames` renames a field, a foreign key and a relation in each entry's model with that tool's own rename (TypeScript's language server, Prisma's for its schema) and scores 19 places that name them, from indexes and checks to queries and raw SQL, as followed, flagged by the compiler, or left behind silently. UQL follows all 19, Drizzle 14, Sequelize leaves 12 behind silently.
 

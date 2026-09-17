@@ -4,7 +4,21 @@
  */
 
 import { RUNTIME_LABELS } from '../src/runtime';
-import { competitorsOf, type Entry, percentileIndex, range, type Run, rank, type Tail, type TimedRow } from './model';
+import {
+  competitorsOf,
+  type Entry,
+  type Interval,
+  marginOf,
+  maxBy,
+  minBy,
+  percentileIndex,
+  range,
+  type Run,
+  rank,
+  spanOf,
+  type Tail,
+  type TimedRow,
+} from './model';
 import { writeReadme } from './project';
 import { bold, envFacts, linkEntry, mdTable } from './render';
 
@@ -25,12 +39,20 @@ function measure(run: Run): Measured {
 const label = (m: Measured) => m.run.runtime.label;
 const name = (m: Measured) => RUNTIME_LABELS[m.run.runtime.name];
 
-function tail(m: Measured, entry: Entry): Tail {
+function rowOf(m: Measured, entry: Entry): TimedRow {
   const row = m.byEntry.get(entry);
   if (!row) {
     throw new TypeError(`${label(m)} did not measure ${entry}`);
   }
-  return row.tail;
+  return row;
+}
+
+const tail = (m: Measured, entry: Entry): Tail => rowOf(m, entry).tail;
+
+/** An entry's median in one runtime, on the scale its p50 is quoted on, so gaps carry their own interval. */
+function p50Of(m: Measured, entry: Entry): Interval {
+  const row = rowOf(m, entry);
+  return { value: row.tail.p50, margin: row.spread * row.tail.p50 };
 }
 
 /** Row order for the table: the first run's ranking, which is why the caller passes Bun first. */
@@ -91,7 +113,7 @@ function envLine(measured: Measured[]): string {
 /** The floor is the one entry that is the same code everywhere, so it is where the runtime alone shows. */
 function floorSentence(measured: Measured[]): string {
   const floors = measured.map((m) => ({ label: name(m), tail: tail(m, 'raw pg') }));
-  const fastest = (p: Percentile) => floors.reduce((a, b) => (b.tail[p] < a.tail[p] ? b : a)).label;
+  const fastest = (p: Percentile) => minBy(floors, (f) => f.tail[p]).label;
   const apart = (p: Percentile) => range(floors.map((f) => f.tail[p]));
   const inflation = floors.map((f) => `${Math.round((f.tail.p99 / f.tail.p50 - 1) * 100)}% on ${f.label}`).join(', ');
 
@@ -107,26 +129,28 @@ function floorSentence(measured: Measured[]): string {
   );
 }
 
-/** Puts the runtime gap next to the ORM gap, which is the only way to say which of the two to spend on. */
+/**
+ * Puts the runtime gap next to the ORM gap, which is what a reader needs to see which of the two to spend
+ * on. Stated as two ranges, never as a verdict: both are extremes of extremes, and naming the wider one
+ * flipped this sentence between runs whose tables otherwise agreed.
+ */
 function scaleSentence(measured: Measured[]): string {
-  const widest = entriesOf(measured)
-    .map((entry) => {
-      const p50s = measured.map((m) => tail(m, entry).p50);
-      return { entry, gap: range(p50s) };
-    })
-    .reduce((a, b) => (b.gap > a.gap ? b : a));
+  const widest = maxBy(
+    entriesOf(measured).map((entry) => ({ entry, gap: spanOf(measured.map((m) => p50Of(m, entry))) })),
+    (e) => e.gap.value,
+  );
 
-  const ormGaps = measured.map((m) => {
-    const competitors = competitorsOf(m.ranked);
-    return competitors[competitors.length - 1].adds - competitors[0].adds;
-  });
-
-  const decides = widest.gap > Math.min(...ormGaps) ? 'runtime' : 'ORM';
+  const ormGaps = measured.map((m) =>
+    spanOf(competitorsOf(m.ranked).map((row) => ({ value: row.adds, margin: marginOf(m.ranked, row) }))),
+  );
+  const smallest = minBy(ormGaps, (g) => g.value);
+  const largest = maxBy(ormGaps, (g) => g.value);
 
   return (
-    `Switching runtime moves any single entry by at most ${widest.gap}µs at p50 (${widest.entry}), where ` +
-    `switching ORM on one runtime moves it ${Math.min(...ormGaps)}-${Math.max(...ormGaps)}µs, so the ` +
-    `${decides} is the bigger decision here.`
+    `Switching runtime moves any single entry by at most ${widest.gap.value}µs at p50 (${widest.entry}), ` +
+    `where switching ORM on one runtime moves it ${smallest.value}-${largest.value}µs. Both are ` +
+    `differences of measured medians, known to ±${widest.gap.margin}µs and ±${smallest.margin}µs, ` +
+    'so read them as ranges rather than as a ranking.'
   );
 }
 
@@ -151,7 +175,7 @@ function orderSentence(measured: Measured[]): string {
     return `Ranked by what each ORM adds, every runtime agrees: ${entries.join(' < ')}.`;
   }
 
-  const closest = swaps.reduce((a, b) => (b.gap < a.gap ? b : a));
+  const closest = minBy(swaps, (s) => s.gap);
   return swaps.length === 1
     ? `The one pair that changes places between runtimes is ${closest.pair}, ${closest.gap}µs apart.`
     : `${swaps.length} pairs change places between runtimes, the closest ${closest.pair} at ${closest.gap}µs.`;

@@ -12,6 +12,7 @@ import {
   ENTRIES,
   type Entry,
   PUBLISHED_STEPS,
+  maxBy,
   places,
   range,
   type Row,
@@ -64,9 +65,10 @@ function stepTable(ranked: Row[]): string {
 function stepsNote(ranked: Row[]): string {
   const legend = PUBLISHED_STEPS.map((step) => `${step} is ${STEP_LABELS[step]}`).join('; ');
   const competitors = competitorsOf(ranked);
-  const worst = competitors
-    .flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: stepOf(r, step) })))
-    .reduce((a, b) => (b.value > a.value ? b : a));
+  const worst = maxBy(
+    competitors.flatMap((r) => PUBLISHED_STEPS.map((step) => ({ entry: r.entry, step, value: stepOf(r, step) }))),
+    (s) => s.value,
+  );
   const others = stepValues(
     competitors.filter((r) => r.entry !== worst.entry),
     worst.step,
@@ -124,13 +126,12 @@ function headline(ranked: Row[]): string {
 }
 
 /** The run and its confidence in one caption, so a table of medians never stands without its error bar. */
-function envLine(run: Run, ranked: TimedRow[]): string {
-  const { postgres, runtime, machine, when } = envFacts(run);
-  const widest = Math.max(...ranked.map((row) => row.spread));
+function envLine(run: Run): string {
+  const { postgres, runtime, machine, when, interval } = envFacts(run);
   return (
     `> ${postgres}, ${runtime}, ${machine}, ${when}. Median µs per operation over ${run.iterations} ` +
     `rounds, after ${run.warmup} warmup rounds, interleaved and rotated. Every median is ` +
-    `±${(widest * 100).toFixed(1)}% or tighter at 95% confidence.`
+    `±${(interval * 100).toFixed(1)}% or tighter at 95% confidence.`
   );
 }
 
@@ -205,7 +206,7 @@ export function syncResults(run: Run): void {
   const ranked = rank(run);
   writeFileSync(resolve(root, 'results.js'), resultsJs(run, ranked));
   writeReadme({
-    env: envLine(run, ranked),
+    env: envLine(run),
     versions: versionsLine(),
     ranking: rankingTable(ranked),
     headline: headline(ranked),

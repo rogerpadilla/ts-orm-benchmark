@@ -101,7 +101,7 @@ function replaceMarked(markdown: string, key: string, body: string): string {
 }
 
 /** Every block this repo publishes, so another project can render them instead of retyping the numbers. */
-export const REPORT = 'report.json';
+const REPORT = 'report.json';
 
 /**
  * Rewrites every named block in README.md, and keeps the same bodies in {@link REPORT}. Merged rather

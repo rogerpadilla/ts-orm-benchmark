@@ -4,7 +4,17 @@
  * one: both answer what a tool costs above hand-written driver code, in the unit each was measured in.
  */
 
-import { competitorsOf, type MemoryRun, PUBLISHED_STEPS, type Row, rankMemory, STEPS, stepOf } from './model';
+import {
+  competitorsOf,
+  maxBy,
+  type MemoryRun,
+  minBy,
+  PUBLISHED_STEPS,
+  type Row,
+  rankMemory,
+  STEPS,
+  stepOf,
+} from './model';
 import { writeReadme } from './project';
 import { bold, linkEntry, machineFacts, mdTable } from './render';
 
@@ -22,16 +32,13 @@ function memoryTable(ranked: Row[]): string {
   return mdTable(['Entry', ...PUBLISHED_STEPS, 'Total KB', 'Adds KB'], rows);
 }
 
-/**
- * What the run was, including how many samples it threw away. A benchmark that discards data has to say
- * so, and it has to say so per entry: the rule drops the rounds a collection ran in, and a collection is
- * likelier the more an entry allocates, so a heavy entry and a light one are only measured the same way
- * while both rates stay near zero. {@link driftedEstimator} is what refuses the run when they do not.
- */
 /** The highest of a per-entry figure and whose it is, which both captions below need. */
 function peak(run: MemoryRun, values: number[]) {
-  const most = Math.max(...values);
-  return { most, entry: run.entries[values.indexOf(most)] };
+  const { value, entry } = maxBy(
+    values.map((value, i) => ({ value, entry: run.entries[i] })),
+    (v) => v.value,
+  );
+  return { most: value, entry };
 }
 
 function envLine(run: MemoryRun): string {
@@ -55,13 +62,14 @@ function note(run: MemoryRun, ranked: Row[]): string {
   const lowest = competitors[0];
   const highest = competitors[competitors.length - 1];
 
-  const widest = PUBLISHED_STEPS.map((step) => {
+  const spans = PUBLISHED_STEPS.map((step) => {
     const values = competitors.map((r) => stepOf(r, step));
     return { step, ratio: Math.max(...values) / Math.min(...values) };
-  }).reduce((a, b) => (b.ratio > a.ratio ? b : a));
+  });
+  const widest = maxBy(spans, (v) => v.ratio);
 
-  const worst = competitors.reduce((a, b) => (stepOf(b, widest.step) > stepOf(a, widest.step) ? b : a));
-  const best = competitors.reduce((a, b) => (stepOf(b, widest.step) < stepOf(a, widest.step) ? b : a));
+  const worst = maxBy(competitors, (r) => stepOf(r, widest.step));
+  const best = minBy(competitors, (r) => stepOf(r, widest.step));
 
   // Every entry usually ends at or below where it started, so this figure is normally negative. Reported
   // as it fell rather than clamped to zero, since which way it went is the finding.

@@ -251,7 +251,7 @@ Same lifecycle, three runtimes, one bundle built by Bun so the runtime is the on
 <!-- /bench:runtimes -->
 
 <!-- bench:runtime-note -->
-On `raw pg`, the same code on all of them, the runtimes are 93µs apart at p50 but 175µs apart at p99: Bun leads the median, Node the tail, and each p99 is 233% on Bun, 201% on Node, 203% on Deno above its own p50. Switching runtime moves any single entry by at most 1075µs at p50 (MikroORM), where switching ORM on one runtime moves it 1191-2223µs, so the ORM is the bigger decision here. The one pair that changes places between runtimes is Drizzle and TypeORM, 41µs apart.
+On `raw pg`, the same code on all of them, the runtimes are 93µs apart at p50 but 175µs apart at p99: Bun leads the median, Node the tail, and each p99 is 233% on Bun, 201% on Node, 203% on Deno above its own p50. Switching runtime moves any single entry by at most 1075µs at p50 (MikroORM), where switching ORM on one runtime moves it 1191-2223µs. Both are differences of measured medians, known to ±38µs and ±39µs, so read them as ranges rather than as a ranking. The one pair that changes places between runtimes is Drizzle and TypeORM, 41µs apart.
 <!-- /bench:runtime-note -->
 
 ## Memory

@@ -6,7 +6,7 @@
 
 import { spawn } from 'node:child_process';
 
-export type Position = { line: number; character: number };
+type Position = { line: number; character: number };
 export type TextEdit = { range: { start: Position; end: Position }; newText: string };
 type WorkspaceEdit = {
   changes?: Record<string, TextEdit[]>;

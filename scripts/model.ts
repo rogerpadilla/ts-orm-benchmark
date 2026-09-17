@@ -69,7 +69,7 @@ export const PUBLISHED_STEPS: Step[] = ['insert', 'read', 'nested'];
 export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STEPS.includes(step));
 
 /** Median µs per step, index-aligned with the run's own {@link Run.entries}. */
-export type Results = Record<Step, number[]>;
+type Results = Record<Step, number[]>;
 
 /** What the compiler said about one probe, and every probe of one entry keyed by the name the tables use. */
 export type Verdict = 'caught' | 'missed';
@@ -191,11 +191,31 @@ export const rank = (run: Run): TimedRow[] =>
 /** A memory run, ranked. Nothing to carry: KB per step is the whole story. */
 export const rankMemory = (run: MemoryRun): Row[] => ordered(rows(run.entries, run.results));
 
+/** The item whose figure is highest, and its opposite. Ties keep the first, so a stable input answers stably. */
+export const maxBy = <T>(items: readonly T[], of: (item: T) => number): T =>
+  items.reduce((a, b) => (of(b) > of(a) ? b : a));
+
+export const minBy = <T>(items: readonly T[], of: (item: T) => number): T =>
+  items.reduce((a, b) => (of(b) < of(a) ? b : a));
+
+/** A measured figure with the half-width of its 95% interval, so nothing is compared on its median alone. */
+export type Interval = { value: number; margin: number };
+
+/** Measurably smaller: the intervals have to clear each other, so noise never orders two figures. */
+const below = (a: Interval, b: Interval) => a.value + a.margin < b.value - b.margin;
+
+/** The distance between the extremes of a set of measured figures, and what that distance is known to. */
+export function spanOf(points: Interval[]): Interval {
+  const lo = minBy(points, (p) => p.value);
+  const hi = maxBy(points, (p) => p.value);
+  return { value: hi.value - lo.value, margin: Math.round(Math.hypot(hi.margin, lo.margin)) };
+}
+
 /**
  * Half-width of the 95% interval on `adds`, which is a difference of two measured medians, so the entry's
  * interval and its floor's add in quadrature rather than one of them standing for both.
  */
-function marginOf(ranked: TimedRow[], row: TimedRow): number {
+export function marginOf(ranked: TimedRow[], row: TimedRow): number {
   const floor = rowFor(ranked, floorFor(row.entry));
   return Math.round(Math.hypot(row.spread * row.total, floor.spread * floor.total));
 }
@@ -207,9 +227,12 @@ function marginOf(ranked: TimedRow[], row: TimedRow): number {
  */
 export function places(ranked: TimedRow[]): PlacedRow[] {
   const competitors = competitorsOf(ranked).map((row) => ({ ...row, margin: marginOf(ranked, row) }));
-  const beats = (a: { adds: number; margin: number }, b: typeof a) => a.adds + a.margin < b.adds - b.margin;
+  const addsOf = (row: { adds: number; margin: number }): Interval => ({ value: row.adds, margin: row.margin });
 
-  return competitors.map((row) => ({ ...row, place: 1 + competitors.filter((other) => beats(other, row)).length }));
+  return competitors.map((row) => ({
+    ...row,
+    place: 1 + competitors.filter((other) => below(addsOf(other), addsOf(row))).length,
+  }));
 }
 
 /** {@link Row.steps} is aligned with {@link STEPS}; this is the only place that has to know it. */
