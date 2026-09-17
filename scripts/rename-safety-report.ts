@@ -19,6 +19,15 @@ import { alphabetical, linkEntry, list, mdTable } from './render';
 /** Each entry's mentions, in {@link RENAME_PROBES} order. */
 export type RenameResults = Map<string, RenameMention[]>;
 
+/**
+ * What uql-orm.dev needs to replay the renames rather than repeat them: each sub-project's compiler options, by
+ * its directory, and the offsets in each renamed file where each member's new name was written.
+ */
+export type RenameRecord = {
+  projects: Record<string, Record<string, unknown>>;
+  edits: Record<string, Record<string, number[]>>;
+};
+
 export const VERDICTS = 'rename-safety/verdicts.json';
 
 const MARK: Record<RenameVerdict, string> = { followed: '✅', flagged: '⚠️', silent: '❌', 'n/a': '-' };
@@ -76,10 +85,10 @@ export function printRenameSummary(results: RenameResults): void {
 }
 
 /**
- * The README blocks and, in {@link VERDICTS}, every mention with its verdict and where it is: uql-orm.dev
- * marks the files with them as they are, rather than scoring anything itself.
+ * The README blocks and, in {@link VERDICTS}, every mention with its verdict and where it is, with the edits
+ * that left them there: uql-orm.dev replays and marks the files with them, rather than scoring anything itself.
  */
-export function syncRenameReport(results: RenameResults): void {
+export function syncRenameReport(results: RenameResults, { projects, edits }: RenameRecord): void {
   const tooling = renameTooling();
   const renames = list(RENAMES.map(({ from, to }) => `\`${from}\` to \`${to}\``));
   writeReadme({
@@ -92,6 +101,8 @@ export function syncRenameReport(results: RenameResults): void {
     renames: RENAMES,
     groups: RENAME_GROUPS,
     probes: RENAME_PROBES,
+    projects,
+    edits,
     entries: Object.fromEntries(alphabetical(results)),
   });
 }

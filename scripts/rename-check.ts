@@ -28,6 +28,7 @@ import { flag, root } from './project';
 import {
   printRenameSummary,
   renameTooling,
+  type RenameRecord,
   type RenameResults,
   syncRenameReport,
   VERDICTS,
@@ -165,6 +166,18 @@ function settle(text: string, regions: readonly RenameRegion[]): string {
 /** Whether `region` of `text` still names something the rename was meant to reach. */
 const isLeft = (text: string, region: RenameRegion) => settle(text, [region]) !== text;
 
+/** Where each member's rename wrote its new name, as ascending offsets into the original `text`. */
+const startsOf = (text: string, edits: readonly TextEdit[]) =>
+  Object.fromEntries(
+    RENAMES.map(({ from, to }) => [
+      from,
+      edits
+        .filter((edit) => edit.newText === to)
+        .map((edit) => offsetAt(text, edit.range.start))
+        .sort((a, b) => a - b),
+    ]).filter(([, starts]) => starts.length),
+  );
+
 async function main() {
   const stems = Object.keys(PROBE_FILES);
   const files = stems.flatMap(filesOf);
@@ -246,6 +259,19 @@ async function main() {
   });
 
   const results: RenameResults = new Map(tools.map(({ stem, regions }) => [PROBE_FILES[stem], regions.map(mentionOf)]));
+  const record: RenameRecord = {
+    projects: Object.fromEntries(
+      projects
+        .filter((project) => project !== '.')
+        .map((project) => [
+          project,
+          JSON.parse(readFileSync(resolve(DIR, project, 'tsconfig.json'), 'utf8')).compilerOptions,
+        ]),
+    ),
+    edits: Object.fromEntries(
+      [...edits].map(([file, fileEdits]) => [file, startsOf(originals.get(file) ?? '', fileEdits)]),
+    ),
+  };
 
   const { typescript, prismaLanguageServer } = renameTooling();
   console.log(`renamed with TypeScript ${typescript} and prisma-language-server ${prismaLanguageServer}\n`);
@@ -255,7 +281,7 @@ async function main() {
     console.log('\n--verify: every probe checked, nothing written');
     return;
   }
-  syncRenameReport(results);
+  syncRenameReport(results, record);
   console.log(`\nREADME.md rename-safety blocks updated, results written to ${VERDICTS}`);
 }
 

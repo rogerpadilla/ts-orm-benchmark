@@ -121,6 +121,142 @@
       "what": "Raw SQL in a filter"
     }
   ],
+  "projects": {
+    "typeorm": {
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+    }
+  },
+  "edits": {
+    "uql.ts": {
+      "emailAddress": [
+        404,
+        468,
+        566,
+        678,
+        791,
+        885,
+        996,
+        1320,
+        1462,
+        1549,
+        1646,
+        1769,
+        1945,
+        2043,
+        2302,
+        2355,
+        2476
+      ],
+      "employerId": [
+        487,
+        608,
+        746,
+        1073,
+        1191,
+        2155
+      ],
+      "employer": [
+        326,
+        1207,
+        1868
+      ]
+    },
+    "sequelize.ts": {
+      "emailAddress": [
+        549,
+        912,
+        1921,
+        2293,
+        2375,
+        2678
+      ],
+      "employerId": [
+        581
+      ],
+      "employer": [
+        630
+      ]
+    },
+    "typeorm/typeorm.ts": {
+      "emailAddress": [
+        387,
+        457,
+        889,
+        1442,
+        1519,
+        1607,
+        1752,
+        1909,
+        2003,
+        2319,
+        2391
+      ],
+      "employerId": [
+        476,
+        707,
+        942
+      ],
+      "employer": [
+        305,
+        1091,
+        1840
+      ]
+    },
+    "mikro-orm.ts": {
+      "emailAddress": [
+        437,
+        1920,
+        2317
+      ],
+      "employer": [
+        314,
+        500
+      ]
+    },
+    "drizzle.ts": {
+      "emailAddress": [
+        401,
+        592,
+        675,
+        743,
+        900,
+        1006,
+        1090,
+        1650,
+        1748,
+        1849,
+        2552,
+        2653
+      ],
+      "employerId": [
+        437,
+        759,
+        973,
+        1264,
+        2373,
+        2435
+      ],
+      "employer": [
+        1218
+      ]
+    },
+    "prisma/schema.prisma": {
+      "emailAddress": [
+        435,
+        690,
+        745
+      ],
+      "employerId": [
+        462,
+        550,
+        759
+      ],
+      "employer": [
+        511
+      ]
+    }
+  },
   "entries": {
     "Drizzle": [
       {
