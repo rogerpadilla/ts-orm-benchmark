@@ -125,1721 +125,812 @@
     "Drizzle": [
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 28,
-        "endLine": 28,
-        "snippet": "index().on(t.emailAddress),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 13,
-            "end": 25
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 28
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 30,
-        "endLine": 30,
-        "snippet": "uniqueIndex().on(t.emailAddress, t.employerId),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 19,
-            "end": 31
-          },
-          {
-            "member": "employerId",
-            "start": 35,
-            "end": 45
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 30
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 32,
-        "endLine": 31,
-        "snippet": "",
-        "edits": [],
-        "reason": "Drizzle's index builder has no INCLUDE",
-        "message": null
+        "endLine": 31
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 45,
-        "endLine": 48,
-        "snippet": "employer: one(companies, {\n  fields: [users.employerId],\n  references: [companies.id],\n}),",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 44,
-            "end": 54
-          },
-          {
-            "member": "employer",
-            "start": 0,
-            "end": 8
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 48
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 53,
-        "endLine": 53,
-        "snippet": "staff: many(users),",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 53
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 33,
-        "endLine": 33,
-        "snippet": "index().on(sql`lower(${t.emailAddress})`),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 25,
-            "end": 37
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 33
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 35,
-        "endLine": 37,
-        "snippet": "index()\n  .on(t.employerId)\n  .where(sql`${t.emailAddress} <> ''`),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 45,
-            "end": 57
-          },
-          {
-            "member": "employerId",
-            "start": 16,
-            "end": 26
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 37
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 39,
-        "endLine": 39,
-        "snippet": "check('address_present', sql`${t.emailAddress} <> ''`),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 33,
-            "end": 45
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 39
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 22,
-        "endLine": 24,
-        "snippet": "emailLower: text().generatedAlwaysAs(\n  (): SQL => sql`lower(${users.emailAddress})`,\n),",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 69,
-            "end": 81
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 24
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 60,
-        "endLine": 60,
-        "snippet": "await db.select({ id: users.id, address: users.emailAddress }).from(users);",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 47,
-            "end": 59
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 60
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 63,
-        "endLine": 63,
-        "snippet": "await db.select().from(users).where(eq(users.emailAddress, 'ada@example.com'));",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 45,
-            "end": 57
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 63
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 66,
-        "endLine": 66,
-        "snippet": "await db.select().from(users).orderBy(users.emailAddress);",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 44,
-            "end": 56
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 66
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '{ id?: boolean | undefined; email?: boolean | undefined; workplaceId?: boolean | undefined; emailLower?: boolean | undefined; }'.",
         "file": "drizzle.ts",
         "startLine": 69,
-        "endLine": 71,
-        "snippet": "await db.query.companies.findMany({\n  with: { staff: { columns: { emailAddress: true } } },\n});",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '{ id?: boolean | undefined; email?: boolean | undefined; workplaceId?: boolean | undefined; emailLower?: boolean | undefined; }'."
+        "endLine": 71
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'employer' does not exist in type '{ workplace?: true | { columns?: { id?: boolean | undefined; } | undefined; with?: { staff?: true | DBQueryConfig<\"many\", false, ExtractTablesWithRelations<{ companies: PgTableWithColumns<{ name: \"Company\"; schema: undefined; columns: { id: PgColumn<{ name: \"id\"; ... 13 more ...; generated: undefined; }, {}, {}>; };...'.",
         "file": "drizzle.ts",
         "startLine": 74,
-        "endLine": 74,
-        "snippet": "await db.query.users.findMany({ with: { employer: true } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'employer' does not exist in type '{ workplace?: true | { columns?: { id?: boolean | undefined; } | undefined; with?: { staff?: true | DBQueryConfig<\"many\", false, ExtractTablesWithRelations<{ companies: PgTableWithColumns<{ name: \"Company\"; schema: undefined; columns: { id: PgColumn<{ name: \"id\"; ... 13 more ...; generated: undefined; }, {}, {}>; };...'."
+        "endLine": 74
       },
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "drizzle.ts",
         "startLine": 77,
-        "endLine": 77,
-        "snippet": "await db.insert(users).values({ emailAddress: 'ada@example.com' });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 77
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '{ email?: string | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<unknown> | undefined; id?: number | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<...> | undefined; workplaceId?: number | ... 3 more ... | undefined; }'.",
         "file": "drizzle.ts",
         "startLine": 80,
-        "endLine": 83,
-        "snippet": "await db\n  .update(users)\n  .set({ emailAddress: 'ada@example.com' })\n  .where(eq(users.id, 1));",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '{ email?: string | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<unknown> | undefined; id?: number | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<...> | undefined; workplaceId?: number | ... 3 more ... | undefined; }'."
+        "endLine": 83
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 86,
-        "endLine": 89,
-        "snippet": "await db\n  .select({ company: users.employerId, total: count() })\n  .from(users)\n  .groupBy(users.employerId);",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 36,
-            "end": 46
-          },
-          {
-            "member": "employerId",
-            "start": 98,
-            "end": 108
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 89
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 92,
-        "endLine": 93,
-        "snippet": "const [user] = await db.select().from(users);\nexport const address = user.emailAddress;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 74,
-            "end": 86
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 93
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "drizzle.ts",
         "startLine": 96,
-        "endLine": 99,
-        "snippet": "await db\n  .select()\n  .from(users)\n  .where(sql`lower(${users.emailAddress}) = ${'ada@example.com'}`);",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 63,
-            "end": 75
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 99
       }
     ],
     "MikroORM": [
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "mikro-orm.ts",
         "startLine": 28,
-        "endLine": 28,
-        "snippet": "{ properties: ['emailAddress'] },",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 28
       },
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "mikro-orm.ts",
         "startLine": 41,
-        "endLine": 41,
-        "snippet": "{ properties: ['emailAddress', 'employer'] },",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 41
       },
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "mikro-orm.ts",
         "startLine": 30,
-        "endLine": 30,
-        "snippet": "{ properties: ['emailAddress'], include: ['employer'] },",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 30
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 19,
-        "endLine": 19,
-        "snippet": "employer: () => p.manyToOne(Company).joinColumn('employerId').nullable(),",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 0,
-            "end": 8
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 19
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 9,
-        "endLine": 9,
-        "snippet": "staff: () => p.oneToMany(User).mappedBy((user) => user.employer),",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 55,
-            "end": 63
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 9
       },
       {
         "verdict": "flagged",
+        "message": "TS2339: Property 'emailAddress' does not exist on type 'Record<\"email\" | \"emailLower\" | \"id\" | \"workplace\" | unique symbol | unique symbol, string>'.",
         "file": "mikro-orm.ts",
         "startLine": 32,
-        "endLine": 35,
-        "snippet": "{\n  expression: (columns, table, name) =>\n    `create index ${name} on ${table} (lower(${columns.emailAddress}))`,\n},",
-        "edits": [],
-        "reason": null,
-        "message": "TS2339: Property 'emailAddress' does not exist on type 'Record<\"email\" | \"emailLower\" | \"id\" | \"workplace\" | unique symbol | unique symbol, string>'."
+        "endLine": 35
       },
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "mikro-orm.ts",
         "startLine": 37,
-        "endLine": 37,
-        "snippet": "{ properties: ['employer'], where: { emailAddress: { $ne: '' } } },",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 37
       },
       {
         "verdict": "flagged",
+        "message": "TS2339: Property 'emailAddress' does not exist on type 'SchemaColumns<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLowe...'.",
         "file": "mikro-orm.ts",
         "startLine": 45,
-        "endLine": 45,
-        "snippet": "{ expression: (columns) => `${columns.emailAddress} <> ''` },",
-        "edits": [],
-        "reason": null,
-        "message": "TS2339: Property 'emailAddress' does not exist on type 'SchemaColumns<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLowe...'."
+        "endLine": 45
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 21,
-        "endLine": 24,
-        "snippet": "emailLower: p\n  .string()\n  .generated((columns) => `lower(${columns.emailAddress}) stored`)\n  .nullable(),",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 24
       },
       {
         "verdict": "flagged",
+        "message": "TS2322: Type '\"emailAddress\"' is not assignable to type '\"*\" | \"email\" | \"emailLower\" | \"id\" | \"workplace\" | \"workplace:ref\"'.",
         "file": "mikro-orm.ts",
         "startLine": 52,
-        "endLine": 52,
-        "snippet": "await em.find(User, {}, { fields: ['id', 'emailAddress'] });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2322: Type '\"emailAddress\"' is not assignable to type '\"*\" | \"email\" | \"emailLower\" | \"id\" | \"workplace\" | \"workplace:ref\"'."
+        "endLine": 52
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'FilterQuery<NoInfer<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly ema...'.",
         "file": "mikro-orm.ts",
         "startLine": 55,
-        "endLine": 55,
-        "snippet": "await em.find(User, { emailAddress: 'ada@example.com' });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'FilterQuery<NoInfer<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly ema...'."
+        "endLine": 55
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'OrderDefinition<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLo...'.",
         "file": "mikro-orm.ts",
         "startLine": 58,
-        "endLine": 58,
-        "snippet": "await em.find(User, {}, { orderBy: { emailAddress: 'asc' } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'OrderDefinition<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLo...'."
+        "endLine": 58
       },
       {
         "verdict": "flagged",
+        "message": "TS2322: Type '\"staff.emailAddress\"' is not assignable to type '\"staff.*\" | \"staff.email\" | \"staff.emailLower\" | \"staff.id\" | \"staff.workplace\" | \"staff.workplace:ref\"'.",
         "file": "mikro-orm.ts",
         "startLine": 61,
-        "endLine": 65,
-        "snippet": "await em.find(\n  Company,\n  {},\n  { populate: ['staff'], fields: ['staff.emailAddress'] },\n);",
-        "edits": [],
-        "reason": null,
-        "message": "TS2322: Type '\"staff.emailAddress\"' is not assignable to type '\"staff.*\" | \"staff.email\" | \"staff.emailLower\" | \"staff.id\" | \"staff.workplace\" | \"staff.workplace:ref\"'."
+        "endLine": 65
       },
       {
         "verdict": "flagged",
+        "message": "TS2322: Type '\"employer\"' is not assignable to type '\"$infer\" | \"*\" | \"email\" | \"emailLower\" | \"id\" | \"workplace\" | \"workplace:ref\"'.",
         "file": "mikro-orm.ts",
         "startLine": 68,
-        "endLine": 68,
-        "snippet": "await em.find(User, {}, { populate: ['employer'] });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2322: Type '\"employer\"' is not assignable to type '\"$infer\" | \"*\" | \"email\" | \"emailLower\" | \"id\" | \"workplace\" | \"workplace:ref\"'."
+        "endLine": 68
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 71,
-        "endLine": 71,
-        "snippet": "await em.insert(User, { emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 24,
-            "end": 36
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 71
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'EntityData<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLower: ...'.",
         "file": "mikro-orm.ts",
         "startLine": 74,
-        "endLine": 74,
-        "snippet": "await em.nativeUpdate(User, { id: 1 }, { emailAddress: 'ada@example.com' });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'EntityData<InferEntityFromProperties<{ readonly id: Pick<UniversalPropertyOptionsBuilder<number, Omit<EmptyOptions, \"primary\"> & { primary: true; }, IncludeKeysForProperty>, IncludeKeysForProperty>; readonly email: StringPropertyOptionsBuilder<...>; readonly workplace: () => PropertyChain<...>; readonly emailLower: ...'."
+        "endLine": 74
       },
       {
         "verdict": "flagged",
+        "message": "TS2769: No overload matches this call.",
         "file": "mikro-orm.ts",
         "startLine": 77,
-        "endLine": 81,
-        "snippet": "await em\n  .createQueryBuilder(User)\n  .select(['employer', sql`count(*)`.as('total')])\n  .groupBy('employer')\n  .execute();",
-        "edits": [],
-        "reason": null,
-        "message": "TS2769: No overload matches this call."
+        "endLine": 81
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 84,
-        "endLine": 85,
-        "snippet": "const [user] = await em.find(User, {});\nexport const address = user.emailAddress;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 68,
-            "end": 80
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 85
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "mikro-orm.ts",
         "startLine": 88,
-        "endLine": 90,
-        "snippet": "await em.find(User, {\n  [sql`lower(${sql.ref('emailAddress')})`]: 'ada@example.com',\n});",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 90
       }
     ],
     "Prisma": [
       {
         "verdict": "followed",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 28,
-        "endLine": 28,
-        "snippet": "@@index([emailAddress])",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 9,
-            "end": 21
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 28
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 30,
-        "endLine": 30,
-        "snippet": "@@unique([emailAddress, employerId])",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 10,
-            "end": 22
-          },
-          {
-            "member": "employerId",
-            "start": 24,
-            "end": 34
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 30
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 32,
-        "endLine": 31,
-        "snippet": "",
-        "edits": [],
-        "reason": "Prisma's indexes have no INCLUDE",
-        "message": null
+        "endLine": 31
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 24,
-        "endLine": 24,
-        "snippet": "employer   Company? @relation(fields: [employerId], references: [id])",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 39,
-            "end": 49
-          },
-          {
-            "member": "employer",
-            "start": 0,
-            "end": 8
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 24
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 16,
-        "endLine": 16,
-        "snippet": "staff User[]",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 16
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 33,
-        "endLine": 32,
-        "snippet": "",
-        "edits": [],
-        "reason": "Prisma indexes fields, never an expression",
-        "message": null
+        "endLine": 32
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 34,
-        "endLine": 33,
-        "snippet": "",
-        "edits": [],
-        "reason": "Prisma's indexes take no condition",
-        "message": null
+        "endLine": 33
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 35,
-        "endLine": 34,
-        "snippet": "",
-        "edits": [],
-        "reason": "Prisma schemas declare no CHECK constraints",
-        "message": null
+        "endLine": 34
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "prisma/schema.prisma",
         "startLine": 26,
-        "endLine": 25,
-        "snippet": "",
-        "edits": [],
-        "reason": "Prisma schemas declare no generated columns",
-        "message": null
+        "endLine": 25
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "prisma.ts",
         "startLine": 6,
-        "endLine": 6,
-        "snippet": "await prisma.user.findMany({ select: { id: true, emailAddress: true } });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 6
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserWhereInput'.",
         "file": "prisma.ts",
         "startLine": 9,
-        "endLine": 9,
-        "snippet": "await prisma.user.findMany({ where: { emailAddress: 'ada@example.com' } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserWhereInput'."
+        "endLine": 9
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserOrderByWithRelationInput[] | UserOrderByWithRelationInput'.",
         "file": "prisma.ts",
         "startLine": 12,
-        "endLine": 12,
-        "snippet": "await prisma.user.findMany({ orderBy: { emailAddress: 'asc' } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserOrderByWithRelationInput[] | UserOrderByWithRelationInput'."
+        "endLine": 12
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserSelect<DefaultArgs>'.",
         "file": "prisma.ts",
         "startLine": 15,
-        "endLine": 17,
-        "snippet": "await prisma.company.findMany({\n  select: { staff: { select: { emailAddress: true } } },\n});",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type 'UserSelect<DefaultArgs>'."
+        "endLine": 17
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'employer' does not exist in type 'UserInclude<DefaultArgs>'.",
         "file": "prisma.ts",
         "startLine": 20,
-        "endLine": 20,
-        "snippet": "await prisma.user.findMany({ include: { employer: true } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'employer' does not exist in type 'UserInclude<DefaultArgs>'."
+        "endLine": 20
       },
       {
         "verdict": "flagged",
+        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '((Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)) & object'.",
         "file": "prisma.ts",
         "startLine": 23,
-        "endLine": 23,
-        "snippet": "await prisma.user.create({ data: { emailAddress: 'ada@example.com' } });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '((Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)) & object'."
+        "endLine": 23
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "prisma.ts",
         "startLine": 26,
-        "endLine": 29,
-        "snippet": "await prisma.user.updateMany({\n  where: { id: 1 },\n  data: { emailAddress: 'ada@example.com' },\n});",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 29
       },
       {
         "verdict": "flagged",
+        "message": "TS2322: Type '\"employerId\"[]' is not assignable to type 'UserScalarFieldEnum[] | UserScalarFieldEnum'.",
         "file": "prisma.ts",
         "startLine": 32,
-        "endLine": 32,
-        "snippet": "await prisma.user.groupBy({ by: ['employerId'], _count: true });",
-        "edits": [],
-        "reason": null,
-        "message": "TS2322: Type '\"employerId\"[]' is not assignable to type 'UserScalarFieldEnum[] | UserScalarFieldEnum'."
+        "endLine": 32
       },
       {
         "verdict": "flagged",
+        "message": "TS2339: Property 'emailAddress' does not exist on type '{ id: number; email: string; workplaceId: number | null; }'.",
         "file": "prisma.ts",
         "startLine": 35,
-        "endLine": 36,
-        "snippet": "const [user] = await prisma.user.findMany();\nexport const address = user.emailAddress;",
-        "edits": [],
-        "reason": null,
-        "message": "TS2339: Property 'emailAddress' does not exist on type '{ id: number; email: string; workplaceId: number | null; }'."
+        "endLine": 36
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "prisma.ts",
         "startLine": 39,
-        "endLine": 39,
-        "snippet": "await prisma.$queryRaw`SELECT id FROM \"User\" WHERE lower(\"emailAddress\") = ${'ada@example.com'}`;",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 39
       }
     ],
     "Sequelize": [
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 51,
-        "endLine": 51,
-        "snippet": "{ fields: ['emailAddress'] },",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 51
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 53,
-        "endLine": 53,
-        "snippet": "{ fields: ['emailAddress', 'employerId'], unique: true },",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 53
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 55,
-        "endLine": 54,
-        "snippet": "",
-        "edits": [],
-        "reason": "Sequelize's index options have no INCLUDE",
-        "message": null
+        "endLine": 54
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 65,
-        "endLine": 65,
-        "snippet": "User.belongsTo(Company, { foreignKey: 'employerId', as: 'employer' });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 65
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 68,
-        "endLine": 68,
-        "snippet": "Company.hasMany(User, { foreignKey: 'employerId', as: 'staff' });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 68
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 56,
-        "endLine": 56,
-        "snippet": "{ fields: [fn('lower', col('emailAddress'))] },",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 56
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 58,
-        "endLine": 58,
-        "snippet": "{ fields: ['employerId'], where: { emailAddress: { [Op.ne]: '' } } },",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 58
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 61,
-        "endLine": 60,
-        "snippet": "",
-        "edits": [],
-        "reason": "Sequelize models declare no CHECK constraints",
-        "message": null
+        "endLine": 60
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 46,
-        "endLine": 45,
-        "snippet": "",
-        "edits": [],
-        "reason": "Sequelize models declare no generated columns",
-        "message": null
+        "endLine": 45
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 71,
-        "endLine": 71,
-        "snippet": "await User.findAll({ attributes: ['id', 'emailAddress'] });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 71
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 74,
-        "endLine": 74,
-        "snippet": "await User.findAll({ where: { emailAddress: 'ada@example.com' } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 30,
-            "end": 42
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 74
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 77,
-        "endLine": 77,
-        "snippet": "await User.findAll({ order: [['emailAddress', 'ASC']] });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 77
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 80,
-        "endLine": 82,
-        "snippet": "await Company.findAll({\n  include: [{ association: 'staff', attributes: ['emailAddress'] }],\n});",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 82
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 85,
-        "endLine": 85,
-        "snippet": "await User.findAll({ include: ['employer'] });",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 85
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 88,
-        "endLine": 88,
-        "snippet": "await User.create({ emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 20,
-            "end": 32
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 88
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 91,
-        "endLine": 91,
-        "snippet": "await User.update({ emailAddress: 'ada@example.com' }, { where: { id: 1 } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 20,
-            "end": 32
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 91
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 94,
-        "endLine": 97,
-        "snippet": "await User.findAll({\n  attributes: ['employerId', [fn('count', col('id')), 'total']],\n  group: ['employerId'],\n});",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 97
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 100,
-        "endLine": 101,
-        "snippet": "const [user] = await User.findAll();\nexport const address = user.emailAddress;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 65,
-            "end": 77
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 101
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "sequelize.ts",
         "startLine": 104,
-        "endLine": 106,
-        "snippet": "await User.findAll({\n  where: where(fn('lower', col('emailAddress')), 'ada@example.com'),\n});",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 106
       }
     ],
     "TypeORM": [
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 24,
-        "endLine": 24,
-        "snippet": "@Index((user: User) => [user.emailAddress])",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 29,
-            "end": 41
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 24
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 26,
-        "endLine": 26,
-        "snippet": "@Index((user: User) => [user.emailAddress, user.employerId], { unique: true })",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 29,
-            "end": 41
-          },
-          {
-            "member": "employerId",
-            "start": 48,
-            "end": 58
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 26
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 28,
-        "endLine": 27,
-        "snippet": "",
-        "edits": [],
-        "reason": "TypeORM's index options have no INCLUDE",
-        "message": null
+        "endLine": 27
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 40,
-        "endLine": 42,
-        "snippet": "@ManyToOne(() => Company, (company) => company.staff)\n@JoinColumn({ name: 'employerId' })\nemployer?: Company;",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 90,
-            "end": 98
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 42
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 19,
-        "endLine": 20,
-        "snippet": "@OneToMany(() => User, (user) => user.employer)\nstaff?: User[];",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 38,
-            "end": 46
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 20
       },
       {
         "verdict": "n/a",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 29,
-        "endLine": 28,
-        "snippet": "",
-        "edits": [],
-        "reason": "TypeORM indexes columns, never an expression",
-        "message": null
+        "endLine": 28
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 30,
-        "endLine": 30,
-        "snippet": "@Index((user: User) => [user.employerId], { where: `\"emailAddress\" <> ''` })",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 29,
-            "end": 39
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 30
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 32,
-        "endLine": 37,
-        "snippet": "@Check(`\"emailAddress\" <> ''`)\n@Entity()\nexport class User {\n  @PrimaryGeneratedColumn() id!: number;\n  @Column() emailAddress!: string;\n  @Column({ nullable: true }) employerId?: number;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 114,
-            "end": 126
-          },
-          {
-            "member": "employerId",
-            "start": 167,
-            "end": 177
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 37
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 45,
-        "endLine": 46,
-        "snippet": "@Column({ generatedType: 'STORED', asExpression: 'lower(\"emailAddress\")' })\nemailLower?: string;",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 46
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 54,
-        "endLine": 54,
-        "snippet": "await users.find({ select: { id: true, emailAddress: true } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 39,
-            "end": 51
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 54
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 57,
-        "endLine": 57,
-        "snippet": "await users.find({ where: { emailAddress: 'ada@example.com' } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 28,
-            "end": 40
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 57
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 60,
-        "endLine": 60,
-        "snippet": "await users.find({ order: { emailAddress: 'ASC' } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 28,
-            "end": 40
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 60
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 63,
-        "endLine": 66,
-        "snippet": "await companies.find({\n  relations: { staff: true },\n  select: { id: true, staff: { emailAddress: true } },\n});",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 84,
-            "end": 96
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 66
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 69,
-        "endLine": 69,
-        "snippet": "await users.find({ relations: { employer: true } });",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 32,
-            "end": 40
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 69
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 72,
-        "endLine": 72,
-        "snippet": "await users.insert({ emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 21,
-            "end": 33
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 72
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 75,
-        "endLine": 75,
-        "snippet": "await users.update({ id: 1 }, { emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 32,
-            "end": 44
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 75
       },
       {
         "verdict": "silent",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 78,
-        "endLine": 83,
-        "snippet": "await users\n  .createQueryBuilder('user')\n  .select('user.employerId')\n  .addSelect('COUNT(*)', 'total')\n  .groupBy('user.employerId')\n  .getRawMany();",
-        "edits": [],
-        "reason": null,
-        "message": null
+        "endLine": 83
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 86,
-        "endLine": 87,
-        "snippet": "const [user] = await users.find();\nexport const address = user.emailAddress;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 63,
-            "end": 75
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 87
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "typeorm/typeorm.ts",
         "startLine": 90,
-        "endLine": 96,
-        "snippet": "await users.find({\n  where: {\n    emailAddress: Raw((column) => `lower(${column}) = :value`, {\n      value: 'ada@example.com',\n    }),\n  },\n});",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 34,
-            "end": 46
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 96
       }
     ],
     "UQL": [
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 25,
-        "endLine": 25,
-        "snippet": "@Index((user) => [user.emailAddress])",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 23,
-            "end": 35
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 25
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 27,
-        "endLine": 27,
-        "snippet": "@Index((user) => [user.emailAddress, user.employerId], { unique: true })",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 23,
-            "end": 35
-          },
-          {
-            "member": "employerId",
-            "start": 42,
-            "end": 52
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 27
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 29,
-        "endLine": 29,
-        "snippet": "@Index((user) => [user.emailAddress], { include: (user) => [user.employerId] })",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 23,
-            "end": 35
-          },
-          {
-            "member": "employerId",
-            "start": 65,
-            "end": 75
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 29
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 44,
-        "endLine": 45,
-        "snippet": "@ManyToOne({ entity: () => Company, references: (user) => user.employerId })\nemployer?: Company;",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 63,
-            "end": 73
-          },
-          {
-            "member": "employer",
-            "start": 77,
-            "end": 85
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 45
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 20,
-        "endLine": 21,
-        "snippet": "@OneToMany({ entity: () => User, mappedBy: (user) => user.employer })\nstaff?: User[];",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 58,
-            "end": 66
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 21
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 31,
-        "endLine": 31,
-        "snippet": "@Index((user) => [raw`lower(${user.emailAddress})`])",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 35,
-            "end": 47
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 31
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 33,
-        "endLine": 35,
-        "snippet": "@Index((user) => [user.employerId], {\n  where: (user) => raw`${user.emailAddress} <> ''`,\n})",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 68,
-            "end": 80
-          },
-          {
-            "member": "employerId",
-            "start": 23,
-            "end": 33
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 35
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 37,
-        "endLine": 41,
-        "snippet": "@Entity({ checks: [{ where: (user) => raw`${user.emailAddress} <> ''` }] })\nexport class User {\n  @Id({ type: Number }) id?: number;\n  @Field({ type: String }) emailAddress?: string;\n  @Field({ type: Number, references: () => Company }) employerId?: number;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 49,
-            "end": 61
-          },
-          {
-            "member": "emailAddress",
-            "start": 160,
-            "end": 172
-          },
-          {
-            "member": "employerId",
-            "start": 237,
-            "end": 247
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 41
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 48,
-        "endLine": 53,
-        "snippet": "@Field({\n  type: String,\n  computed: (user) => raw`lower(${user.emailAddress})`,\n  stored: true,\n})\nemailLower?: string;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 64,
-            "end": 76
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 53
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 57,
-        "endLine": 57,
-        "snippet": "await pool.findMany(User, { $select: { id: true, emailAddress: true } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 49,
-            "end": 61
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 57
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 60,
-        "endLine": 60,
-        "snippet": "await pool.findMany(User, { $where: { emailAddress: 'ada@example.com' } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 38,
-            "end": 50
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 60
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 63,
-        "endLine": 63,
-        "snippet": "await pool.findMany(User, { $sort: { emailAddress: 1 } });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 37,
-            "end": 49
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 63
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 66,
-        "endLine": 68,
-        "snippet": "await pool.findMany(Company, {\n  $populate: { staff: { $select: { emailAddress: true } } },\n});",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 66,
-            "end": 78
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 68
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 71,
-        "endLine": 71,
-        "snippet": "await pool.findMany(User, { $populate: { employer: true } });",
-        "edits": [
-          {
-            "member": "employer",
-            "start": 41,
-            "end": 49
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 71
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 74,
-        "endLine": 74,
-        "snippet": "await pool.insertOne(User, { emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 29,
-            "end": 41
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 74
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 77,
-        "endLine": 77,
-        "snippet": "await pool.updateOneById(User, 1, { emailAddress: 'ada@example.com' });",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 36,
-            "end": 48
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 77
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 80,
-        "endLine": 83,
-        "snippet": "await pool.aggregate(User, {\n  $group: { employerId: true },\n  $select: { total: { $count: '*' } },\n});",
-        "edits": [
-          {
-            "member": "employerId",
-            "start": 41,
-            "end": 51
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 83
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 86,
-        "endLine": 87,
-        "snippet": "const [user] = await pool.findMany(User, { $select: { emailAddress: true } });\nexport const address = user.emailAddress;",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 107,
-            "end": 119
-          },
-          {
-            "member": "emailAddress",
-            "start": 54,
-            "end": 66
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 87
       },
       {
         "verdict": "followed",
+        "message": null,
         "file": "uql.ts",
         "startLine": 90,
-        "endLine": 93,
-        "snippet": "const u = refs(User);\nawait pool.findMany(User, {\n  $where: { $and: [raw`lower(${u.emailAddress}) = ${'ada@example.com'}`] },\n});",
-        "edits": [
-          {
-            "member": "emailAddress",
-            "start": 83,
-            "end": 95
-          }
-        ],
-        "reason": null,
-        "message": null
+        "endLine": 93
       }
     ]
-  },
-  "playground": {
-    "renames": [
-      {
-        "from": "emailAddress",
-        "to": "email",
-        "kind": "field"
-      }
-    ],
-    "entries": {
-      "UQL": {
-        "file": "playground/uql.ts",
-        "source": "import { Entity, Field, Id, Index, raw, type SqlQuerierPool } from 'uql-orm';\n\ndeclare const pool: SqlQuerierPool;\n\n// Expression index\n@Index((user) => [raw`lower(${user.emailAddress})`])\n@Entity()\nexport class User {\n  @Id({ type: Number }) id?: number;\n  @Field({ type: String }) emailAddress?: string;\n}\n\n// Field in the filter\nawait pool.findMany(User, { $where: { emailAddress: 'ada@example.com' } });\n// Field in inserted data\nawait pool.insertOne(User, { emailAddress: 'ada@example.com' });\n// Field in updated data\nawait pool.updateOneById(User, 1, { emailAddress: 'ada@example.com' });\n",
-        "mentions": [
-          {
-            "verdict": "followed",
-            "file": "playground/uql.ts",
-            "startLine": 6,
-            "endLine": 11,
-            "snippet": "@Index((user) => [raw`lower(${user.emailAddress})`])\n@Entity()\nexport class User {\n  @Id({ type: Number }) id?: number;\n  @Field({ type: String }) emailAddress?: string;\n}",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 35,
-                "end": 47
-              },
-              {
-                "member": "emailAddress",
-                "start": 147,
-                "end": 159
-              }
-            ],
-            "reason": null,
-            "message": null
-          },
-          {
-            "verdict": "followed",
-            "file": "playground/uql.ts",
-            "startLine": 14,
-            "endLine": 14,
-            "snippet": "await pool.findMany(User, { $where: { emailAddress: 'ada@example.com' } });",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 38,
-                "end": 50
-              }
-            ],
-            "reason": null,
-            "message": null
-          },
-          {
-            "verdict": "followed",
-            "file": "playground/uql.ts",
-            "startLine": 16,
-            "endLine": 16,
-            "snippet": "await pool.insertOne(User, { emailAddress: 'ada@example.com' });",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 29,
-                "end": 41
-              }
-            ],
-            "reason": null,
-            "message": null
-          },
-          {
-            "verdict": "followed",
-            "file": "playground/uql.ts",
-            "startLine": 18,
-            "endLine": 18,
-            "snippet": "await pool.updateOneById(User, 1, { emailAddress: 'ada@example.com' });",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 36,
-                "end": 48
-              }
-            ],
-            "reason": null,
-            "message": null
-          }
-        ]
-      },
-      "Drizzle": {
-        "file": "playground/drizzle.ts",
-        "source": "import { eq, sql } from 'drizzle-orm';\nimport type { NodePgDatabase } from 'drizzle-orm/node-postgres';\nimport { index, pgTable, serial, text } from 'drizzle-orm/pg-core';\n\ndeclare const db: NodePgDatabase;\n\nexport const users = pgTable(\n  'User',\n  { id: serial().primaryKey(), emailAddress: text().notNull() },\n  (t) => [\n    // Expression index\n    index().on(sql`lower(${t.emailAddress})`),\n  ],\n);\n\n// Field in the filter\nawait db.select().from(users).where(eq(users.emailAddress, 'ada@example.com'));\n// Field in inserted data\nawait db.insert(users).values({ emailAddress: 'ada@example.com' });\n// Field in updated data\nawait db\n  .update(users)\n  .set({ emailAddress: 'ada@example.com' })\n  .where(eq(users.id, 1));\n",
-        "mentions": [
-          {
-            "verdict": "followed",
-            "file": "playground/drizzle.ts",
-            "startLine": 12,
-            "endLine": 12,
-            "snippet": "index().on(sql`lower(${t.emailAddress})`),",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 25,
-                "end": 37
-              }
-            ],
-            "reason": null,
-            "message": null
-          },
-          {
-            "verdict": "followed",
-            "file": "playground/drizzle.ts",
-            "startLine": 17,
-            "endLine": 17,
-            "snippet": "await db.select().from(users).where(eq(users.emailAddress, 'ada@example.com'));",
-            "edits": [
-              {
-                "member": "emailAddress",
-                "start": 45,
-                "end": 57
-              }
-            ],
-            "reason": null,
-            "message": null
-          },
-          {
-            "verdict": "flagged",
-            "file": "playground/drizzle.ts",
-            "startLine": 19,
-            "endLine": 19,
-            "snippet": "await db.insert(users).values({ emailAddress: 'ada@example.com' });",
-            "edits": [],
-            "reason": null,
-            "message": "TS2769: No overload matches this call."
-          },
-          {
-            "verdict": "flagged",
-            "file": "playground/drizzle.ts",
-            "startLine": 21,
-            "endLine": 24,
-            "snippet": "await db\n  .update(users)\n  .set({ emailAddress: 'ada@example.com' })\n  .where(eq(users.id, 1));",
-            "edits": [],
-            "reason": null,
-            "message": "TS2353: Object literal may only specify known properties, and 'emailAddress' does not exist in type '{ email?: string | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<unknown> | undefined; id?: number | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | SQL<...> | undefined; }'."
-          }
-        ]
-      }
-    }
   }
 }

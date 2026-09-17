@@ -11,7 +11,6 @@ import {
   RENAME_PROBES,
   RENAME_VERDICTS,
   type RenameMention,
-  type RenamePlayground,
   type RenameVerdict,
   RENAMES,
 } from './renames';
@@ -77,10 +76,10 @@ export function printRenameSummary(results: RenameResults): void {
 }
 
 /**
- * The README blocks and, in {@link VERDICTS}, every mention with its code and its verdict, and the playground
- * excerpts scored the same way: uql-orm.dev shows them as they are, rather than scoring anything itself.
+ * The README blocks and, in {@link VERDICTS}, every mention with its verdict and where it is: uql-orm.dev
+ * marks the files with them as they are, rather than scoring anything itself.
  */
-export function syncRenameReport(results: RenameResults, playground: RenamePlayground): void {
+export function syncRenameReport(results: RenameResults): void {
   const tooling = renameTooling();
   const renames = list(RENAMES.map(({ from, to }) => `\`${from}\` to \`${to}\``));
   writeReadme({
@@ -94,6 +93,5 @@ export function syncRenameReport(results: RenameResults, playground: RenamePlayg
     groups: RENAME_GROUPS,
     probes: RENAME_PROBES,
     entries: Object.fromEntries(alphabetical(results)),
-    playground,
   });
 }

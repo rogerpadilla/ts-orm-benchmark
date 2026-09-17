@@ -7,7 +7,7 @@
 
 **New: a rename-safety half.** `bun run bench.renames` renames a field, a foreign key and a relation in each entry's model with that tool's own rename (TypeScript's language server, Prisma's for its schema) and scores 19 places that name them, from indexes and checks to queries and raw SQL, as followed, flagged by the compiler, or left behind silently. UQL follows all 19, Drizzle 14, Sequelize leaves 12 behind silently.
 
-- `rename-safety/playground/` holds the short UQL and Drizzle excerpts the UQL site renames live, scored the same way and held to the verdicts of the full files they come from.
+- [uql-orm.dev/rename-safety](https://uql-orm.dev/rename-safety) shows these files and renames them live.
 - TypeORM's model uses its decorators, whose index columns and inverse side take callbacks a rename follows, so it lives in `rename-safety/typeorm/`, a project with `experimentalDecorators` that UQL's standard decorators cannot share.
 - Dependencies: uql-orm 0.58.0 to 0.65.1, whose index expressions and partial-index conditions read the entity's refs and whose to-one names the foreign key it declares, `references: (user) => user.companyId`; `@prisma/language-server` 31.12.10 added.
 

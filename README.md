@@ -181,7 +181,7 @@ Counted as missing, not excused: a check the compiler no longer makes protects n
 
 What an ORM costs when you rename a field. Each entry's model and every place that names three of its members are in [rename-safety/](rename-safety/), written the most rename-friendly way its API allows, then renamed with that tool's own rename: TypeScript's language server, or Prisma's for its schema. For TypeORM that way is its decorators, whose inverse side takes a callback where an entity schema takes a string; they need `experimentalDecorators`, which UQL's standard decorators cannot share a project with, so [rename-safety/typeorm/](rename-safety/typeorm/) has its own. A rename takes the column with the field, which is what every entry maps by default; Prisma's server also adds `@map` to keep the old column, and that edit is left out.
 
-[rename-safety/playground/](rename-safety/playground/) holds the two short excerpts, UQL and Drizzle, that [uql-orm.dev/rename-safety](https://uql-orm.dev/rename-safety) renames live. They are renamed and scored the same way, and a run fails if one disagrees with the full file it comes from.
+[uql-orm.dev/rename-safety](https://uql-orm.dev/rename-safety) shows these files and renames them live, in the same editor tabs as its type-safety page.
 
 <!-- bench:rename-safety-env -->
 > Renamed `emailAddress` to `email`, `employerId` to `workplaceId` and `employer` to `workplace`, with TypeScript 7.0.2 and prisma-language-server 31.12.10.

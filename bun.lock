@@ -19,7 +19,7 @@
         "sequelize": "6.37.8",
         "typeorm": "1.1.1",
         "typescript": "7.0.2",
-        "uql-orm": "0.66.0",
+        "uql-orm": "0.67.1",
       },
     },
   },
@@ -580,7 +580,7 @@
 
     "universalify": ["universalify@2.0.1", "", {}, "sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw=="],
 
-    "uql-orm": ["uql-orm@0.66.0", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0", "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.3.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mssql": ">=11.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mssql", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-aEZtmGkXrC6Lcj25cCTKC9G/yXynVcBvJn86mrAJIWZP/gInf/KS76k5YftrTWqvKnvzZVjjBhp9cyyRRUTB6Q=="],
+    "uql-orm": ["uql-orm@0.67.1", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0", "@libsql/client": ">=0.6.0", "@neondatabase/serverless": ">=0.9.0", "@nestjs/common": ">=10.0.0", "@nestjs/core": ">=10.0.0", "@tursodatabase/database": ">=0.7.0", "@tursodatabase/serverless": ">=1.3.0", "better-sqlite3": ">=9.0.0", "express": ">=5.0.0", "mariadb": ">=3.0.0", "mongodb": ">=6.0.0", "mssql": ">=11.0.0", "mysql2": ">=3.0.0", "pg": ">=8.0.0", "pg-query-stream": ">=4.0.0", "rxjs": ">=7.0.0" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mssql", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-VI0Tl2HkfjKllkgkUiIrJOfsDRDOjDGxqP8enYx8wiOn8DrjVqxpaXEbB+d2ZKHqMw6q71OoMekhjBIBUnHUCQ=="],
 
     "uuid": ["uuid@8.3.2", "", { "bin": "dist/bin/uuid" }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 

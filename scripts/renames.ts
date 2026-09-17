@@ -62,31 +62,15 @@ export const RENAME_VERDICTS = ['followed', 'flagged', 'silent', 'n/a'] as const
 
 export type RenameVerdict = (typeof RENAME_VERDICTS)[number];
 
-/** One probe as one entry scored it, with what uql-orm.dev needs to show it without compiling anything. */
+/** One probe as one entry scored it, and where: what uql-orm.dev marks in the file it shows. */
 export type RenameMention = {
   verdict: RenameVerdict;
   /** The file under `rename-safety/`, and the 1-based lines of the code under the marker. */
   file: string;
   startLine: number;
   endLine: number;
-  /** Those lines with their common indent removed, and where in them each member's rename edited. */
-  snippet: string;
-  edits: { member: string; start: number; end: number }[];
   /** The compiler's first error, for a flagged mention. */
   message: string | null;
-  /** Why the entry cannot declare it, for a probe that does not apply. */
-  reason: string | null;
-};
-
-/** The two excerpts uql-orm.dev's rename playground shows, by the entry each is cut from. */
-export const PLAYGROUND = { UQL: 'playground/uql.ts', Drizzle: 'playground/drizzle.ts' } as const;
-
-/** The one rename the playground plays. */
-export const PLAYGROUND_RENAMES = RENAMES.filter(({ kind }) => kind === 'field');
-
-export type RenamePlayground = {
-  renames: readonly (typeof RENAMES)[number][];
-  entries: Record<string, { file: string; source: string; mentions: RenameMention[] }>;
 };
 
 /** A line comment naming a probe, with the reason it does not apply when it does not. */
