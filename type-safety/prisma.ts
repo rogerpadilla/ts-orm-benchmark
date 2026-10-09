@@ -26,7 +26,7 @@ await prisma.user.findMany({
 // Misspelled column in the sort | idd -> id
 await prisma.user.findMany({ select: { id: true }, orderBy: { idd: 'asc' } });
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await prisma.user.aggregate({ _sum: { name: true } });
 
 // Misspelled column inside a loaded relation | nmae -> name
@@ -40,8 +40,14 @@ await prisma.user.createManyAndReturn({
   select: { id: true },
 });
 
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await prisma.user.createManyAndReturn({
+  data: [{ name: 'New User' }],
+  select: { id: true },
+});
+
 // Number written into a text column | 42 -> 'Updated Name'
-await prisma.user.updateMany({ where: { id: 1 }, data: { name: 42 } });
+await prisma.user.update({ where: { id: 1 }, data: { name: 42 } });
 
 // Reading a column the projection left out | user.email -> user.name
 const [user] = await prisma.user.findMany({ select: { id: true, name: true } });

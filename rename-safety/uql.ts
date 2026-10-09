@@ -37,8 +37,10 @@ export class Company {
 @Entity({ checks: [{ where: (user) => raw`${user.emailAddress} <> ''` }] })
 export class User {
   @Id({ type: Number }) id?: number;
-  @Field({ type: String }) emailAddress?: string;
-  @Field({ type: Number, references: () => Company }) employerId?: number;
+  @Field({ type: String, nullable: false }) emailAddress!: string;
+  @Field({ type: Number, references: () => Company }) employerId?:
+    | number
+    | null;
 
   // Foreign key of a relation
   @ManyToOne({ entity: () => Company, references: (user) => user.employerId })
@@ -49,6 +51,7 @@ export class User {
     type: String,
     computed: (user) => raw`lower(${user.emailAddress})`,
     stored: true,
+    nullable: false,
   })
   emailLower?: string;
 }

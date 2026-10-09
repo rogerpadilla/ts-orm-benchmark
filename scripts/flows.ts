@@ -5,9 +5,8 @@
  * Each builder takes only the client it needs; {@link FLOWS} is where an entry is wired to one.
  */
 
-import type { SqlEntityManager } from '@mikro-orm/postgresql';
 import { asc, eq, gt } from 'drizzle-orm';
-import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import type { PgDatabase, PgQueryResultHKT, PgQueryResultKind } from 'drizzle-orm/pg-core';
 import { Op } from 'sequelize';
 import { LessThanOrEqual, MoreThan } from 'typeorm';
 import type { BunSqlClients, Clients } from '../src/clients';
@@ -18,7 +17,6 @@ import {
   drizzleUsers,
   MikroCompanySchema,
   MikroUserSchema,
-  type SqCompany as SqCompanyModel,
   TypeORMCompanySchema,
   TypeORMUserSchema,
   USER_TABLE,
@@ -27,18 +25,8 @@ import {
 import { SEED_COMPANIES } from './fixture';
 import type { Entry, Step } from './model';
 
-/**
- * One step of the lifecycle. `run` is the only part that is timed; `rows` and `children` just read a
- * count out of whatever this entry's API hands back, which is the entry's business. What that count has
- * to be is the step's, and lives in {@link EXPECTED_ROWS} so no entry can assert less than its peers.
- */
-export type Operation = {
-  run: () => Promise<unknown>;
-  /** For an API that reports affected rows instead of returning them. Defaults to the array's length. */
-  rows?: (returned: unknown) => number;
-  /** For a nested read that does not hand back plain `{ users: [...] }` parents. */
-  children?: (parent: unknown) => unknown[] | undefined;
-};
+/** One step of the lifecycle: only `run` is timed, and it returns what a caller would use. */
+export type Operation = { run: () => Promise<unknown> };
 
 export type Flow = Record<Step, Operation>;
 
@@ -54,11 +42,7 @@ const READ_LIMIT = 200;
 const NESTED_LIMIT = 50;
 const UPDATE_NAME = 'Updated Name';
 
-/**
- * What every entry has to produce, per step. Declared once rather than per entry: when each flow carried
- * its own assertions, MikroORM's insert, update and delete asserted nothing and Prisma's update and
- * delete only asserted a truthy return, so those steps could have done nothing and still scored well.
- */
+/** Declared once rather than per entry, so no entry can assert less than its peers. */
 const EXPECTED_ROWS: Record<Step, number> = {
   insert: NEW_USERS.length,
   read: READ_LIMIT,
@@ -75,35 +59,39 @@ function expect(cond: boolean, message: string) {
   }
 }
 
-/** Rows come back with different key casing and numeric types per driver; only the shape is asserted. */
+/** A step returns rows, one row, nothing, or an affected count: each read as how many rows it reached. */
 function rowCount(returned: unknown): number {
-  return Array.isArray(returned) ? returned.length : 0;
+  if (typeof returned === 'number') {
+    return returned;
+  }
+  if (Array.isArray(returned)) {
+    return returned.length;
+  }
+  return returned === null || returned === undefined ? 0 : 1;
 }
 
-/** Runs after the timer stops, so normalising an entry's return shape here costs it nothing. */
-export function checkStep(entry: Entry, step: Step, op: Operation, returned: unknown): void {
-  const rows = (op.rows ?? rowCount)(returned);
+const isRow = (value: unknown): value is object => typeof value === 'object' && value !== null;
+
+/** Runs after the timer stops, so reading an entry's return shape here costs it nothing. */
+export function checkStep(entry: Entry, step: Step, returned: unknown): void {
+  const rows = rowCount(returned);
   expect(rows === EXPECTED_ROWS[step], `${entry} ${step} returned ${rows} rows, expected ${EXPECTED_ROWS[step]}`);
 
   if (step === 'readAgain') {
-    const name = (returned as { name?: string }[])[0]?.name;
+    const name = isRow(returned) && 'name' in returned ? returned.name : undefined;
     expect(name === UPDATE_NAME, `${entry} readAgain saw ${JSON.stringify(name)}, expected the updated name`);
   }
 
-  if (step === 'nested') {
-    const children = op.children ?? ((parent: unknown) => (parent as { users?: unknown[] }).users);
-    const populated = (returned as unknown[]).every((parent) => (children(parent)?.length ?? 0) > 0);
+  if (step === 'nested' && Array.isArray(returned)) {
+    const populated = returned.every((parent) => isRow(parent) && 'users' in parent && rowCount(parent.users) > 0);
     expect(populated, `${entry} nested left a company without its users`);
   }
 }
 
-/** Both driver-level counts an ORM can hand back instead of rows. */
-const affectedRows = (returned: unknown) => (returned as { affectedRows?: number }).affectedRows ?? 0;
-const affected = (returned: unknown) => (returned as { affected?: number }).affected ?? 0;
-const oneIfReturned = (returned: unknown) => (returned ? 1 : 0);
+/** The flat row both floors read for the nested step, and map by hand: no ORM assembles this. */
+type FlatRow = { cId: number; cName: string; uId: number | null; uName: string | null };
 
-/** The floors map rows by hand, which is the point of them: no ORM assembles this. */
-function nestFlatRows(rows: { cId: number; cName: string; uId: number | null; uName: string | null }[]) {
+function nestFlatRows(rows: FlatRow[]) {
   const byId = new Map<number, { id: number; name: string; users: { id: number; name: string }[] }>();
   for (const row of rows) {
     let parent = byId.get(row.cId);
@@ -111,8 +99,8 @@ function nestFlatRows(rows: { cId: number; cName: string; uId: number | null; uN
       parent = { id: row.cId, name: row.cName, users: [] };
       byId.set(row.cId, parent);
     }
-    if (row.uId !== null) {
-      parent.users.push({ id: row.uId, name: row.uName as string });
+    if (row.uId !== null && row.uName !== null) {
+      parent.users.push({ id: row.uId, name: row.uName });
     }
   }
   return [...byId.values()];
@@ -138,35 +126,35 @@ function rawPgFlow(db: Clients['rawPg']): Flow {
         ).rows,
     },
     update: {
-      run: async () =>
-        (await db.query(`UPDATE "${USER_TABLE}" SET name=$1 WHERE id=$2 RETURNING id`, [UPDATE_NAME, 1])).rows,
+      run: async () => (await db.query(`UPDATE "${USER_TABLE}" SET name=$1 WHERE id=$2`, [UPDATE_NAME, 1])).rowCount,
     },
     readAgain: {
-      run: async () => (await db.query(`SELECT id,name FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows,
+      run: async () => (await db.query(`SELECT id,name FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows[0],
     },
     nested: {
-      run: async () => {
-        const rows = (
-          await db.query(
-            `SELECT c.id "cId", c.name "cName", u.id "uId", u.name "uName"
-             FROM "${COMPANY_TABLE}" c LEFT JOIN "${USER_TABLE}" u ON u."companyId" = c.id
-             WHERE c.id <= $1 ORDER BY c.id`,
-            [NESTED_LIMIT],
-          )
-        ).rows as { cId: number; cName: string; uId: number | null; uName: string | null }[];
-        return nestFlatRows(rows);
-      },
+      run: async () =>
+        nestFlatRows(
+          (
+            await db.query<FlatRow>(
+              `SELECT c.id "cId", c.name "cName", u.id "uId", u.name "uName"
+               FROM "${COMPANY_TABLE}" c LEFT JOIN "${USER_TABLE}" u ON u."companyId" = c.id
+               WHERE c.id <= $1 ORDER BY c.id`,
+              [NESTED_LIMIT],
+            )
+          ).rows,
+        ),
     },
     delete: {
-      run: async () => (await db.query(`DELETE FROM "${USER_TABLE}" WHERE id=$1 RETURNING id`, [1])).rows,
+      run: async () => (await db.query(`DELETE FROM "${USER_TABLE}" WHERE id=$1`, [1])).rowCount,
     },
     readEmpty: {
-      run: async () => (await db.query(`SELECT id FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows,
+      run: async () => (await db.query(`SELECT id FROM "${USER_TABLE}" WHERE id=$1`, [1])).rows[0],
     },
   };
 }
 
 function bunSqlFlow(sql: BunSqlClients['bunSql']): Flow {
+  // Table names are literal: interpolating them would bind them as values, or escape them on every call.
   return {
     insert: {
       // Bun expands an array of objects into the column list and the VALUES tuples itself.
@@ -177,26 +165,26 @@ function bunSqlFlow(sql: BunSqlClients['bunSql']): Flow {
         sql`SELECT id,name,email,"companyId","createdAt" FROM "User" WHERE "companyId" > 0 ORDER BY id LIMIT ${READ_LIMIT}`,
     },
     update: {
-      run: () => sql`UPDATE "User" SET name=${UPDATE_NAME} WHERE id=1 RETURNING id`,
+      run: async () => (await sql`UPDATE "User" SET name=${UPDATE_NAME} WHERE id=1`).count,
     },
     readAgain: {
-      run: () => sql`SELECT id,name FROM "User" WHERE id=1`,
+      run: async () => (await sql`SELECT id,name FROM "User" WHERE id=1`)[0],
     },
     nested: {
       run: async () => {
-        const rows = (await sql`
+        const rows: FlatRow[] = await sql`
           SELECT c.id AS "cId", c.name AS "cName", u.id AS "uId", u.name AS "uName"
           FROM "Company" c LEFT JOIN "User" u ON u."companyId" = c.id
           WHERE c.id <= ${NESTED_LIMIT} ORDER BY c.id
-        `) as { cId: number; cName: string; uId: number | null; uName: string | null }[];
+        `;
         return nestFlatRows(rows);
       },
     },
     delete: {
-      run: () => sql`DELETE FROM "User" WHERE id=1 RETURNING id`,
+      run: async () => (await sql`DELETE FROM "User" WHERE id=1`).count,
     },
     readEmpty: {
-      run: () => sql`SELECT id FROM "User" WHERE id=1`,
+      run: async () => (await sql`SELECT id FROM "User" WHERE id=1`)[0],
     },
   };
 }
@@ -216,11 +204,10 @@ function uqlFlow(q: Clients['uql'] | BunSqlClients['uqlBunSql']): Flow {
         }),
     },
     update: {
-      run: () => q.updateMany(User, { $where: { id: 1 } }, { name: UPDATE_NAME }),
-      rows: Number,
+      run: () => q.updateOneById(User, 1, { name: UPDATE_NAME }),
     },
     readAgain: {
-      run: () => q.findMany(User, { $select: { id: true, name: true }, $where: { id: 1 } }),
+      run: () => q.findOneById(User, 1, { $select: { id: true, name: true } }),
     },
     nested: {
       run: () =>
@@ -232,11 +219,10 @@ function uqlFlow(q: Clients['uql'] | BunSqlClients['uqlBunSql']): Flow {
         }),
     },
     delete: {
-      run: () => q.deleteMany(User, { $where: { id: 1 } }),
-      rows: Number,
+      run: () => q.deleteOneById(User, 1),
     },
     readEmpty: {
-      run: () => q.findMany(User, { $select: { id: true }, $where: { id: 1 } }),
+      run: () => q.findOneById(User, 1, { $select: { id: true } }),
     },
   };
 }
@@ -256,11 +242,10 @@ function sequelizeFlow({ SqUser, SqCompany }: Pick<Clients, 'SqUser' | 'SqCompan
         }),
     },
     update: {
-      run: () => SqUser.update({ name: UPDATE_NAME }, { where: { id: 1 } }),
-      rows: (r) => (r as number[])[0],
+      run: async () => (await SqUser.update({ name: UPDATE_NAME }, { where: { id: 1 } }))[0],
     },
     readAgain: {
-      run: () => SqUser.findAll({ attributes: ['id', 'name'], where: { id: 1 } }),
+      run: () => SqUser.findByPk(1, { attributes: ['id', 'name'] }),
     },
     nested: {
       run: () =>
@@ -270,14 +255,12 @@ function sequelizeFlow({ SqUser, SqCompany }: Pick<Clients, 'SqUser' | 'SqCompan
           where: { id: { [Op.lte]: NESTED_LIMIT } },
           order: [['id', 'ASC']],
         }),
-      children: (parent) => (parent as SqCompanyModel).users,
     },
     delete: {
       run: () => SqUser.destroy({ where: { id: 1 } }),
-      rows: Number,
     },
     readEmpty: {
-      run: () => SqUser.findAll({ attributes: ['id'], where: { id: 1 } }),
+      run: () => SqUser.findByPk(1, { attributes: ['id'] }),
     },
   };
 }
@@ -287,8 +270,7 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
   const companies = ds.getRepository(TypeORMCompanySchema);
   return {
     insert: {
-      run: () => repo.insert(NEW_USERS),
-      rows: (r) => (r as { identifiers: unknown[] }).identifiers.length,
+      run: async () => (await repo.insert(NEW_USERS)).identifiers,
     },
     read: {
       run: () =>
@@ -300,11 +282,10 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
         }),
     },
     update: {
-      run: () => repo.update({ id: 1 }, { name: UPDATE_NAME }),
-      rows: affected,
+      run: async () => (await repo.update({ id: 1 }, { name: UPDATE_NAME })).affected,
     },
     readAgain: {
-      run: () => repo.find({ select: { id: true, name: true }, where: { id: 1 } }),
+      run: () => repo.findOne({ select: { id: true, name: true }, where: { id: 1 } }),
     },
     nested: {
       run: () =>
@@ -316,29 +297,22 @@ function typeormFlow(ds: Clients['typeorm']): Flow {
         }),
     },
     delete: {
-      run: () => repo.delete({ id: 1 }),
-      rows: affected,
+      run: async () => (await repo.delete({ id: 1 })).affected,
     },
     readEmpty: {
-      run: () => repo.find({ select: { id: true }, where: { id: 1 } }),
+      run: () => repo.findOne({ select: { id: true }, where: { id: 1 } }),
     },
   };
 }
 
 function mikroFlow(orm: Clients['mikroOrm']): Flow {
   // A request-scoped fork per operation, as MikroORM's docs call for: https://mikro-orm.io/docs/identity-map
-  const fork = () => orm.em.fork() as SqlEntityManager;
-  const mikroNew = NEW_USERS.map((u) => ({
-    name: u.name,
-    email: u.email,
-    company: u.companyId,
-    createdAt: u.createdAt,
-  }));
+  const fork = () => orm.em.fork();
+  const mikroNew = NEW_USERS.map(({ companyId, ...user }) => ({ ...user, company: companyId }));
   return {
     insert: {
       // `em.insertMany` returns only the first id, so the insert stays on the builder (see README, Method).
-      run: () => fork().createQueryBuilder(MikroUserSchema).insert(mikroNew).execute(),
-      rows: affectedRows,
+      run: async () => (await fork().createQueryBuilder(MikroUserSchema).insert(mikroNew).execute()).rows,
     },
     read: {
       run: () =>
@@ -350,10 +324,9 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
     },
     update: {
       run: () => fork().nativeUpdate(MikroUserSchema, { id: 1 }, { name: UPDATE_NAME }),
-      rows: Number,
     },
     readAgain: {
-      run: () => fork().find(MikroUserSchema, { id: 1 }, { fields: ['id', 'name'] }),
+      run: () => fork().findOne(MikroUserSchema, 1, { fields: ['id', 'name'] }),
     },
     nested: {
       run: () =>
@@ -365,15 +338,18 @@ function mikroFlow(orm: Clients['mikroOrm']): Flow {
     },
     delete: {
       run: () => fork().nativeDelete(MikroUserSchema, { id: 1 }),
-      rows: Number,
     },
     readEmpty: {
-      run: () => fork().find(MikroUserSchema, { id: 1 }, { fields: ['id'] }),
+      run: () => fork().findOne(MikroUserSchema, 1, { fields: ['id'] }),
     },
   };
 }
 
-function drizzleFlow(db: PgDatabase<PgQueryResultHKT, typeof drizzleSchema>): Flow {
+/** Same builder on both drivers; only how each reports affected rows differs. */
+function drizzleFlow<H extends PgQueryResultHKT>(
+  db: PgDatabase<H, typeof drizzleSchema>,
+  affected: (result: PgQueryResultKind<H, never>) => number,
+): Flow {
   return {
     insert: {
       run: () => db.insert(drizzleUsers).values(NEW_USERS).returning({ id: drizzleUsers.id }),
@@ -394,16 +370,16 @@ function drizzleFlow(db: PgDatabase<PgQueryResultHKT, typeof drizzleSchema>): Fl
           .limit(READ_LIMIT),
     },
     update: {
-      run: () =>
-        db
-          .update(drizzleUsers)
-          .set({ name: UPDATE_NAME })
-          .where(eq(drizzleUsers.id, 1))
-          .returning({ id: drizzleUsers.id }),
+      run: async () => affected(await db.update(drizzleUsers).set({ name: UPDATE_NAME }).where(eq(drizzleUsers.id, 1))),
     },
     readAgain: {
-      run: () =>
-        db.select({ id: drizzleUsers.id, name: drizzleUsers.name }).from(drizzleUsers).where(eq(drizzleUsers.id, 1)),
+      run: async () =>
+        (
+          await db
+            .select({ id: drizzleUsers.id, name: drizzleUsers.name })
+            .from(drizzleUsers)
+            .where(eq(drizzleUsers.id, 1))
+        )[0],
     },
     nested: {
       run: () =>
@@ -415,10 +391,10 @@ function drizzleFlow(db: PgDatabase<PgQueryResultHKT, typeof drizzleSchema>): Fl
         }),
     },
     delete: {
-      run: () => db.delete(drizzleUsers).where(eq(drizzleUsers.id, 1)).returning({ id: drizzleUsers.id }),
+      run: async () => affected(await db.delete(drizzleUsers).where(eq(drizzleUsers.id, 1))),
     },
     readEmpty: {
-      run: () => db.select({ id: drizzleUsers.id }).from(drizzleUsers).where(eq(drizzleUsers.id, 1)),
+      run: async () => (await db.select({ id: drizzleUsers.id }).from(drizzleUsers).where(eq(drizzleUsers.id, 1)))[0],
     },
   };
 }
@@ -441,10 +417,9 @@ function prismaFlow(db: Clients['prisma']): Flow {
     },
     update: {
       run: () => db.user.update({ where: { id: 1 }, data: { name: UPDATE_NAME }, select: { id: true } }),
-      rows: oneIfReturned,
     },
     readAgain: {
-      run: () => db.user.findMany({ select: { id: true, name: true }, where: { id: 1 } }),
+      run: () => db.user.findUnique({ select: { id: true, name: true }, where: { id: 1 } }),
     },
     nested: {
       run: () =>
@@ -456,13 +431,16 @@ function prismaFlow(db: Clients['prisma']): Flow {
     },
     delete: {
       run: () => db.user.delete({ where: { id: 1 }, select: { id: true } }),
-      rows: oneIfReturned,
     },
     readEmpty: {
-      run: () => db.user.findMany({ select: { id: true }, where: { id: 1 } }),
+      run: () => db.user.findUnique({ select: { id: true }, where: { id: 1 } }),
     },
   };
 }
+
+/** Bun's result carries `count`, which Drizzle's type for it leaves out. */
+const bunSqlCount = (result: unknown): number =>
+  isRow(result) && 'count' in result && typeof result.count === 'number' ? result.count : 0;
 
 /** The Bun-only entries are filtered out off Bun, so reaching one there is a bug, not a runtime gap. */
 function bunSqlOf(c: Clients): BunSqlClients {
@@ -480,9 +458,7 @@ export const FLOWS: Record<Entry, (c: Clients) => Flow> = {
   Sequelize: sequelizeFlow,
   TypeORM: (c) => typeormFlow(c.typeorm),
   MikroORM: (c) => mikroFlow(c.mikroOrm),
-  Drizzle: (c) => drizzleFlow(c.drizzleDb),
-  // Same query-building API, different driver: both db types extend the `PgDatabase` the flow is written
-  // against, and differ only in the driver internals it never touches.
-  'Drizzle (bunSql)': (c) => drizzleFlow(bunSqlOf(c).drizzleDb),
+  Drizzle: (c) => drizzleFlow(c.drizzleDb, (result) => result.rowCount ?? 0),
+  'Drizzle (bunSql)': (c) => drizzleFlow(bunSqlOf(c).drizzleDb, bunSqlCount),
   Prisma: (c) => prismaFlow(c.prisma),
 };

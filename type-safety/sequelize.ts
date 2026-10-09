@@ -24,7 +24,7 @@ await SqUser.findAll({
 // Misspelled column in the sort | idd -> id
 await SqUser.findAll({ attributes: ['id'], order: [['idd', 'ASC']] });
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await SqUser.sum('name');
 
 // Misspelled column inside a loaded relation | nmae -> name
@@ -34,9 +34,10 @@ await SqCompany.findAll({
 });
 
 // Misspelled column in inserted data | emails -> email
-await SqUser.bulkCreate([
-  { name: 'New User', emails: 'new@example.com', companyId: 1, createdAt: 1 },
-]);
+await SqUser.bulkCreate([{ name: 'New User', emails: 'new@example.com' }]);
+
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await SqUser.bulkCreate([{ name: 'New User' }]);
 
 // Number written into a text column | 42 -> 'Updated Name'
 await SqUser.update({ name: 42 }, { where: { id: 1 } });

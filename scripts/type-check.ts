@@ -1,20 +1,7 @@
 /**
- * The type-safety half of the benchmark: the same mistakes written in each tool's own API, and which of
- * them the compiler refuses. `scripts/probes.ts` is the vocabulary, `type-safety/<tool>.ts` the queries.
- *
- * Every probe is compiled twice - as written, and with its correction applied - so a diagnostic only
- * counts when the corrected copy is clean. That control is the whole difference between measuring a
- * tool's types and measuring whether a file happens to be broken.
- *
- * uql-orm.dev has a second harness of the same shape, `scripts/check-type-safety.ts`, and it is not a
- * copy of this one. This compiles the probes against `node_modules`; that one compiles them against the
- * virtual file system Monaco resolves, where a package it cannot reach becomes `any` rather than an
- * error. Only that one can catch a payload gap, and only this one scores. Change the probes and both
- * need re-running.
- *
- * Usage:
- *   bun scripts/type-check.ts
- *   bun scripts/type-check.ts --verify   # fail on a probe that stopped erroring, write nothing
+ * Compiles every probe twice, as written and corrected (`scripts/probes.ts`), and counts one as caught when the
+ * mistake errors and the correction is clean. uql-orm.dev's `check-type-safety.ts` replays them in Monaco and
+ * scores nothing.
  */
 
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';

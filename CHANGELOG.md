@@ -2,27 +2,39 @@
 
 ## Unreleased
 
-- The per-step table has a row per entry, like the memory table, instead of eleven entry columns that outgrew the page. Its note names what each column ran.
-- Dependencies: uql-orm 0.65.1 to 0.68.1.
-- The runtime note states the runtime gap and the ORM gap as two ranges with the margin on each, instead of naming the wider one. Which one was wider flipped between two runs whose tables otherwise agreed: both are an extreme of extremes, and the distance between them was inside the drift from one run to the next, so the sentence was reporting noise as guidance.
-- `maxBy` and `minBy` replace twelve hand-rolled reduce idioms across the four reports, and the caption's confidence figure is read from one place rather than recomputed next to it.
-- Results: UQL still adds the least, +247µs on Bun SQL and +275µs on `pg`. Bun leads the runtime table at p50 and Node at p99, and the three sit 93µs apart at p50 on `raw pg`. Sequelize and Prisma share a place, their intervals overlapping. Type-safety and rename-safety scores unchanged.
+**New**
 
-**New: a rename-safety half.** `bun run bench.renames` renames a field, a foreign key and a relation in each entry's model with that tool's own rename (TypeScript's language server, Prisma's for its schema) and scores 19 places that name them, from indexes and checks to queries and raw SQL, as followed, flagged by the compiler, or left behind silently. UQL follows all 19, Drizzle 14, Sequelize leaves 12 behind silently.
+- Rename safety: `bun run bench.renames` renames a field, a foreign key and a relation with each tool's own rename and scores 19 places that name them. UQL follows all 19, Drizzle 14; Sequelize leaves 12 behind silently. [Live demo](https://uql-orm.dev/rename-safety).
+- Memory: `bun run bench.memory` measures what each entry allocates per lifecycle, against `raw pg`.
+- Two probes: a sum over a text column, and a required column left out of an insert. Only TypeORM misses the second.
 
-- [uql-orm.dev/rename-safety](https://uql-orm.dev/rename-safety) shows these files and renames them live.
-- TypeORM's model uses its decorators, whose index columns and inverse side take callbacks a rename follows, so it lives in `rename-safety/typeorm/`, a project with `experimentalDecorators` that UQL's standard decorators cannot share.
-- Dependencies: uql-orm 0.58.0 to 0.65.1, whose index expressions and partial-index conditions read the entity's refs and whose to-one names the foreign key it declares, `references: (user) => user.companyId`; `@prisma/language-server` 31.12.10 added.
+**Removed**
 
-**New probe: a sum over a text column.** Prisma, TypeORM and UQL catch it; Drizzle, MikroORM and Sequelize do not.
+- Deno from the runtime table, now Bun and Node. Its team joined Cloudflare, Deno Deploy shuts down in six months and the runtime gets one more year of bug fixes, so its column stops being worth measuring.
 
-- Dependencies: uql-orm 0.53.0 to 0.58.0. Its aggregate takes computed columns in `$select` and names each by a key, so UQL's sum probe now reads `$sum: { name: true }`.
+**Fairer**
 
-**New: a memory half.** `bun run bench.memory` weighs what each entry allocates per lifecycle, floored against `raw pg` like the timing tables. Node, one process per entry, nothing collected on purpose. UQL adds +201KB, MikroORM +3618KB.
+- Each entry is timed and scored on the same API, written the way its users write it.
+- Single-row reads use each tool's one-row call (`findOneById`, `findUnique`, `findOne`, `findByPk`).
+- Update and delete by id return a count. The floors and Drizzle no longer send `RETURNING`; Prisma still does, as its API always returns the row.
+- Every model declares the same nullability as the tables.
+- The sum probe's correction sums `id`, since TypeORM's `sum()` rejects a nullable column.
 
-- Drizzle's flat type-safety probes moved to `db.select()`, the builder its timed read uses: it had been timed on one API and scored on the other. 8/10 to 9/10.
-- Dependencies: uql-orm 0.37.1 to 0.39.0.
-- Results: UQL still adds the least, +181µs on Bun SQL and +208µs on `pg`. Deno now leads the runtime table at both p50 and p99.
+**Simpler**
+
+- One check reads every step's result; the per-entry adapters and casts are gone.
+- The per-step table has one row per entry.
+- No comment runs past four lines. Flags are documented in the README.
+
+**Dependencies**
+
+uql-orm 0.37.1 to 0.100.3 (its Bun SQL entry is now `uql-orm/bun-sql`), MikroORM 7.2.5, Drizzle 0.45.4, TypeORM 1.1.2, `pg` 8.23.1, `@prisma/language-server` 31.12.15 (added).
+
+**Results**
+
+- Time: UQL adds the least, +261µs on Bun SQL and +308µs on `pg`; Drizzle on Bun SQL now shares first place (+352µs).
+- Memory: UQL adds the least, +115KB, against +523KB for Drizzle. 0.100.2 had +161KB.
+- Type safety: UQL 12 of 12, Prisma 11, Drizzle, MikroORM and TypeORM 10, Sequelize 6.
 
 ## 0.11.0 - 2026-09-02
 

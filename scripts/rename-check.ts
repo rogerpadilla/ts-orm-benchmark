@@ -1,20 +1,7 @@
 /**
- * The rename-safety half of the benchmark: each tool's model renamed with that tool's own rename, and what
- * became of every place that named what was renamed. `scripts/renames.ts` is the vocabulary,
- * `rename-safety/` the code.
- *
- * The TypeScript files are renamed through `tsc --lsp`, the server an editor runs; Prisma's schema through
- * `prisma-language-server`, its editor extension's. That one also adds `@map` to keep the old column, and
- * that edit is dropped: the rename measured here takes the column with the field, as every other entry's does.
- *
- * A mention left behind is compiled on a copy of its file where every other one is written as renamed, so
- * an error is charged only to the probe that caused it: `defineEntity`, for one, reports a stale property
- * as a single error on the whole call. The copy with all of them written as renamed has to compile clean,
- * and so do the originals, so a flagged probe is the rename's doing and nothing else's.
- *
- * Usage:
- *   bun scripts/rename-check.ts
- *   bun scripts/rename-check.ts --verify   # score and print, write nothing
+ * Renames each tool's model with its own language server, `tsc --lsp` or Prisma's (whose `@map` edit is dropped),
+ * and scores each mention as followed, flagged or silent by compiling a copy where only it is left behind.
+ * Method: README, "Rename safety".
  */
 
 import { spawnSync } from 'node:child_process';

@@ -20,7 +20,7 @@ await users.find({ select: { id: true }, where: { createdAt: Like('abc') } });
 // Misspelled column in the sort | idd -> id
 await users.find({ select: { id: true }, order: { idd: 'ASC' } });
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await users.sum('name');
 
 // Misspelled column inside a loaded relation | nmae -> name
@@ -31,6 +31,9 @@ await companies.find({
 
 // Misspelled column in inserted data | emails -> email
 await users.insert([{ name: 'New User', emails: 'new@example.com' }]);
+
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await users.insert([{ name: 'New User' }]);
 
 // Number written into a text column | 42 -> 'Updated Name'
 await users.update({ id: 1 }, { name: 42 });

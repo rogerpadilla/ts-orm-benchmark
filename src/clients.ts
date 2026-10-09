@@ -1,10 +1,6 @@
 /**
- * Live clients for the flow benchmark: one per entry, each connected to a real PostgreSQL through the
- * driver it would use in an application, plus the hand-written `pg` and Bun SQL floors.
- *
- * The floors are what make the numbers portable. Absolute latency depends heavily on how you reach
- * Postgres (a unix socket is ~7x faster than Docker Desktop on macOS), but "cost above raw `pg`" is the
- * ORM's own overhead and stays comparable across setups.
+ * One live client per entry on a real PostgreSQL, plus the `pg` and Bun SQL floors, which keep "cost above the
+ * driver" comparable however the database is reached.
  */
 
 import { EntityCaseNamingStrategy, MikroORM } from '@mikro-orm/core';
@@ -40,18 +36,13 @@ export async function closeAll(closing: (Promise<unknown> | undefined)[]): Promi
 }
 
 /**
- * Bun's native SQL client, ~2.4x faster than `pg` on a trivial query and ~1.6x on a 200-row read. It is a
- * second reference floor: it shows how much of every entry's cost is really the driver rather than the ORM.
- * UQL and Drizzle ship a Bun SQL adapter in their own package, so both get an extra row and both are
- * labelled, because a faster driver is not an apples-to-apples ORM win.
- *
- * Imported dynamically, and only on Bun: a static `from 'bun'` makes the whole benchmark unloadable on
- * Node and Deno, which is what the runtime comparison needs it to survive.
+ * Bun's SQL client as a second floor, and the UQL and Drizzle adapters each ship for it. Imported dynamically,
+ * since a static `from 'bun'` would make the benchmark unloadable on Node.
  */
 async function createBunSqlClients(connectionString: string) {
   const [{ SQL }, { BunSqlQuerierPool }, { drizzle: drizzleBunSql }] = await Promise.all([
     import('bun'),
-    import('uql-orm/bunSql'),
+    import('uql-orm/bun-sql'),
     import('drizzle-orm/bun-sql'),
   ]);
 

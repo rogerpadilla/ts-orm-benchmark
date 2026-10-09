@@ -27,7 +27,7 @@ await uql.findMany(User, {
 // Misspelled column in the sort | idd -> id
 await uql.findMany(User, { $select: { id: true }, $sort: { idd: 1 } });
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await uql.aggregate(User, { $select: { total: { $sum: { name: true } } } });
 
 // Misspelled column inside a loaded relation | nmae -> name
@@ -39,8 +39,11 @@ await uql.findMany(Company, {
 // Misspelled column in inserted data | emails -> email
 await uql.insertMany(User, [{ name: 'New User', emails: 'new@example.com' }]);
 
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await uql.insertMany(User, [{ name: 'New User' }]);
+
 // Number written into a text column | 42 -> 'Updated Name'
-await uql.updateMany(User, { $where: { id: 1 } }, { name: 42 });
+await uql.updateOneById(User, 1, { name: 42 });
 
 // Reading a column the projection left out | user.email -> user.name
 const [user] = await uql.findMany(User, { $select: { id: true, name: true } });

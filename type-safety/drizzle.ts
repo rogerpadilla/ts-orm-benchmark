@@ -33,7 +33,7 @@ await db
   .from(drizzleUsers)
   .orderBy(asc(drizzleUsers.idd));
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await db.select({ total: sum(drizzleUsers.name) }).from(drizzleUsers);
 
 // Misspelled column inside a loaded relation | nmae -> name
@@ -46,6 +46,9 @@ await db.query.Company.findMany({
 await db
   .insert(drizzleUsers)
   .values([{ name: 'New User', emails: 'new@example.com' }]);
+
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await db.insert(drizzleUsers).values([{ name: 'New User' }]);
 
 // Number written into a text column | 42 -> 'Updated Name'
 await db.update(drizzleUsers).set({ name: 42 }).where(eq(drizzleUsers.id, 1));

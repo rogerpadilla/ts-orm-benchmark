@@ -34,6 +34,10 @@
       "what": "Misspelled column in inserted data"
     },
     {
+      "id": "insert-required",
+      "what": "Required column left out of inserted data"
+    },
+    {
       "id": "update-value",
       "what": "Number written into a text column"
     },
@@ -77,6 +81,7 @@
       "caught",
       "caught",
       "caught",
+      "caught",
       "caught"
     ],
     "MikroORM": [
@@ -90,10 +95,12 @@
       "caught",
       "caught",
       "caught",
+      "caught",
       "caught"
     ],
     "Prisma": [
       "missed",
+      "caught",
       "caught",
       "caught",
       "caught",
@@ -115,6 +122,7 @@
       "missed",
       "caught",
       "caught",
+      "caught",
       "missed",
       "caught"
     ],
@@ -127,11 +135,13 @@
       "caught",
       "caught",
       "caught",
+      "missed",
       "caught",
       "missed",
       "caught"
     ],
     "UQL": [
+      "caught",
       "caught",
       "caught",
       "caught",

@@ -124,7 +124,7 @@ function floorSentence(measured: Measured[]): string {
       : `${fastest('p50')} leads the median, ${fastest('p99')} the tail`;
 
   return (
-    `On \`raw pg\`, the same code on all of them, the runtimes are ${apart('p50')}µs apart at p50 but ` +
+    `On \`raw pg\`, where the code is identical, the runtimes are ${apart('p50')}µs apart at p50 but ` +
     `${apart('p99')}µs apart at p99: ${lead}, and each p99 is ${inflation} above its own p50.`
   );
 }
@@ -155,7 +155,7 @@ function scaleSentence(measured: Measured[]): string {
 }
 
 /**
- * Whether the runtime reorders the ORMs, which is the reason to publish three runs instead of one. Naming
+ * Whether the runtime reorders the ORMs, which is the reason to publish a run per runtime instead of one. Naming
  * the pairs that actually swap, rather than printing every order in full: one pair usually moves.
  */
 function orderSentence(measured: Measured[]): string {

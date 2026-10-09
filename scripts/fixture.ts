@@ -99,8 +99,8 @@ export async function resetFixture(admin: pg.Pool) {
 
 /** The version string without the platform tail, which is what the report quotes. */
 async function postgresVersion(admin: pg.Pool): Promise<string> {
-  const { rows } = await admin.query('SELECT version()');
-  return (rows[0].version as string).split(' on ')[0];
+  const { rows } = await admin.query<{ version: string }>('SELECT version()');
+  return rows[0].version.split(' on ')[0];
 }
 
 /**

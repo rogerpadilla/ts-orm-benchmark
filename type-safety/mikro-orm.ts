@@ -23,7 +23,7 @@ await em.find(
 // Misspelled column in the sort | idd -> id
 await em.find(MikroUserSchema, {}, { fields: ['id'], orderBy: { idd: 'ASC' } });
 
-// Sum over a text column | name -> createdAt
+// Sum over a text column | name -> id
 await em
   .createQueryBuilder(MikroUserSchema)
   .select(sql`sum(${sql.ref('name')})`.as('total'))
@@ -39,9 +39,13 @@ await em.find(
 // Misspelled column in inserted data | emails -> email
 await em
   .createQueryBuilder(MikroUserSchema)
-  .insert([
-    { name: 'New User', emails: 'new@example.com', createdAt: 1, company: 1 },
-  ])
+  .insert([{ name: 'New User', emails: 'new@example.com' }])
+  .execute();
+
+// Required column left out of inserted data | 'New User' } -> 'New User', email: 'new@example.com' }
+await em
+  .createQueryBuilder(MikroUserSchema)
+  .insert([{ name: 'New User' }])
   .execute();
 
 // Number written into a text column | 42 -> 'Updated Name'

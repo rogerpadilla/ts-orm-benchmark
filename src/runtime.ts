@@ -3,22 +3,19 @@
  * entries are dropped instead of crashing the run.
  */
 
-export type RuntimeName = 'bun' | 'node' | 'deno';
+/** Bun first: it is the only runtime that can run every entry, so its ranking orders the runtime table. */
+export const RUNTIME_NAMES = ['bun', 'node'] as const;
+
+export type RuntimeName = (typeof RUNTIME_NAMES)[number];
 
 export type Runtime = { name: RuntimeName; version: string; label: string };
 
-export const RUNTIME_LABELS: Record<RuntimeName, string> = { bun: 'Bun', node: 'Node', deno: 'Deno' };
+export const RUNTIME_LABELS: Record<RuntimeName, string> = { bun: 'Bun', node: 'Node' };
 
-/** `process.versions` rather than a global: all three runtimes populate their own key there. */
+/** `process.versions` rather than a global: Bun adds its own key there next to Node's. */
 function detect(): Omit<Runtime, 'label'> {
-  const { bun, deno, node } = process.versions;
-  if (bun) {
-    return { name: 'bun', version: bun };
-  }
-  if (deno) {
-    return { name: 'deno', version: deno };
-  }
-  return { name: 'node', version: node };
+  const { bun, node } = process.versions;
+  return bun ? { name: 'bun', version: bun } : { name: 'node', version: node };
 }
 
 const detected = detect();

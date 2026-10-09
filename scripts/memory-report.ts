@@ -97,11 +97,8 @@ export function printMemorySummary(run: MemoryRun): void {
 }
 
 /**
- * The share of its own rounds an entry may lose to a collection and still be measured like the others.
- * Discarding those rounds is the only way to read an allocation off `heapUsed`, but a collection is
- * likelier the more an entry allocates: past some rate a heavy entry's median comes from its quietest
- * rounds while a light one's comes from nearly all of them, and the table is comparing two things.
- * At 10% every entry still keeps nine rounds in ten. Today the worst is 2%.
+ * The share of rounds an entry may lose to a collection and still compare: past it, a heavy entry's median
+ * comes from its quietest rounds while a light one's comes from nearly all of them.
  */
 const MAX_DISCARDED = 0.1;
 

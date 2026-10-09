@@ -27,12 +27,8 @@ export const ENTRIES = [
 export const BASELINES = ['raw pg', 'bun sql'] as const;
 
 /**
- * Every tool the report names, in one place. `pkg` is where its version is read from and `probe` is its
- * file in `type-safety/`; the two floors are hand-written driver code, so they have neither.
- *
- * One registry rather than three. `TOOLS`, the probe-file map and the version line used to be separate
- * lists that had to agree by convention: a probe file whose name did not match a key here still scored,
- * it just lost its link in the table, silently. Derived, that cannot happen.
+ * Every tool the report names: its link, the package its version is read from, and its probe file stem. The
+ * floors are hand-written driver code, so they have neither.
  */
 export const TOOLS: Record<string, { url: string; pkg?: string; probe?: string }> = {
   UQL: { url: 'https://uql-orm.dev', pkg: 'uql-orm', probe: 'uql' },
@@ -59,6 +55,8 @@ export const STEPS = ['insert', 'read', 'update', 'readAgain', 'nested', 'delete
 export type Entry = (typeof ENTRIES)[number];
 export type Step = (typeof STEPS)[number];
 
+export const isEntry = (value: string | undefined): value is Entry => ENTRIES.some((entry) => entry === value);
+
 /**
  * The steps whose timings are worth publishing: the three where how much data is bound and hydrated
  * decides the number. Every step is still run, in order, and still asserted.
@@ -75,44 +73,40 @@ type Results = Record<Step, number[]>;
 export type Verdict = 'caught' | 'missed';
 export type Verdicts = Map<string, Verdict[]>;
 
-/** The one place that turns {@link STEPS} into a record keyed by them, so the cast lives here alone. */
-export const byStep = <T>(of: (step: Step) => T) =>
-  Object.fromEntries(STEPS.map((step) => [step, of(step)])) as Record<Step, T>;
+/** A record keyed by every step, spelled out so the compiler checks that none is missing. */
+export const byStep = <T>(of: (step: Step) => T): Record<Step, T> => ({
+  insert: of('insert'),
+  read: of('read'),
+  update: of('update'),
+  readAgain: of('readAgain'),
+  nested: of('nested'),
+  delete: of('delete'),
+  readEmpty: of('readEmpty'),
+});
 
 /** Round-total µs: what one caller waits for a whole lifecycle, at the median and out in the tail. */
 export type Tail = { p50: number; p99: number };
 
-/**
- * One runtime's run and everything the report states about it, measured rather than hand-kept. Carried as
- * one object so no figure can be paired with the wrong run: the entry list is part of the run, because a
- * run off Bun has three entries fewer.
- */
-export type Run = {
+/** What every benchmark run carries: where it ran, how long, and the median per step per entry. */
+type RunBase = {
   runtime: Runtime;
   postgres: string;
   iterations: number;
   warmup: number;
   entries: Entry[];
   results: Results;
+};
+
+/** A timing run. Carried as one object so no figure can be paired with the wrong run. */
+export type Run = RunBase & {
   /** Index-aligned with {@link Run.entries}. */
   tails: Tail[];
   /** Relative half-width of the median round total's 95% interval, index-aligned with {@link Run.entries}. */
   spreads: number[];
 };
 
-/**
- * One run of the memory benchmark: KB allocated per lifecycle, per step. Structurally a {@link Run}
- * without the timing statistics, because allocation has no tail worth reporting - a step allocates what
- * it allocates, and the samples that disagree are the ones a GC landed in, which are discarded not
- * averaged. {@link MemoryRun.discarded} is how many, so a quiet loss of samples cannot pass for a clean run.
- */
-export type MemoryRun = {
-  runtime: Runtime;
-  postgres: string;
-  iterations: number;
-  warmup: number;
-  entries: Entry[];
-  results: Results;
+/** A memory run, in KB. Allocation has no tail worth reporting; the samples a GC landed in are discarded. */
+export type MemoryRun = RunBase & {
   /** Share of samples a GC landed in, index-aligned with {@link MemoryRun.entries}. */
   discarded: number[];
   /** KB still held after every round has run and the heap has been collected, index-aligned likewise. */
@@ -146,7 +140,7 @@ export function parseEntry(entry: string): { base: string; variant?: string } {
   return match ? { base: match[1], variant: match[2] } : { base: entry };
 }
 
-/** Bun's SQL client is a Bun API, so these have nothing to run on Node or Deno. */
+/** Bun's SQL client is a Bun API, so these have nothing to run on Node. */
 const isBunOnly = (entry: string) => entry === 'bun sql' || parseEntry(entry).variant === 'bunSql';
 
 /** What every runtime can load, and so the only set a cross-runtime comparison can be made of. */

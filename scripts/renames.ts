@@ -1,18 +1,6 @@
 /**
- * What the rename-safety check asks of every ORM, and how a file marks it. The code is
- * `rename-safety/<tool>.ts`, one self-contained file per tool: its model and every place that names a
- * renamed member, written the most rename-friendly way that tool's API allows. TypeORM's is
- * `rename-safety/typeorm/typeorm.ts`, a project of its own for the legacy decorators that way needs.
- *
- * A rename here is a field and the column it maps to, the way each tool maps one by default, done with
- * that tool's own rename: the TypeScript language server, or Prisma's for its schema. A probe is a
- * comment and the code under it, up to the next marker, a blank line, or a line indented less than the
- * marker:
- *
- *     // Field in the filter
- *     await pool.findMany(User, { $where: { emailAddress: 'ada@example.com' } });
- *
- * `// <what> | n/a: <why>` marks a probe the tool has no way to declare, and owns no code.
+ * The renames and the mentions `rename-safety/<tool>.ts` marks, `// <what>` over the code it owns, or
+ * `// <what> | n/a: <why>` for one the tool cannot declare.
  */
 
 import { regionEnd } from './markers';

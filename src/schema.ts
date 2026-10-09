@@ -1,9 +1,6 @@
 /**
- * The one Company/User model, defined once per ORM. Same shape for everyone is what makes the entries
- * comparable at all.
- *
- * Definitions only: the live connections are `src/clients.ts`, the rows every entry is seeded with are
- * `scripts/fixture.ts`, and the lifecycle is `scripts/flow-bench.ts`.
+ * The one Company/User model, defined once per ORM with the same columns and nullability as the DDL in
+ * `scripts/fixture.ts`. Same shape for everyone is what makes the entries comparable.
  */
 
 import { defineEntity, p as mikroP } from '@mikro-orm/core';
@@ -29,28 +26,25 @@ export const COMPANY_TABLE = 'Company';
 @Entity()
 export class Company {
   @Id({ type: Number }) id?: number;
-  @Field({ type: String }) name?: string;
+  @Field({ type: String, nullable: false }) name!: string;
   @OneToMany({ entity: () => User, mappedBy: (user) => user.company }) users?: User[];
 }
 
 @Entity()
 export class User {
   @Id({ type: Number }) id?: number;
-  @Field({ type: String }) name?: string;
-  @Field({ type: String }) email?: string;
-  @Field({ type: Number, references: () => Company }) companyId?: number;
-  @Field({ type: Number }) createdAt?: number;
+  @Field({ type: String, nullable: false }) name!: string;
+  @Field({ type: String, nullable: false }) email!: string;
+  @Field({ type: Number, references: () => Company }) companyId?: number | null;
+  @Field({ type: Number }) createdAt?: number | null;
   @ManyToOne({ entity: () => Company, references: (user) => user.companyId }) company?: Company;
 }
 
 // TypeORM
 
 /**
- * `EntitySchema` rather than the decorators TypeORM's docs lead with, and not as a preference: at 1.1.0
- * those decorators are still the legacy kind, so they need `experimentalDecorators` - which this project
- * does not set, because the standard TC39 decorators are what UQL's entry compiles with and one project
- * has one setting. Measured before settling for it, on the first ten probes: compiled with the flag on,
- * the decorator entities scored the same and missed the same probe (`result-unselected`).
+ * `EntitySchema`, because TypeORM's decorators are still the legacy kind and need `experimentalDecorators`,
+ * which UQL's standard ones cannot share a project with. Compiled with the flag, they scored the same.
  */
 
 /** `EntitySchema` derives its allowed keys from this, so relations need it stated. */
@@ -59,8 +53,8 @@ type TypeORMUser = {
   id: number;
   name: string;
   email: string;
-  companyId: number;
-  createdAt: number;
+  companyId: number | null;
+  createdAt: number | null;
   company?: TypeORMCompany;
 };
 
@@ -83,8 +77,8 @@ export const TypeORMUserSchema = new EntitySchema<TypeORMUser>({
     id: { type: Number, primary: true, generated: true },
     name: { type: String },
     email: { type: String },
-    companyId: { type: Number },
-    createdAt: { type: Number },
+    companyId: { type: Number, nullable: true },
+    createdAt: { type: Number, nullable: true },
   },
   relations: {
     company: { type: 'many-to-one', target: 'Company', joinColumn: { name: 'companyId' } },
@@ -119,8 +113,8 @@ export const MikroUserSchema = defineEntity({
     id: mikroP.integer().primary(),
     name: mikroP.string(),
     email: mikroP.string(),
-    createdAt: mikroP.integer(),
-    company: () => mikroP.manyToOne(MikroCompanySchema).joinColumn('companyId'),
+    createdAt: mikroP.integer().nullable(),
+    company: () => mikroP.manyToOne(MikroCompanySchema).joinColumn('companyId').nullable(),
   },
 });
 
@@ -172,21 +166,24 @@ export class SqUser extends Model<InferAttributes<SqUser>, InferCreationAttribut
   declare id: CreationOptional<number>;
   declare name: string;
   declare email: string;
-  declare companyId: number;
-  declare createdAt: number;
+  declare companyId: CreationOptional<number | null>;
+  declare createdAt: CreationOptional<number | null>;
 }
 
 /** `init` binds a class to one connection, so the two above are singletons bound by whoever calls this. */
 export function defineSequelizeModels(sequelize: Sequelize) {
   SqCompany.init(
-    { id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true }, name: DataTypes.STRING },
+    {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      name: { type: DataTypes.STRING, allowNull: false },
+    },
     { sequelize, timestamps: false, tableName: COMPANY_TABLE, freezeTableName: true },
   );
   SqUser.init(
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-      name: DataTypes.STRING,
-      email: DataTypes.STRING,
+      name: { type: DataTypes.STRING, allowNull: false },
+      email: { type: DataTypes.STRING, allowNull: false },
       companyId: DataTypes.INTEGER,
       createdAt: DataTypes.INTEGER,
     },

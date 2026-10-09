@@ -1,14 +1,11 @@
 /**
- * Lifts each entry's step out of `scripts/flows.ts` so the README can show the query it timed. Read from
- * the source rather than written twice: a sample that is copied is a sample that goes stale, and the one
- * thing a reader has to be able to trust here is that the code shown is the code that ran.
- *
- * The parse leans on the file being Oxfmt-formatted, which it is, and throws rather than guesses.
+ * Lifts a step out of `scripts/flows.ts` so the README shows the code that ran, not a copy of it. Leans on the
+ * file being formatted, and throws rather than guesses.
  */
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ENTRIES, type Entry, type Step } from './model';
+import { ENTRIES, type Entry, isEntry, type Step } from './model';
 import { root } from './project';
 
 const FLOWS_PATH = 'scripts/flows.ts';
@@ -25,7 +22,8 @@ export function flowOf(): Map<Entry, string> {
   const inside = section(source(), 'export const FLOWS', '};');
   const pairs = inside.flatMap((line) => {
     const match = WIRING.exec(line);
-    return match ? [[(match[1] ?? match[2]) as Entry, match[3]] as const] : [];
+    const entry = match?.[1] ?? match?.[2];
+    return match && isEntry(entry) ? [[entry, match[3]] as const] : [];
   });
   const wired = new Map(pairs);
   const missing = ENTRIES.filter((entry) => !wired.has(entry));
@@ -56,7 +54,8 @@ const dedent = (lines: string[], by: number) => lines.map((line) => line.slice(b
  * stopped, and showing them beside the query would suggest they are part of it.
  */
 export function sampleOf(flow: string, step: Step): string {
-  const body = section(source(), `function ${flow}(`, '}');
+  // A generic builder declares `drizzleFlow<H ...>(`, so the name alone opens it.
+  const body = section(source(), `function ${flow}`, '}');
   const inStep = section(body, `    ${step}: {`, '    },');
   const from = inStep.findIndex((line) => line.startsWith('      run:'));
   if (from < 0) {

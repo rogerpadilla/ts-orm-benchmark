@@ -1,11 +1,6 @@
 /**
- * The clients the probes are written against. Nothing here connects to anything: a probe is only ever
- * type-checked, never run, so each is `declare`d at the type an application would hold.
- *
- * Declared structurally rather than lifted off `src/clients.ts`, because this file is also the context
- * the live editor on uql-orm.dev loads, and reaching into `src/clients.ts` would drag a `pg` pool, a
- * driver adapter and Bun's globals into a browser that has no use for any of them. `clients.assert.ts`
- * is what keeps the two in step: it fails to compile the day this stops describing the real thing.
+ * The clients the probes are typed against, declared rather than imported so uql-orm.dev can load this file in a
+ * browser without a `pg` pool. `clients.assert.ts` fails to compile when it drifts from `src/clients.ts`.
  */
 
 import type { MikroORM } from '@mikro-orm/postgresql';

@@ -1,15 +1,6 @@
 /**
- * Times each entry's lifecycle against the hand-written `raw pg` and `bun sql` floors, then rewrites every
- * generated block in README.md, where the method and its limits are stated. The steps are in
- * `scripts/flows.ts`. Runs on Bun, Node and Deno; off Bun the Bun SQL entries are absent, since that
- * client is a Bun API, and `scripts/runtime-bench.ts` times one bundle of this file on all three.
- *
- * Usage:
- *   DATABASE_URL=postgres://localhost:5432/postgres bun scripts/flow-bench.ts
- *   bun scripts/flow-bench.ts --iterations 400
- *   bun scripts/flow-bench.ts --iterations 3 --verify   # assert every step, write nothing
- *   bun scripts/flow-bench.ts --json /tmp/bun.json      # write the run, leave README alone
- *   bun scripts/flow-bench.ts --portable                # only the entries every runtime can load
+ * Times each entry's lifecycle (`scripts/flows.ts`) against the `raw pg` and `bun sql` floors and rewrites the
+ * timing blocks of README.md. Off Bun the Bun SQL entries are absent. Flags: README, "Run it".
  */
 
 import { RUNTIME } from '../src/runtime';
@@ -71,11 +62,11 @@ async function main() {
         // Resetting per step would erase the very state each read is there to verify.
         await resetFixture(admin);
         for (const step of STEPS) {
-          const op = flows[i][step];
+          const { run } = flows[i][step];
           const t0 = process.hrtime.bigint();
-          const returned = await op.run();
+          const returned = await run();
           const elapsed = Number(process.hrtime.bigint() - t0) / 1000;
-          checkStep(entries[i], step, op, returned);
+          checkStep(entries[i], step, returned);
           if (round >= warmup) {
             samples[i][step].push(elapsed);
           }

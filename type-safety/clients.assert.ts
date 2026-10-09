@@ -1,11 +1,6 @@
 /**
- * Keeps `clients.ts` honest. That file declares each client structurally so the probes can be compiled
- * in a browser, away from `src/clients.ts` and the `pg` pool, driver adapter and Bun globals it opens.
- * Structural means it can drift, and a drifted context scores the probes against a client nobody holds.
- *
- * So the real one is assigned to the declared one here, in a file that carries no probe and is compiled
- * with them: the day `src/clients.ts` hands out something else, this stops compiling and the run stops
- * with it. Types only - nothing here runs, and nothing here connects.
+ * Keeps `clients.ts` honest: the real clients are assigned to the declared ones, so this stops compiling the day
+ * `src/clients.ts` hands out something else. Types only.
  */
 
 import type { Clients } from '../src/clients';

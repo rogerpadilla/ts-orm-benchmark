@@ -21,8 +21,6 @@
     "ts",
     "node",
     "bun",
-    "deno",
-    "ts",
     "postgres",
     "prisma",
     "typeorm",
@@ -36,20 +34,20 @@
   "author": "Roger Padilla <sonemonu@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@mikro-orm/core": "7.2.0",
-    "@mikro-orm/postgresql": "7.2.0",
+    "@mikro-orm/core": "7.2.5",
+    "@mikro-orm/postgresql": "7.2.5",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "@prisma/language-server": "31.12.10",
+    "@prisma/language-server": "31.12.15",
     "@types/bun": "^1.4.2",
-    "drizzle-orm": "0.45.2",
-    "oxfmt": "^0.68.0",
-    "oxlint": "^1.83.0",
-    "pg": "8.23.0",
+    "drizzle-orm": "0.45.4",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "pg": "8.23.1",
     "prisma": "7.10.0",
     "sequelize": "6.37.8",
-    "typeorm": "1.1.1",
+    "typeorm": "1.1.2",
     "typescript": "7.0.2",
-    "uql-orm": "0.68.1"
+    "uql-orm": "0.100.3"
   }
 }

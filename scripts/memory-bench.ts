@@ -1,14 +1,6 @@
 /**
- * Measures how much heap each entry allocates per lifecycle, step by step, and rewrites the memory blocks
- * of README.md. Same seven steps `scripts/flows.ts` defines; only the instrument changes, from a clock to
- * `heapUsed`. Why Node alone, and why {@link PORTABLE_ENTRIES}, is the Memory section of README.md.
- * No timings here: allocation settles inside 60 rounds, latency does not, and `flow-bench.ts` owns it.
- *
- * Usage:
- *   DATABASE_URL=postgres://localhost:5432/postgres bun scripts/memory-bench.ts
- *   bun scripts/memory-bench.ts --iterations 120
- *   bun scripts/memory-bench.ts --iterations 3 --verify   # assert every step, write nothing
- *   bun scripts/memory-bench.ts --json /tmp/mem.json  # write the run, leave README alone
+ * Weighs the heap each entry allocates per lifecycle step, one Node process per entry, and rewrites the memory
+ * blocks of README.md, whose Memory section says why Node alone. Flags: README, "Run it".
  */
 
 import { resolve } from 'node:path';
@@ -18,7 +10,7 @@ import { RUNTIME } from '../src/runtime';
 import { connect, resetFixture } from './fixture';
 import { checkStep, FLOWS, type Flow } from './flows';
 import { printMemorySummary, syncMemoryReport } from './memory-report';
-import { byStep, type Entry, type MemoryRun, median, PORTABLE_ENTRIES, STEPS, sortedAsc } from './model';
+import { byStep, type Entry, isEntry, type MemoryRun, median, PORTABLE_ENTRIES, STEPS, sortedAsc } from './model';
 import { arg, BUILD_DIR, bundleForNode, publish, spawnJson, writeJson } from './project';
 
 /**
@@ -52,12 +44,12 @@ async function measure(entry: Entry, iterations: number): Promise<MemoryRun> {
       // billing it to the entry would dilute every figure the table is read for.
       await resetFixture(admin);
       for (const step of STEPS) {
-        const op = flow[step];
+        const { run } = flow[step];
         const before = collections;
         const heapBefore = process.memoryUsage().heapUsed;
-        const returned = await op.run();
+        const returned = await run();
         const allocated = process.memoryUsage().heapUsed - heapBefore;
-        checkStep(entry, step, op, returned);
+        checkStep(entry, step, returned);
         if (round < warmup) {
           continue;
         }
@@ -150,11 +142,15 @@ function merge(runs: MemoryRun[]): MemoryRun {
 
 async function main(): Promise<void> {
   const iterations = Number(arg('iterations') ?? 60);
-  const entry = arg('entry') as Entry | undefined;
+  const entry = arg('entry');
 
   // The child half: one entry, one process, its numbers written where the parent asked for them.
-  if (entry) {
-    writeJson(arg('json') as string, await measure(entry, iterations));
+  if (entry !== undefined) {
+    const out = arg('json');
+    if (!isEntry(entry) || out === undefined) {
+      throw new TypeError(`a child needs a known --entry and a --json path, and got ${entry} and ${out}`);
+    }
+    writeJson(out, await measure(entry, iterations));
     return;
   }
 

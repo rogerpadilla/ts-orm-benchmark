@@ -1,6 +1,6 @@
 {
   "typescript": "7.0.2",
-  "prismaLanguageServer": "31.12.10",
+  "prismaLanguageServer": "31.12.15",
   "renames": [
     {
       "from": "emailAddress",
@@ -153,30 +153,30 @@
         678,
         791,
         885,
-        996,
-        1320,
-        1462,
-        1549,
-        1646,
-        1769,
-        1945,
-        2043,
-        2302,
-        2355,
-        2476
+        1013,
+        1354,
+        1517,
+        1604,
+        1701,
+        1824,
+        2000,
+        2098,
+        2357,
+        2410,
+        2531
       ],
       "employerId": [
         487,
         608,
         746,
-        1073,
-        1191,
-        2155
+        1090,
+        1225,
+        2210
       ],
       "employer": [
         326,
-        1207,
-        1868
+        1241,
+        1923
       ]
     },
     "sequelize.ts": {
@@ -976,8 +976,8 @@
         "verdict": "followed",
         "message": null,
         "file": "uql.ts",
-        "startLine": 44,
-        "endLine": 45
+        "startLine": 46,
+        "endLine": 47
       },
       {
         "verdict": "followed",
@@ -1005,21 +1005,14 @@
         "message": null,
         "file": "uql.ts",
         "startLine": 37,
-        "endLine": 41
+        "endLine": 43
       },
       {
         "verdict": "followed",
         "message": null,
         "file": "uql.ts",
-        "startLine": 48,
-        "endLine": 53
-      },
-      {
-        "verdict": "followed",
-        "message": null,
-        "file": "uql.ts",
-        "startLine": 57,
-        "endLine": 57
+        "startLine": 50,
+        "endLine": 56
       },
       {
         "verdict": "followed",
@@ -1040,13 +1033,13 @@
         "message": null,
         "file": "uql.ts",
         "startLine": 66,
-        "endLine": 68
+        "endLine": 66
       },
       {
         "verdict": "followed",
         "message": null,
         "file": "uql.ts",
-        "startLine": 71,
+        "startLine": 69,
         "endLine": 71
       },
       {
@@ -1068,21 +1061,28 @@
         "message": null,
         "file": "uql.ts",
         "startLine": 80,
-        "endLine": 83
+        "endLine": 80
       },
       {
         "verdict": "followed",
         "message": null,
         "file": "uql.ts",
-        "startLine": 86,
-        "endLine": 87
+        "startLine": 83,
+        "endLine": 86
       },
       {
         "verdict": "followed",
         "message": null,
         "file": "uql.ts",
-        "startLine": 90,
-        "endLine": 93
+        "startLine": 89,
+        "endLine": 90
+      },
+      {
+        "verdict": "followed",
+        "message": null,
+        "file": "uql.ts",
+        "startLine": 93,
+        "endLine": 96
       }
     ]
   }

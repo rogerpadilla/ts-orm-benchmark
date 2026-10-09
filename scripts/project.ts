@@ -14,12 +14,8 @@ export const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 export const BUILD_DIR = resolve(root, '.bench-build');
 
 /**
- * Bundles one script for Node and returns the path. `--packages=external` so the bundle loads the same
- * installed dependencies Bun does rather than a copy inlined at build time.
- *
- * Both benchmarks that leave this process need it: the runtime comparison to put one build in front of
- * three runtimes, the memory one to give every entry a process of its own. Bun-only, and only ever
- * called from the parent, so the bundles it produces can still run where there is no `Bun`.
+ * Bundles one script for Node, dependencies left external so it loads what Bun loads. Called only from a Bun
+ * parent, so the bundle itself still runs where there is no `Bun`.
  */
 export async function bundleForNode(script: string): Promise<string> {
   mkdirSync(BUILD_DIR, { recursive: true });
