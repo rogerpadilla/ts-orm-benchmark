@@ -36,18 +36,18 @@
   "devDependencies": {
     "@mikro-orm/core": "7.2.5",
     "@mikro-orm/postgresql": "7.2.5",
-    "@prisma/adapter-pg": "7.10.0",
-    "@prisma/client": "7.10.0",
-    "@prisma/language-server": "31.12.15",
-    "@types/bun": "^1.4.2",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "@prisma/language-server": "31.13.0",
+    "@types/bun": "^1.4.4",
     "drizzle-orm": "0.45.4",
-    "oxfmt": "^0.72.0",
-    "oxlint": "^1.87.0",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
     "pg": "8.23.1",
-    "prisma": "7.10.0",
+    "prisma": "7.10.1",
     "sequelize": "6.37.8",
     "typeorm": "1.1.2",
     "typescript": "7.0.2",
-    "uql-orm": "0.100.3"
+    "uql-orm": "0.105.0"
   }
 }

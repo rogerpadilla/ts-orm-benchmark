@@ -1,0 +1,179 @@
+{
+  "typescript": "7.0.2",
+  "probes": [
+    {
+      "id": "option-key",
+      "what": "Misspelled option on a column"
+    },
+    {
+      "id": "option-type",
+      "what": "Text length on a numeric column"
+    },
+    {
+      "id": "default-type",
+      "what": "Default of the wrong type"
+    },
+    {
+      "id": "default-enum",
+      "what": "Default outside the column's enum"
+    },
+    {
+      "id": "declared-type",
+      "what": "Declared type disagreeing with its column"
+    },
+    {
+      "id": "declared-null",
+      "what": "Nullable column declared always present"
+    },
+    {
+      "id": "version-type",
+      "what": "Optimistic lock on a text column"
+    },
+    {
+      "id": "generated-key",
+      "what": "Generated column reading a misspelled column"
+    },
+    {
+      "id": "foreign-key",
+      "what": "Foreign key naming a missing column"
+    },
+    {
+      "id": "foreign-key-type",
+      "what": "Foreign key of another type than the key it references"
+    },
+    {
+      "id": "inverse",
+      "what": "Inverse side naming a missing relation"
+    },
+    {
+      "id": "index-key",
+      "what": "Index on a missing column"
+    }
+  ],
+  "stems": {
+    "Drizzle": "drizzle",
+    "MikroORM": "mikro-orm",
+    "Prisma": "prisma",
+    "Sequelize": "sequelize",
+    "TypeORM": "typeorm",
+    "UQL (decorators)": "uql",
+    "UQL (schema)": "uql-schema"
+  },
+  "files": [
+    "definition-safety/drizzle.ts",
+    "definition-safety/mikro-orm.ts",
+    "definition-safety/prisma.prisma",
+    "definition-safety/sequelize.ts",
+    "definition-safety/typeorm.ts",
+    "definition-safety/uql.ts",
+    "definition-safety/uql-schema.ts"
+  ],
+  "entries": {
+    "Drizzle": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "n/a",
+      "n/a",
+      "n/a",
+      "caught",
+      "caught",
+      "missed",
+      "missed",
+      "caught"
+    ],
+    "MikroORM": [
+      "caught",
+      "missed",
+      "missed",
+      "missed",
+      "n/a",
+      "n/a",
+      "missed",
+      "missed",
+      "n/a",
+      "n/a",
+      "caught",
+      "caught"
+    ],
+    "Prisma": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "n/a",
+      "n/a",
+      "n/a",
+      "n/a",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ],
+    "Sequelize": [
+      "caught",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "n/a",
+      "n/a",
+      "missed",
+      "missed",
+      "n/a",
+      "missed"
+    ],
+    "TypeORM": [
+      "caught",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed",
+      "missed"
+    ],
+    "UQL (decorators)": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ],
+    "UQL (schema)": [
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "n/a",
+      "n/a",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught",
+      "caught"
+    ]
+  },
+  "instantiations": {
+    "UQL (decorators)": 8840,
+    "Sequelize": 19189,
+    "TypeORM": 43,
+    "MikroORM": 3303,
+    "Drizzle": 14367,
+    "UQL (schema)": 4421
+  }
+}

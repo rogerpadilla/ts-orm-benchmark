@@ -4,6 +4,7 @@
 
 **New**
 
+- Definition safety: 12 mistakes made declaring the entities themselves, from a misspelled column option to a foreign key of the wrong type, each scored of the ones its API can express, with what checking the model costs in instantiations. UQL is scored as decorators and as a schema; Prisma's model is checked by `prisma validate`.
 - Rename safety: `bun run bench.renames` renames a field, a foreign key and a relation with each tool's own rename and scores 19 places that name them. UQL follows all 19, Drizzle 14; Sequelize leaves 12 behind silently. [Live demo](https://uql-orm.dev/rename-safety).
 - Memory: `bun run bench.memory` measures what each entry allocates per lifecycle, against `raw pg`.
 - Two probes: a sum over a text column, and a required column left out of an insert. Only TypeORM misses the second.
@@ -14,6 +15,7 @@
 
 **Fairer**
 
+- Each type-safety mistake is compiled in a copy of its file where it is the only one, so no mistake is credited with another's error.
 - Each entry is timed and scored on the same API, written the way its users write it.
 - Single-row reads use each tool's one-row call (`findOneById`, `findUnique`, `findOne`, `findByPk`).
 - Update and delete by id return a count. The floors and Drizzle no longer send `RETURNING`; Prisma still does, as its API always returns the row.
@@ -28,12 +30,12 @@
 
 **Dependencies**
 
-uql-orm 0.37.1 to 0.100.3 (its Bun SQL entry is now `uql-orm/bun-sql`), MikroORM 7.2.5, Drizzle 0.45.4, TypeORM 1.1.2, `pg` 8.23.1, `@prisma/language-server` 31.12.15 (added).
+uql-orm 0.37.1 to 0.105.0 (its Bun SQL entry is now `uql-orm/bun-sql`, its columns are `f` builders, and NOT NULL is the default), Prisma 7.10.1, MikroORM 7.2.5, Drizzle 0.45.4, TypeORM 1.1.2, `pg` 8.23.1, `@prisma/language-server` 31.13.0 (added).
 
 **Results**
 
-- Time: UQL adds the least, +261µs on Bun SQL and +308µs on `pg`; Drizzle on Bun SQL now shares first place (+352µs).
-- Memory: UQL adds the least, +115KB, against +523KB for Drizzle. 0.100.2 had +161KB.
+- Time: UQL adds the least, +291µs on Bun SQL and +387µs on `pg`; Drizzle on Bun SQL is second (+346µs).
+- Memory: UQL adds the least, +122KB, against +523KB for Drizzle. 0.100.2 had +161KB.
 - Type safety: UQL 12 of 12, Prisma 11, Drizzle, MikroORM and TypeORM 10, Sequelize 6.
 
 ## 0.11.0 - 2026-09-02

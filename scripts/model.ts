@@ -70,8 +70,11 @@ export const ASSERTED_ONLY_STEPS: Step[] = STEPS.filter((step) => !PUBLISHED_STE
 type Results = Record<Step, number[]>;
 
 /** What the compiler said about one probe, and every probe of one entry keyed by the name the tables use. */
-export type Verdict = 'caught' | 'missed';
+export type Verdict = 'caught' | 'missed' | 'n/a';
 export type Verdicts = Map<string, Verdict[]>;
+
+/** Instantiations each entry's model costs the checker, keyed like {@link Verdicts}. */
+export type Costs = Map<string, number>;
 
 /** A record keyed by every step, spelled out so the compiler checks that none is missing. */
 export const byStep = <T>(of: (step: Step) => T): Record<Step, T> => ({

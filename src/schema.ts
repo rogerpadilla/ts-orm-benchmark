@@ -16,7 +16,7 @@ import {
   type Sequelize,
 } from 'sequelize';
 import { EntitySchema } from 'typeorm';
-import { Entity, Field, Id, ManyToOne, OneToMany } from 'uql-orm';
+import { Entity, f, Field, ManyToOne, OneToMany } from 'uql-orm';
 
 export const USER_TABLE = 'User';
 export const COMPANY_TABLE = 'Company';
@@ -25,18 +25,18 @@ export const COMPANY_TABLE = 'Company';
 
 @Entity()
 export class Company {
-  @Id({ type: Number }) id?: number;
-  @Field({ type: String, nullable: false }) name!: string;
+  @Field(f.number().id()) id?: number;
+  @Field(f.string()) name!: string;
   @OneToMany({ entity: () => User, mappedBy: (user) => user.company }) users?: User[];
 }
 
 @Entity()
 export class User {
-  @Id({ type: Number }) id?: number;
-  @Field({ type: String, nullable: false }) name!: string;
-  @Field({ type: String, nullable: false }) email!: string;
-  @Field({ type: Number, references: () => Company }) companyId?: number | null;
-  @Field({ type: Number }) createdAt?: number | null;
+  @Field(f.number().id()) id?: number;
+  @Field(f.string()) name!: string;
+  @Field(f.string()) email!: string;
+  @Field(f.references(() => Company).nullable()) companyId?: number | null;
+  @Field(f.number().nullable()) createdAt?: number | null;
   @ManyToOne({ entity: () => Company, references: (user) => user.companyId }) company?: Company;
 }
 

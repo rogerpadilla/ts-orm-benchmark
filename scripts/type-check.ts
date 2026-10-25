@@ -1,137 +1,166 @@
 /**
- * Compiles every probe twice, as written and corrected (`scripts/probes.ts`), and counts one as caught when the
- * mistake errors and the correction is clean. uql-orm.dev's `check-type-safety.ts` replays them in Monaco and
- * scores nothing.
+ * Compiles each probe in a copy of its file where it is the only mistake left, and counts it caught when that copy
+ * errors. One mistake per copy, so no mistake is credited with another's error. The suites are in `scripts/probes.ts`.
  */
 
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { COMPILER, compile, type Diagnostic, listed } from './compiler';
-import { regionEnd } from './markers';
-import { PROBE_FILES, type Verdict, type Verdicts } from './model';
-import { PROBE_MARKER, PROBES, type ProbeId, SHARED_FIXES } from './probes';
+import { resolve } from 'node:path';
+import { COMPILER, compile, type Diagnostic, instantiations, listed, validateSchema } from './compiler';
+import type { Costs, Verdict, Verdicts } from './model';
+import { DEFINITIONS, type Probe, PROBE_MARKER, probePath, QUERIES, type Suite } from './probes';
 import { flag, installedVersion, root } from './project';
-import { printTypeSafetySummary, syncTypeSafetyReport, VERDICTS } from './type-safety-report';
+import { printTypeSafetySummary, syncTypeSafetyReport } from './type-safety-report';
 
-const DIR = resolve(root, 'type-safety');
+/** One probe as it sits in a file: its marker line, and how to undo the mistake under it, or why it has none. */
+type Marked = { probe: Probe; marker: number; fix?: { mistake: string; correction: string }; na?: string };
 
-/** One probe as it sits in a file: the lines it owns, and how to undo the mistake it carries. */
-type Region = {
-  id: ProbeId;
-  /** 1-based, inclusive, marker line included. A diagnostic anywhere in here belongs to this probe. */
-  from: number;
-  to: number;
-  fix: { mistake: string; correction: string };
-};
+type ProbeFile = { stem: string; entry: string; ext: 'ts' | 'prisma'; lines: string[]; marked: Marked[] };
 
-type ProbeFile = { stem: string; entry: string; lines: string[]; regions: Region[] };
-
-function readProbeFile(stem: string): ProbeFile {
-  const lines = readFileSync(resolve(DIR, `${stem}.ts`), 'utf8').split('\n');
-  const marked = lines.flatMap((line, i) => {
-    const match = PROBE_MARKER.exec(line.trim());
-    const [, what, mistake, correction] = match ?? [];
-    return what && mistake && correction ? [{ what, from: i + 1, fix: { mistake, correction } }] : [];
+function readProbeFile(suite: Suite, stem: string): ProbeFile {
+  const path = probePath(suite, stem);
+  const ext = path.endsWith('.ts') ? 'ts' : 'prisma';
+  const lines = readFileSync(resolve(root, path), 'utf8').split('\n');
+  const found = lines.flatMap((line, marker) => {
+    const [, what, na, mistake, correction] = PROBE_MARKER.exec(line.trim()) ?? [];
+    const probe = suite.probes.find((candidate) => candidate.what === what);
+    return probe ? [{ probe, marker, na, fix: mistake ? { mistake, correction } : undefined }] : [];
   });
 
-  // Matched to the catalogue by what each says, in order, which is why a marker carries no id.
-  const declared = marked.map(({ what }) => what).join('\n');
-  const expected = PROBES.map(({ what }) => what).join('\n');
-  if (declared !== expected) {
-    throw new TypeError(`${stem}.ts does not mark the ${PROBES.length} probes of scripts/probes.ts, in their order`);
-  }
+  // In the catalogue's order, which is the table's, so a reader finds each where they expect it.
+  const marked = suite.probes.map((probe) => {
+    const of = found.filter((m) => m.probe === probe);
+    if (of.length !== 1) {
+      throw new TypeError(`${path} has to mark '${probe.what}' once, and marks it ${of.length} times`);
+    }
+    return of[0];
+  });
 
-  const markerLines = new Set(marked.map(({ from }) => from - 1));
-  const regions = marked.map(({ from, fix }, i): Region => ({
-    id: PROBES[i].id,
-    from,
-    to: regionEnd(lines, from - 1, (line) => markerLines.has(line)) + 1,
-    fix,
-  }));
-
-  for (const { id, fix } of regions) {
-    const written = `${fix.mistake} -> ${fix.correction}`;
-    const shared = SHARED_FIXES[id];
-    if (shared && written !== shared) {
-      throw new TypeError(`${stem}.ts corrects '${id}' as '${written}', where every file writes '${shared}'`);
+  for (const { probe, fix } of marked) {
+    const shared = suite.fixes[probe.id];
+    const written = fix && `${fix.mistake} -> ${fix.correction}`;
+    if (shared && fix && written !== shared) {
+      throw new TypeError(`${path} corrects '${probe.id}' as '${written}', where every file writes '${shared}'`);
     }
   }
 
-  return { stem, entry: PROBE_FILES[stem], lines, regions };
+  return { stem, entry: suite.stems[stem], ext, lines, marked };
 }
 
 /**
- * The file with every mistake undone, which has to compile clean. The marker line is left out of the
- * replacement scope on purpose: it spells the mistake out, so a scan over the whole region would correct
- * the comment and leave the code alone.
+ * The file with every mistake but `kept` corrected. A mistake is corrected on the first line below its marker that
+ * holds it, never on the marker, which spells it out, and never past the next marker.
  */
-function controlSource({ lines, regions }: ProbeFile): string {
+function sourceKeeping({ lines, marked }: ProbeFile, kept?: Probe): string {
   const out = [...lines];
-  for (const { from, to, fix } of regions) {
-    const at = out.findIndex((line, i) => i >= from && i < to && line.includes(fix.mistake));
+  const markers = marked.map(({ marker }) => marker).sort((a, b) => a - b);
+  for (const { probe, marker, fix } of marked) {
+    if (!fix || probe === kept) {
+      continue;
+    }
+    const next = markers.find((line) => line > marker) ?? out.length;
+    const at = out.findIndex((line, i) => i > marker && i < next && line.includes(fix.mistake));
     if (at < 0) {
-      throw new TypeError(`probe at line ${from}: '${fix.mistake}' does not appear in the lines below it`);
+      throw new TypeError(`'${probe.what}': '${fix.mistake}' does not appear between its marker and the next`);
     }
     out[at] = out[at].replace(fix.mistake, fix.correction);
   }
   return out.join('\n');
 }
 
-const here = (d: Diagnostic) => dirname(d.file) === DIR;
+/** Generated beside the originals, so their relative imports resolve, and removed when the run ends. */
+const copyName = ({ stem, ext }: ProbeFile, probe?: Probe) => `${stem}.${probe?.id ?? 'control'}.probe.${ext}`;
 
-/** A probe is caught when the mistake errors and the correction does not. */
-function verdicts(files: ProbeFile[], probed: Diagnostic[], control: Diagnostic[]): Verdicts {
-  const broken = control.filter(here);
-  if (broken.length) {
-    throw new Error(listed('the corrected probes must compile clean, and these did not:', broken));
+function check(suite: Suite): { verdicts: Verdicts; costs?: Costs } {
+  const dir = resolve(root, suite.dir);
+  const files = Object.keys(suite.stems).map((stem) => readProbeFile(suite, stem));
+  const copies = files.flatMap((file) => [
+    { file, probe: undefined, name: copyName(file) },
+    ...file.marked.filter(({ fix }) => fix).map(({ probe }) => ({ file, probe, name: copyName(file, probe) })),
+  ]);
+
+  try {
+    for (const { file, probe, name } of copies) {
+      writeFileSync(resolve(dir, name), sourceKeeping(file, probe));
+    }
+
+    const typescript = compile(`${suite.dir}/tsconfig.probes.json`);
+    const errorsIn = (name: string): Diagnostic[] =>
+      name.endsWith('.prisma')
+        ? validateSchema(resolve(dir, name), { generate: false })
+        : typescript.filter((d) => d.file === resolve(dir, name));
+
+    // An error in no copy is the context itself failing: `clients.ts` no longer describing the real clients,
+    // most likely, which would score every probe importing it.
+    const names = new Set(copies.map(({ name }) => resolve(dir, name)));
+    const broken = [
+      ...typescript.filter((d) => !names.has(d.file)),
+      ...files.flatMap((file) => errorsIn(copyName(file))),
+    ];
+    if (broken.length) {
+      throw new Error(listed('the corrected probes and their context must compile clean, and these did not:', broken));
+    }
+
+    const verdicts: Verdicts = new Map(
+      files.map((file) => [
+        file.entry,
+        file.marked.map(({ probe, na }): Verdict => {
+          if (na) {
+            return 'n/a';
+          }
+          return errorsIn(copyName(file, probe)).length ? 'caught' : 'missed';
+        }),
+      ]),
+    );
+    return { verdicts, costs: suite.weighed ? weigh(dir, files) : undefined };
+  } finally {
+    for (const { name } of copies) {
+      rmSync(resolve(dir, name), { force: true });
+    }
   }
+}
 
-  // A diagnostic outside every probe region is the context itself failing - `clients.ts` no longer
-  // describing the real clients, most likely. Nothing below would look at it, and the run would report a
-  // set of verdicts drawn from a file that does not compile.
-  const inRegion = (d: Diagnostic, stem: string, region: Region) =>
-    d.file === resolve(DIR, `${stem}.ts`) && d.line >= region.from && d.line <= region.to;
-  const stray = probed.filter(
-    (d) => here(d) && !files.some(({ stem, regions }) => regions.some((region) => inRegion(d, stem, region))),
-  );
-  if (stray.length) {
-    throw new Error(listed('every error has to belong to a probe, and these belong to nothing:', stray));
+/** The copy holding only a file's imports, which is compiled to weigh what the library costs. */
+const importsName = ({ stem }: ProbeFile) => `${stem}.imports.probe.ts`;
+
+/**
+ * Each TypeScript model's own type cost: its corrected copy, less a file holding only its imports, so what is left
+ * is what checking the definitions costs rather than loading the library's declarations.
+ */
+function weigh(dir: string, files: ProbeFile[]): Costs {
+  const typescript = files.filter(({ ext }) => ext === 'ts');
+  try {
+    return new Map(
+      typescript.map((file) => {
+        const imports = sourceKeeping(file).match(/^import[\s\S]*?;$/gm) ?? [];
+        writeFileSync(resolve(dir, importsName(file)), `${imports.join('\n')}\n`);
+        return [file.entry, instantiations(dir, copyName(file)) - instantiations(dir, importsName(file))];
+      }),
+    );
+  } finally {
+    for (const file of typescript) {
+      rmSync(resolve(dir, importsName(file)), { force: true });
+    }
   }
-
-  return new Map(
-    files.map(({ stem, entry, regions }) => [
-      entry,
-      regions.map((region): Verdict => (probed.some((d) => inRegion(d, stem, region)) ? 'caught' : 'missed')),
-    ]),
-  );
 }
 
 function main() {
-  // Driven by the catalogue rather than by whatever is in the directory: a probe file nobody named is a
-  // file nobody scores, and `readProbeFile` says which one is missing better than a directory scan could.
-  const files = Object.keys(PROBE_FILES).map(readProbeFile);
-  for (const file of files) {
-    writeFileSync(resolve(DIR, `${file.stem}.control.ts`), controlSource(file));
+  console.log(`checking with TypeScript ${installedVersion(COMPILER.pkg)}`);
+  const results = [QUERIES, DEFINITIONS].map((suite) => ({ suite, ...check(suite) }));
+
+  for (const { suite, verdicts, costs } of results) {
+    console.log(`\n${suite.dir}`);
+    printTypeSafetySummary(verdicts, costs);
   }
 
-  try {
-    console.log(`checking with TypeScript ${installedVersion(COMPILER.pkg)}\n`);
-    const results = verdicts(files, compile('type-safety/tsconfig.json'), compile('type-safety/tsconfig.control.json'));
-
-    printTypeSafetySummary(results);
-
-    if (flag('verify')) {
-      console.log('\n--verify: every probe checked, nothing written');
-      return;
-    }
-
-    syncTypeSafetyReport(results);
-    console.log(`\nREADME.md type-safety blocks updated, verdicts written to ${VERDICTS}`);
-  } finally {
-    for (const { stem } of files) {
-      rmSync(resolve(DIR, `${stem}.control.ts`), { force: true });
-    }
+  if (flag('verify')) {
+    console.log('\n--verify: every probe checked, nothing written');
+    return;
   }
+
+  for (const { suite, verdicts, costs } of results) {
+    syncTypeSafetyReport(suite, verdicts, costs);
+  }
+  console.log('\nREADME.md type-safety blocks updated, verdicts written beside each suite');
 }
 
 main();

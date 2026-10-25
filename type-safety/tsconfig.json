@@ -1,7 +1,7 @@
 {
   "extends": "../tsconfig.json",
   "include": ["*.ts"],
-  // Compiled by `tsconfig.control.json` instead: in here they would be a second, unattributable copy of
-  // every diagnostic the probes are scored on.
-  "exclude": ["*.control.ts"]
+  // Compiled by `tsconfig.probes.json` instead, one mistake per copy: in here every copy would repeat the
+  // original's diagnostics.
+  "exclude": ["*.probe.ts"]
 }

@@ -1,12 +1,12 @@
 import {
+  Computed,
   Entity,
+  f,
   Field,
-  Id,
-  Index,
   ManyToOne,
   OneToMany,
-  raw,
   refs,
+  sql,
   type SqlQuerierPool,
 } from 'uql-orm';
 
@@ -14,45 +14,45 @@ declare const pool: SqlQuerierPool;
 
 @Entity()
 export class Company {
-  @Id({ type: Number }) id?: number;
+  @Field(f.number().id()) id?: number;
 
   // Inverse side of a relation
   @OneToMany({ entity: () => User, mappedBy: (user) => user.employer })
   staff?: User[];
 }
 
-// Index on the field
-@Index((user) => [user.emailAddress])
-// Composite unique index
-@Index((user) => [user.emailAddress, user.employerId], { unique: true })
-// Covering index column
-@Index((user) => [user.emailAddress], { include: (user) => [user.employerId] })
-// Expression index
-@Index((user) => [raw`lower(${user.emailAddress})`])
-// Partial index condition
-@Index((user) => [user.employerId], {
-  where: (user) => raw`${user.emailAddress} <> ''`,
+@Entity({
+  indexes: (user, index) => [
+    // Index on the field
+    index([user.emailAddress]),
+    // Composite unique index
+    index([user.emailAddress, user.employerId], { unique: true }),
+    // Covering index column
+    index([user.emailAddress], { include: [user.employerId] }),
+    // Expression index
+    index([sql`lower(${user.emailAddress})`]),
+    // Partial index condition
+    index([user.employerId], { where: sql`${user.emailAddress} <> ''` }),
+  ],
+  // Check constraint
+  checks: (user, check) => [check(sql`${user.emailAddress} <> ''`)],
 })
-// Check constraint
-@Entity({ checks: [{ where: (user) => raw`${user.emailAddress} <> ''` }] })
 export class User {
-  @Id({ type: Number }) id?: number;
-  @Field({ type: String, nullable: false }) emailAddress!: string;
-  @Field({ type: Number, references: () => Company }) employerId?:
-    | number
-    | null;
+  @Field(f.number().id()) id?: number;
+  @Field(f.string()) emailAddress!: string;
+  @Field(f.references(() => Company).nullable()) employerId?: number | null;
 
   // Foreign key of a relation
   @ManyToOne({ entity: () => Company, references: (user) => user.employerId })
   employer?: Company;
 
   // Generated column
-  @Field({
-    type: String,
-    computed: (user) => raw`lower(${user.emailAddress})`,
-    stored: true,
-    nullable: false,
-  })
+  @Computed((user) =>
+    f
+      .string()
+      .as(sql`lower(${user.emailAddress})`)
+      .stored(),
+  )
   emailLower?: string;
 }
 
@@ -92,5 +92,5 @@ export const address = user.emailAddress;
 // Raw SQL in a filter
 const u = refs(User);
 await pool.findMany(User, {
-  $where: { $and: [raw`lower(${u.emailAddress}) = ${'ada@example.com'}`] },
+  $where: { $and: [sql`lower(${u.emailAddress}) = ${'ada@example.com'}`] },
 });

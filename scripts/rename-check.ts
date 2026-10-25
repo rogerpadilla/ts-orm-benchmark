@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { COMPILER, compile, type Diagnostic, listed } from './compiler';
+import { COMPILER, compile, type Diagnostic, listed, validateSchema } from './compiler';
 import { applyEdits, type LanguageServer, offsetAt, positionAt, startLanguageServer, type TextEdit } from './lsp';
 import { PROBE_FILES } from './model';
 import { flag, root } from './project';
@@ -38,35 +38,6 @@ const projectOf = (file: string) => (existsSync(resolve(DIR, dirname(file), 'tsc
 
 /** Where a file's renamed copies go under `renamed/`: in its own project, named after it. */
 const copyOf = (file: string) => join(projectOf(file), basename(file, '.ts'));
-
-/** Validates a schema, and generates its client when it is valid; each error by the line it points at. */
-function validateSchema(schema: string): Diagnostic[] {
-  const prisma = (command: string) => {
-    const { status, stdout, stderr } = spawnSync(
-      resolve(root, 'node_modules/.bin/prisma'),
-      [command, '--schema', schema],
-      { cwd: root, encoding: 'utf8' },
-    );
-    return { status, output: `${stdout}${stderr}` };
-  };
-  const validated = prisma('validate');
-  const errors = [...validated.output.matchAll(/^error: (.+)\n\s*-->\s+.*?:(\d+)/gm)].map((match) => ({
-    file: schema,
-    line: Number(match[2]),
-    text: match[1],
-  }));
-  if (validated.status !== 0 && !errors.length) {
-    throw new Error(`prisma validate failed without naming a line:\n${validated.output}`);
-  }
-  if (errors.length) {
-    return errors;
-  }
-  const generated = prisma('generate');
-  if (generated.status !== 0) {
-    throw new Error(`prisma generate failed:\n${generated.output}`);
-  }
-  return [];
-}
 
 /**
  * Each member renamed from where the server will start: its first mention outside a comment and a string that
