@@ -6,6 +6,7 @@
 
 - Definition safety: 12 mistakes made declaring the entities themselves, from a misspelled column option to a foreign key of the wrong type, each scored of the ones its API can express, with what checking the model costs in instantiations. UQL is scored as decorators and as a schema; Prisma's model is checked by `prisma validate`.
 - Rename safety: `bun run bench.renames` renames a field, a foreign key and a relation with each tool's own rename and scores 19 places that name them. UQL follows all 19, Drizzle 14; Sequelize leaves 12 behind silently. [Live demo](https://uql-orm.dev/rename-safety).
+- uql-orm 0.106.1. Its type-cost counts on definition safety are 8,845 instantiations for decorators and 4,658 for schema.
 - Memory: `bun run bench.memory` measures what each entry allocates per lifecycle, against `raw pg`.
 - Two probes: a sum over a text column, and a required column left out of an insert. Only TypeORM misses the second.
 

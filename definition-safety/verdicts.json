@@ -169,11 +169,11 @@
     ]
   },
   "instantiations": {
-    "UQL (decorators)": 8840,
+    "UQL (decorators)": 8845,
     "Sequelize": 19189,
     "TypeORM": 43,
     "MikroORM": 3303,
     "Drizzle": 14367,
-    "UQL (schema)": 4421
+    "UQL (schema)": 4658
   }
 }

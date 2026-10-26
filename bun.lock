@@ -19,7 +19,7 @@
         "sequelize": "6.37.8",
         "typeorm": "1.1.2",
         "typescript": "7.0.2",
-        "uql-orm": "0.105.0",
+        "uql-orm": "0.106.1",
       },
     },
   },
@@ -540,7 +540,7 @@
 
     "universalify": ["universalify@2.0.1", "", {}, "sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw=="],
 
-    "uql-orm": ["uql-orm@0.105.0", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0 <0.6", "@libsql/client": ">=0.6.0 <0.19", "@neondatabase/serverless": ">=0.9.0 <2", "@nestjs/common": ">=10.0.0 <13", "@nestjs/core": ">=10.0.0 <13", "@tursodatabase/database": ">=0.8.2 <0.9", "@tursodatabase/serverless": ">=1.4.1 <2", "better-sqlite3": ">=9.0.0 <14", "express": ">=5.0.0 <6", "mariadb": ">=3.0.0 <4", "mongodb": ">=6.0.0 <8", "mssql": ">=11.0.0 <13", "mysql2": ">=3.0.0 <4", "pg": ">=8.0.0 <9", "pg-query-stream": ">=4.0.0 <5", "rxjs": ">=7.0.0 <8" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mssql", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-eabUplcKvBEO+vRYyMJqrJXZxGmeuSQ1yyK0fPhJCsqMLgkAQtAPe+6j9Z96Sp8tCSOl0YJ+lrKw23i31/MjGg=="],
+    "uql-orm": ["uql-orm@0.106.1", "", { "peerDependencies": { "@electric-sql/pglite": ">=0.5.0 <0.6", "@libsql/client": ">=0.6.0 <0.19", "@neondatabase/serverless": ">=0.9.0 <2", "@nestjs/common": ">=10.0.0 <13", "@nestjs/core": ">=10.0.0 <13", "@tursodatabase/database": ">=0.8.2 <0.9", "@tursodatabase/serverless": ">=1.4.1 <2", "better-sqlite3": ">=9.0.0 <14", "express": ">=5.0.0 <6", "mariadb": ">=3.0.0 <4", "mongodb": ">=6.0.0 <8", "mssql": ">=11.0.0 <13", "mysql2": ">=3.0.0 <4", "pg": ">=8.0.0 <9", "pg-query-stream": ">=4.0.0 <5", "rxjs": ">=7.0.0 <8" }, "optionalPeers": ["@electric-sql/pglite", "@libsql/client", "@neondatabase/serverless", "@nestjs/common", "@nestjs/core", "@tursodatabase/database", "@tursodatabase/serverless", "better-sqlite3", "express", "mariadb", "mongodb", "mssql", "mysql2", "pg", "pg-query-stream", "rxjs"], "bin": { "uql-migrate": "dist/migrate/bin.js" } }, "sha512-wRf2UOBYalhiYThOBr1jd5M7/kOKxHJStW7WEvXtRl410rTE93NaIkXyZkFGDB7TDDAWAZMmRTMnyuU/MZ7zCw=="],
 
     "uuid": ["uuid@8.3.2", "", { "bin": "dist/bin/uuid" }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 
