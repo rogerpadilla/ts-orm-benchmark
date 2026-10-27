@@ -25,14 +25,14 @@ export const COMPANY_TABLE = 'Company';
 
 @Entity()
 export class Company {
-  @Field(f.number().id()) id?: number;
+  @Field(f.number().id()) id!: number;
   @Field(f.string()) name!: string;
   @OneToMany({ entity: () => User, mappedBy: (user) => user.company }) users?: User[];
 }
 
 @Entity()
 export class User {
-  @Field(f.number().id()) id?: number;
+  @Field(f.number().id()) id!: number;
   @Field(f.string()) name!: string;
   @Field(f.string()) email!: string;
   @Field(f.references(() => Company).nullable()) companyId?: number | null;
